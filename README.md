@@ -4,8 +4,7 @@
 - Introducción al Desarrollo Web
 
 ## TÍTULO DE LA PRÁCTICA
-- Entorno de Ejecución Node.js, Gestión de Paquetes con npm y Creación de Servidor HTTP con Módulos Nativos
-
+-Módulo de Autenticación, Hash de Contraseñas (bcryptjs), Manejo de Sesiones/Cookies y Seguridad Web
 ## GRUPO:
 
 | Alumno | Porcentaje |
