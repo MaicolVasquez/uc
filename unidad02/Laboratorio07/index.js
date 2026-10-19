@@ -60,6 +60,12 @@ async function registrarUsuario(req, res) {
     }
 }
 
+function authMiddleware(req, res, next) {
+    if (req.session && req.session.userId) {
+        return next();
+    }
+    return res.status(401).json({ mensaje: 'No autorizado. Debes iniciar sesión.' });
+}
 // Ruta de Registro
 app.post('/api/auth/register', registrarUsuario);
 
