@@ -1,4 +1,4 @@
-# LABORATORIO N° 05: Node.js, npm y Servidor HTTP
+# LLABORATORIO N° 07: Autenticación, Sesiones y Seguridad en Express
 
 ## ASIGNATURA
 - Introducción al Desarrollo Web
