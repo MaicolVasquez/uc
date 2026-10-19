@@ -69,6 +69,22 @@ function authMiddleware(req, res, next) {
 // Ruta de Registro
 app.post('/api/auth/register', registrarUsuario);
 
+app.get('/api/perfil', authMiddleware, (req, res) => {
+    const usuario = usuarios.find((u) => u.id === req.session.userId);
+
+    if (!usuario) {
+        return res.status(404).json({ mensaje: 'Usuario no encontrado.' });
+    }
+
+    res.json({
+        mensaje: 'Perfil del usuario autenticado',
+        usuario: {
+            id: usuario.id,
+            email: usuario.email,
+        },
+    });
+});
+
 // RUTA DE INICIO DE SESIÓN
 app.post('/api/auth/login', async (req, res) => {
     try {
