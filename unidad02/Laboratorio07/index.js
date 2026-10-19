@@ -2,6 +2,8 @@ require('dotenv').config();
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
+// IMPORTAndo EXPRESS-SESSION
+const session = require('express-session');
 
 const app = express();
 const usuarios = [];
@@ -10,6 +12,18 @@ const PORT = process.env.PORT || 3000;
 console.log(`Entorno configurado. Puerto: ${PORT}`);
 
 app.use(express.json());
+
+// CONFIGURACIÓN DE LA SESIÓN
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    }
+}));
 
 async function registrarUsuario(req, res) {
     try {
@@ -46,7 +60,39 @@ async function registrarUsuario(req, res) {
     }
 }
 
+// Ruta de Registro
 app.post('/api/auth/register', registrarUsuario);
+
+// RUTA DE INICIO DE SESIÓN
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ mensaje: 'Por favor, proporciona email y contraseña.' });
+        }
+
+        // Buscar al usuario por correo
+        const user = usuarios.find(u => u.email === email);
+        if (!user) {
+            return res.status(401).json({ mensaje: 'Credenciales inválidas' });
+        }
+
+        // Verificar la contraseña con el hash
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ mensaje: 'Credenciales inválidas' });
+        }
+
+        // Establecer la sesión del usuario asignando su ID
+        req.session.userId = user.id;
+
+        res.status(200).json({ mensaje: 'Inicio de sesión exitoso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error interno del servidor' });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
