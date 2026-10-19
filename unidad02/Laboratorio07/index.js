@@ -116,6 +116,28 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({
+                mensaje: 'Error al cerrar sesión'
+            });
+        }
+
+        res.clearCookie('connect.sid', {
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+        });
+
+        res.status(200).json({
+            mensaje: 'Sesión cerrada exitosamente'
+        });
+    });
+});
+
+
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
