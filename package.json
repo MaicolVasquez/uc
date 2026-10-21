@@ -1,0 +1,30 @@
+{
+  "name": "uc",
+  "version": "1.0.0",
+  "description": "- La página web \"UNSA Conecta\" es un portal estudiantil diseñado para facilitar la vida universitaria de la comunidad de la Universidad Nacional de San Agustín de Arequipa. De manera sencilla, funciona como una plataforma centralizada que ofrece cinco herramientas principales: un sistema para reportar o buscar objetos perdidos, un mapa interactivo para localizar facultades y servicios en los diferentes campus, un tablón de notificaciones con avisos importantes de la universidad, una sección de tutorías donde los estudiantes pueden enseñarse mutuamente, y una red social llamada \"Punto Hueco\" para organizar grupos de estudio, juegos o charlas durante las horas libres entre clases.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MaicolVasquez/uc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MaicolVasquez/uc/issues"
+  },
+  "homepage": "https://github.com/MaicolVasquez/uc#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
