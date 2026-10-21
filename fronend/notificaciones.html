@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificaciones | UNSA Conecta - Portal Estudiantil Universitario</title>
+    <link rel="stylesheet" href="pub/css/styles.css">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="pub/js/tailwind.config.js"></script>
+</head>
+
+<body data-page="announcements" class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
+
+    <!-- Banner urgente + cabecera (inyectados desde pub/js/layout.js) -->
+    <div id="layout-top"></div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <section id="tab-announcements-content" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Tablón de Notificaciones y Avisos UNSA</h1>
+                    <p class="text-sm text-slate-500">Mantente informado sobre feriados académicos, comunicados de
+                        huelgas, trámites de matrícula y estado de bibliotecas.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-slate-500">Filtrar por Urgencia:</span>
+                    <select id="urgencyFilter" onchange="filterAnnouncements()"
+                        class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg p-2 font-medium focus:ring-2 focus:ring-unsa-maroon">
+                        <option value="ALL">Todas las alertas</option>
+                        <option value="URGENTE">🚨 Alta Prioridad (Urgentes)</option>
+                        <option value="INFO">ℹ️ Información General</option>
+                        <option value="EVENTO">📅 Eventos y Asambleas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Categories Tabs Filter -->
+            <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-200">
+                <button onclick="filterAnnouncementCategory('ALL', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
+                    Todos los avisos
+                </button>
+                <button onclick="filterAnnouncementCategory('Huelgas', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    📢 Huelgas & Paros
+                </button>
+                <button onclick="filterAnnouncementCategory('Feriados', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    🌴 Feriados Academicos
+                </button>
+                <button onclick="filterAnnouncementCategory('Biblioteca', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    📚 Biblioteca Central
+                </button>
+                <button onclick="filterAnnouncementCategory('Tramites', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    📝 Trámites & Matrícula
+                </button>
+            </div>
+
+            <!-- Grid List of Announcements -->
+            <div id="announcementsGrid" class="space-y-4">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- Toast + Footer (inyectados desde pub/js/layout.js) -->
+    <div id="layout-bottom"></div>
+
+    <!-- Scripts: datos compartidos -> layout/utilidades -> lógica del módulo -->
+    <script src="pub/js/data.js"></script>
+    <script src="pub/js/layout.js"></script>
+    <script src="pub/js/announcements.js"></script>
+</body>
+
+</html>

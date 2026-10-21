@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNSA Maps | UNSA Conecta - Portal Estudiantil Universitario</title>
+    <link rel="stylesheet" href="pub/css/styles.css">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="pub/js/tailwind.config.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body data-page="maps" class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
+
+    <!-- Banner urgente + cabecera (inyectados desde pub/js/layout.js) -->
+    <div id="layout-top"></div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <section id="tab-maps-content" class="tab-content space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-unsa-maroon"></i> Croquis & Mapa Interactivo de
+                            la UNSA
+                        </h2>
+                        <p class="text-sm text-slate-500">
+                            Explora pabellones, facultades, laboratorios, bibliotecas y servicios universitarios en los
+                            3 campus principales de Arequipa.
+                        </p>
+                    </div>
+
+                    <!-- Campus Quick Selectors -->
+                    <div class="inline-flex p-1 bg-slate-100 rounded-xl space-x-1 border border-slate-200">
+                        <button onclick="zoomToCampus('ingenierias')"
+                            class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all bg-white shadow-sm">
+                            🏗️ Area Ingenierías
+                        </button>
+                        <button onclick="zoomToCampus('sociales')"
+                            class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all">
+                            🏛️ Area Sociales
+                        </button>
+                        <button onclick="zoomToCampus('biomedicas')"
+                            class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all">
+                            🧬 Area Biomédicas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar for Map Locations -->
+                <div class="mb-4 relative">
+                    <i class="fa-solid fa-building-columns absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="mapSearchInput" onkeyup="searchMapLocation()"
+                        placeholder="Buscar facultad, biblioteca, pabellón de aulas, comedor..."
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon">
+                </div>
+
+                <!-- Map Container & Sidebar Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[550px]">
+                    <!-- Leaflet Map Container -->
+                    <div
+                        class="lg:col-span-2 h-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative">
+                        <div id="unsaMap" class="w-full h-full"></div>
+                    </div>
+
+                    <!-- Location Detail Card Sidebar -->
+                    <div
+                        class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between overflow-y-auto max-h-full">
+                        <div id="locationDetailPanel">
+                            <span
+                                class="text-xs font-bold uppercase tracking-wider text-unsa-maroon bg-red-100 px-2.5 py-1 rounded-md">
+                                Ubicación Seleccionada
+                            </span>
+                            <h3 id="locTitle" class="text-xl font-bold text-slate-900 mt-2">Pabellón Cs. de la
+                                Computación</h3>
+                            <p id="locCampus" class="text-xs font-semibold text-slate-500 mb-3"><i
+                                    class="fa-solid fa-location-dot text-red-500"></i> Campus Área de Ingenierías</p>
+
+                            <img id="locImg"
+                                src="https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=80"
+                                alt="Facultad" class="w-full h-36 object-cover rounded-lg shadow-sm mb-3">
+
+                            <p id="locDesc" class="text-xs text-slate-600 mb-3 leading-relaxed">
+                                Edificio moderno de laboratorios de software, centro de alto rendimiento informático y
+                                aulas de la EP de Ciencia de la Computación.
+                            </p>
+
+                            <div class="space-y-2 border-t border-slate-200 pt-3 text-xs">
+                                <div class="flex items-center justify-between text-slate-600">
+                                    <span class="font-medium"><i class="fa-regular fa-clock text-unsa-gold mr-1"></i>
+                                        Horario de Atención:</span>
+                                    <span id="locHours" class="font-semibold text-slate-800">07:00 - 20:00 hrs</span>
+                                </div>
+                                <div class="flex items-start gap-1 text-slate-600">
+                                    <span class="font-medium flex-shrink-0"><i
+                                            class="fa-solid fa-list-check text-unsa-gold mr-1"></i> Servicios:</span>
+                                    <span id="locServices" class="font-semibold text-slate-800">Labs, WiFi, Aulas
+                                        Virtuales, Biblioteca de Escuela</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Directions Quick Guide Button -->
+                        <div class="mt-4 pt-3 border-t border-slate-200">
+                            <button onclick="getDirectionsToCurrent()"
+                                class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-diamond-turn-right"></i> ¿Cómo llegar desde la puerta principal?
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- Toast + Footer (inyectados desde pub/js/layout.js) -->
+    <div id="layout-bottom"></div>
+
+    <!-- Scripts: datos compartidos -> layout/utilidades -> lógica del módulo -->
+    <script src="pub/js/data.js"></script>
+    <script src="pub/js/layout.js"></script>
+    <script src="pub/js/maps.js"></script>
+</body>
+
+</html>

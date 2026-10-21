@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punto Hueco | UNSA Conecta - Portal Estudiantil Universitario</title>
+    <link rel="stylesheet" href="pub/css/styles.css">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="pub/js/tailwind.config.js"></script>
+</head>
+
+<body data-page="huecos" class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
+
+    <!-- Banner urgente + cabecera (inyectados desde pub/js/layout.js) -->
+    <div id="layout-top"></div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <section id="tab-huecos-content" class="tab-content space-y-6">
+            <!-- Banner Header -->
+            <div
+                class="bg-gradient-to-r from-amber-600 via-unsa-maroon to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span
+                        class="bg-white text-slate-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
+                        Red Social Agustina
+                    </span>
+                    <h1 class="text-2xl md:text-3xl font-extrabold">Punto Hueco UNSA</h1>
+                    <p class="text-slate-200 text-sm mt-1 max-w-xl">
+                        ¿Tienes horas libres entre clases? Organiza o únete a grupos de estudio en el pasto, partidas de
+                        ajedrez, debates o simplemente tómate un café en la cafetería.
+                    </p>
+                </div>
+                <button onclick="openModal('huecoCreateModal')"
+                    class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-extrabold px-5 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-plus-circle"></i> Crear Punto Hueco
+                </button>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-200">
+                <button onclick="filterHuecos('ALL', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
+                    Todas las Actividades
+                </button>
+                <button onclick="filterHuecos('Estudiar', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    📚 Estudiar / Tareas
+                </button>
+                <button onclick="filterHuecos('Socializar', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    ☕ Charlar / Conocer Gente
+                </button>
+                <button onclick="filterHuecos('Juegos', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    ♟️ Juegos de Mesa / Gaming
+                </button>
+                <button onclick="filterHuecos('Deportes', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    ⚽ Deportes / Vóley / Fut
+                </button>
+                <button onclick="filterHuecos('Creatividad', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                    🎨 Música & Proyectos
+                </button>
+            </div>
+
+            <!-- Meetups Grid -->
+            <div id="huecosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+    </main>
+
+    <div id="huecoCreateModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-mug-hot text-amber-600"></i> Crear Nuevo Punto Hueco
+                </h3>
+                <button onclick="closeModal('huecoCreateModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+            </div>
+
+            <form id="huecoCreateForm" onsubmit="handleSaveHueco(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Título del Encuentro *</label>
+                    <input type="text" id="huecoTitle" required
+                        placeholder="Ej. Grupo de repaso de Cálculo I en el pasto"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Categoría *</label>
+                        <select id="huecoCategory" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                            <option value="Estudiar">📚 Estudiar / Tareas</option>
+                            <option value="Socializar">☕ Charlar / Socializar</option>
+                            <option value="Juegos">♟️ Juegos de Mesa / Ajedrez</option>
+                            <option value="Deportes">⚽ Deportes / Recreación</option>
+                            <option value="Creatividad">🎨 Proyectos / Música</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Campus *</label>
+                        <select id="huecoCampus" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                            <option value="Ingenierías">Área de Ingenierías</option>
+                            <option value="Sociales">Área de Sociales</option>
+                            <option value="Biomédicas">Área de Biomédicas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Lugar Exacto de Reunión *</label>
+                    <input type="text" id="huecoLocation" required
+                        placeholder="Ej. Banquitas frente a Biblioteca Central o Cafetería FIPS"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Horario (Inicio y Fin) *</label>
+                        <input type="text" id="huecoTime" required placeholder="Ej. 11:30 AM - 1:00 PM"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Aforo / Capacidad Max *</label>
+                        <input type="number" id="huecoCapacity" required min="2" max="30" value="6"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Organizado por (Nombre y Carrera)
+                        *</label>
+                    <input type="text" id="huecoOrganizer" required placeholder="Ej. Luis (Ing. Mecánica)"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp de coordinación *</label>
+                    <input type="tel" id="huecoPhone" required placeholder="987654321"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Descripción o requisitos del plan</label>
+                    <textarea id="huecoDesc" rows="2"
+                        placeholder="Traer cuaderno / Traer tablero de ajedrez / Solo ganas de charlar..."
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('huecoCreateModal')"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow">Publicar
+                        Punto Hueco</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast + Footer (inyectados desde pub/js/layout.js) -->
+    <div id="layout-bottom"></div>
+
+    <!-- Scripts: datos compartidos -> layout/utilidades -> lógica del módulo -->
+    <script src="pub/js/data.js"></script>
+    <script src="pub/js/layout.js"></script>
+    <script src="pub/js/huecos.js"></script>
+</body>
+
+</html>
