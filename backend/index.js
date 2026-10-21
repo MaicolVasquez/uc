@@ -1,3 +1,4 @@
+const express = require('express')
 const app = express();
 
 app.use(express.json());
@@ -5,7 +6,6 @@ app.use(express.json());
 // Base de datos en memoria
 const usuarios = [];
 
-// Ruta de registro
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password } = req.body;
