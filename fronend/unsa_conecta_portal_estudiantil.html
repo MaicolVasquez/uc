@@ -1,100 +1,37 @@
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-slate-50">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNSA Conecta - Portal Estudiantil Universitario</title>
+    <link rel="stylesheet" href="pub/css/styles.css">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        unsa: {
-                            maroon: '#7A1D2E',
-                            dark: '#581320',
-                            bright: '#9B2238',
-                            gold: '#D4AF37',
-                            goldhover: '#B59226',
-                            accent: '#FFF8E7',
-                            slate: '#0F172A'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="pub/js/tailwind.config.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="pub/js/dataset.js"></script>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Leaflet CSS & JS for Interactive Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        .leaflet-container {
-            width: 100%;
-            height: 100%;
-            border-radius: 0.75rem;
-            z-index: 10;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        .pulse-badge {
-            animation: pulse-ring 2s infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(0.95); opacity: 1; }
-        }
-        .tab-active {
-            border-bottom: 3px solid #D4AF37;
-            color: #7A1D2E;
-            font-weight: 700;
-        }
-    </style>
 </head>
+
 <body class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
 
     <!-- Urgent Announcement Top Ticker -->
-    <div id="topUrgentBanner" class="bg-amber-500 text-slate-900 px-4 py-2 text-xs md:text-sm font-semibold flex items-center justify-between shadow-md transition-all">
+    <div id="topUrgentBanner"
+        class="bg-amber-500 text-slate-900 px-4 py-2 text-xs md:text-sm font-semibold flex items-center justify-between shadow-md transition-all">
         <div class="flex items-center gap-2 overflow-hidden whitespace-nowrap text-ellipsis max-w-[85%]">
-            <span class="bg-red-700 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full animate-pulse flex-shrink-0">
+            <span
+                class="bg-red-700 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full animate-pulse flex-shrink-0">
                 <i class="fa-solid fa-triangle-exclamation mr-1"></i> Urgente
             </span>
             <span id="urgentText">
-                📢 Comunicado Oficial: Suspensión parcial de actividades administrativas en Campus Sociales por mantenimiento eléctrico hoy desde las 14:00 hrs.
+                📢 Comunicado Oficial: Suspensión parcial de actividades administrativas en Campus Sociales por
+                mantenimiento eléctrico hoy desde las 14:00 hrs.
             </span>
         </div>
-        <button onclick="dismissUrgentBanner()" class="text-slate-800 hover:text-slate-950 font-bold text-lg px-2" title="Cerrar notificación">
+        <button onclick="dismissUrgentBanner()" class="text-slate-800 hover:text-slate-950 font-bold text-lg px-2"
+            title="Cerrar notificación">
             &times;
         </button>
     </div>
@@ -105,46 +42,58 @@
             <div class="flex items-center justify-between h-20">
                 <!-- Brand Logo & Title -->
                 <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('lost-found')">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-unsa-gold to-amber-600 flex items-center justify-center text-unsa-maroon font-black text-2xl shadow-lg border border-yellow-200">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-unsa-gold to-amber-600 flex items-center justify-center text-unsa-maroon font-black text-2xl shadow-lg border border-yellow-200">
                         U
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-xl tracking-tight text-white">UNSA<span class="text-unsa-gold">Conecta</span></span>
-                            <span class="bg-unsa-bright text-xs px-2 py-0.5 rounded-md border border-white/20 font-medium text-yellow-100">v2.5</span>
+                            <span class="font-extrabold text-xl tracking-tight text-white">UNSA<span
+                                    class="text-unsa-gold">Conecta</span></span>
+                            <span
+                                class="bg-unsa-bright text-xs px-2 py-0.5 rounded-md border border-white/20 font-medium text-yellow-100">v2.5</span>
                         </div>
-                        <p class="text-[11px] text-slate-300 hidden sm:block">Universidad Nacional de San Agustín de Arequipa</p>
+                        <p class="text-[11px] text-slate-300 hidden sm:block">Universidad Nacional de San Agustín de
+                            Arequipa</p>
                     </div>
                 </div>
 
                 <!-- Desktop Navigation Tabs -->
                 <nav class="hidden md:flex space-x-1 lg:space-x-2">
-                    <button id="nav-lost-found" onclick="switchTab('lost-found')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
+                    <button id="nav-lost-found" onclick="switchTab('lost-found')"
+                        class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
                         <i class="fa-solid fa-box-open text-unsa-gold"></i> Objetos Perdidos
                     </button>
-                    <button id="nav-maps" onclick="switchTab('maps')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
+                    <button id="nav-maps" onclick="switchTab('maps')"
+                        class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
                         <i class="fa-solid fa-map-location-dot text-unsa-gold"></i> UNSA Maps
                     </button>
-                    <button id="nav-announcements" onclick="switchTab('announcements')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10 relative">
+                    <button id="nav-announcements" onclick="switchTab('announcements')"
+                        class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10 relative">
                         <i class="fa-solid fa-bullhorn text-unsa-gold"></i> Notificaciones
                         <span class="w-2 h-2 rounded-full bg-red-400 absolute top-2 right-1 animate-ping"></span>
                     </button>
-                    <button id="nav-tutoring" onclick="switchTab('tutoring')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
+                    <button id="nav-tutoring" onclick="switchTab('tutoring')"
+                        class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
                         <i class="fa-solid fa-graduation-cap text-unsa-gold"></i> Estudiante a Estudiante
                     </button>
-                    <button id="nav-huecos" onclick="switchTab('huecos')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
+                    <button id="nav-huecos" onclick="switchTab('huecos')"
+                        class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10">
                         <i class="fa-solid fa-mug-hot text-unsa-gold"></i> Punto Hueco
                     </button>
                 </nav>
 
                 <!-- Header Actions -->
                 <div class="hidden lg:flex items-center gap-3">
-                    <button onclick="openNotificationToast('Bienvenido a UNSA Conecta. Todos tus datos están vigentes.')" class="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10 relative">
+                    <button
+                        onclick="openNotificationToast('Bienvenido a UNSA Conecta. Todos tus datos están vigentes.')"
+                        class="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10 relative">
                         <i class="fa-regular fa-bell text-lg"></i>
                         <span class="absolute top-1 right-1 w-2 h-2 bg-unsa-gold rounded-full"></span>
                     </button>
                     <div class="flex items-center gap-2 pl-3 border-l border-white/20">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="w-9 h-9 rounded-full ring-2 ring-unsa-gold object-cover">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                            alt="Avatar" class="w-9 h-9 rounded-full ring-2 ring-unsa-gold object-cover">
                         <div class="text-xs">
                             <p class="font-bold text-white leading-tight">Estudiante Agustino</p>
                             <p class="text-slate-300 text-[10px]">Ing. de Sistemas</p>
@@ -154,7 +103,8 @@
 
                 <!-- Mobile Menu Toggle Button -->
                 <div class="flex md:hidden items-center">
-                    <button id="mobileMenuBtn" onclick="toggleMobileMenu()" class="p-2 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 focus:outline-none">
+                    <button id="mobileMenuBtn" onclick="toggleMobileMenu()"
+                        class="p-2 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 focus:outline-none">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
                 </div>
@@ -163,19 +113,24 @@
 
         <!-- Mobile Dropdown Navigation Menu -->
         <div id="mobileMenu" class="hidden md:hidden bg-unsa-dark border-t border-white/10 px-4 pt-2 pb-4 space-y-1">
-            <button onclick="switchTab('lost-found'); toggleMobileMenu();" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
+            <button onclick="switchTab('lost-found'); toggleMobileMenu();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
                 <i class="fa-solid fa-box-open text-unsa-gold w-5"></i> Objetos Perdidos
             </button>
-            <button onclick="switchTab('maps'); toggleMobileMenu();" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
+            <button onclick="switchTab('maps'); toggleMobileMenu();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
                 <i class="fa-solid fa-map-location-dot text-unsa-gold w-5"></i> UNSA Maps (Croquis)
             </button>
-            <button onclick="switchTab('announcements'); toggleMobileMenu();" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
+            <button onclick="switchTab('announcements'); toggleMobileMenu();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
                 <i class="fa-solid fa-bullhorn text-unsa-gold w-5"></i> Notificaciones e Info
             </button>
-            <button onclick="switchTab('tutoring'); toggleMobileMenu();" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
+            <button onclick="switchTab('tutoring'); toggleMobileMenu();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
                 <i class="fa-solid fa-graduation-cap text-unsa-gold w-5"></i> Estudiante a Estudiante
             </button>
-            <button onclick="switchTab('huecos'); toggleMobileMenu();" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
+            <button onclick="switchTab('huecos'); toggleMobileMenu();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-white/10 flex items-center gap-3">
                 <i class="fa-solid fa-mug-hot text-unsa-gold w-5"></i> Punto Hueco
             </button>
         </div>
@@ -187,42 +142,52 @@
         <!-- TAB 1: OBJETOS PERDIDOS -->
         <section id="tab-lost-found-content" class="tab-content space-y-6">
             <!-- Header Banner -->
-            <div class="bg-gradient-to-r from-unsa-maroon via-unsa-bright to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+            <div
+                class="bg-gradient-to-r from-unsa-maroon via-unsa-bright to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 opacity-10 text-white pointer-events-none">
                     <i class="fa-solid fa-box-open text-[200px]"></i>
                 </div>
                 <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <span class="bg-unsa-gold text-unsa-slate text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
+                        <span
+                            class="bg-unsa-gold text-unsa-slate text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
                             UNSA Lost & Found
                         </span>
-                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Objetos Perdidos y Encontrados</h1>
+                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Objetos Perdidos y Encontrados
+                        </h1>
                         <p class="text-slate-200 text-sm mt-1 max-w-2xl">
-                            ¿Perdiste tu carné, llaves, mochila o laptop en alguna facultad? Reporta o encuentra objetos dejados en las tres áreas de la universidad.
+                            ¿Perdiste tu carné, llaves, mochila o laptop en alguna facultad? Reporta o encuentra objetos
+                            dejados en las tres áreas de la universidad.
                         </p>
                     </div>
-                    <button onclick="openModal('lostFoundModal')" class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-bold px-5 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
+                    <button onclick="openModal('lostFoundModal')"
+                        class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-bold px-5 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
                         <i class="fa-solid fa-circle-plus"></i> Reportar Objeto
                     </button>
                 </div>
             </div>
 
             <!-- Search and Filter Controls -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 justify-between items-center">
+            <div
+                class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 justify-between items-center">
                 <div class="relative w-full md:w-96">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="lfSearch" oninput="filterLostFound()" placeholder="Buscar por título, carné, facultades..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="lfSearch" oninput="filterLostFound()"
+                        placeholder="Buscar por título, carné, facultades..."
+                        class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon">
                 </div>
                 <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                     <!-- Status Filter -->
-                    <select id="lfStatusFilter" onchange="filterLostFound()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
+                    <select id="lfStatusFilter" onchange="filterLostFound()"
+                        class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
                         <option value="ALL">Todos los estados</option>
                         <option value="PERDIDO">🔴 Solo Perdidos</option>
                         <option value="ENCONTRADO">🟢 Solo Encontrados</option>
                     </select>
 
                     <!-- Campus Filter -->
-                    <select id="lfCampusFilter" onchange="filterLostFound()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
+                    <select id="lfCampusFilter" onchange="filterLostFound()"
+                        class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
                         <option value="ALL">Todos los Campus</option>
                         <option value="Ingenierías">Área de Ingenierías</option>
                         <option value="Sociales">Área de Sociales</option>
@@ -230,7 +195,8 @@
                     </select>
 
                     <!-- Category Filter -->
-                    <select id="lfCategoryFilter" onchange="filterLostFound()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
+                    <select id="lfCategoryFilter" onchange="filterLostFound()"
+                        class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
                         <option value="ALL">Todas las Categorías</option>
                         <option value="Documentos">Carné / DNI / Cuadernos</option>
                         <option value="Electrónicos">Laptops / Celulares / Cargadores</option>
@@ -254,22 +220,27 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                     <div>
                         <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-map-location-dot text-unsa-maroon"></i> Croquis & Mapa Interactivo de la UNSA
+                            <i class="fa-solid fa-map-location-dot text-unsa-maroon"></i> Croquis & Mapa Interactivo de
+                            la UNSA
                         </h2>
                         <p class="text-sm text-slate-500">
-                            Explora pabellones, facultades, laboratorios, bibliotecas y servicios universitarios en los 3 campus principales de Arequipa.
+                            Explora pabellones, facultades, laboratorios, bibliotecas y servicios universitarios en los
+                            3 campus principales de Arequipa.
                         </p>
                     </div>
 
                     <!-- Campus Quick Selectors -->
                     <div class="inline-flex p-1 bg-slate-100 rounded-xl space-x-1 border border-slate-200">
-                        <button onclick="zoomToCampus('ingenierias')" class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all bg-white shadow-sm">
+                        <button onclick="zoomToCampus('ingenierias')"
+                            class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all bg-white shadow-sm">
                             🏗️ Area Ingenierías
                         </button>
-                        <button onclick="zoomToCampus('sociales')" class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all">
+                        <button onclick="zoomToCampus('sociales')"
+                            class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all">
                             🏛️ Area Sociales
                         </button>
-                        <button onclick="zoomToCampus('biomedicas')" class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all">
+                        <button onclick="zoomToCampus('biomedicas')"
+                            class="campus-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all">
                             🧬 Area Biomédicas
                         </button>
                     </div>
@@ -278,46 +249,60 @@
                 <!-- Search Bar for Map Locations -->
                 <div class="mb-4 relative">
                     <i class="fa-solid fa-building-columns absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="mapSearchInput" onkeyup="searchMapLocation()" placeholder="Buscar facultad, biblioteca, pabellón de aulas, comedor..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="mapSearchInput" onkeyup="searchMapLocation()"
+                        placeholder="Buscar facultad, biblioteca, pabellón de aulas, comedor..."
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <!-- Map Container & Sidebar Layout -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[550px]">
                     <!-- Leaflet Map Container -->
-                    <div class="lg:col-span-2 h-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative">
+                    <div
+                        class="lg:col-span-2 h-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative">
                         <div id="unsaMap" class="w-full h-full"></div>
                     </div>
 
                     <!-- Location Detail Card Sidebar -->
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between overflow-y-auto max-h-full">
+                    <div
+                        class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between overflow-y-auto max-h-full">
                         <div id="locationDetailPanel">
-                            <span class="text-xs font-bold uppercase tracking-wider text-unsa-maroon bg-red-100 px-2.5 py-1 rounded-md">
+                            <span
+                                class="text-xs font-bold uppercase tracking-wider text-unsa-maroon bg-red-100 px-2.5 py-1 rounded-md">
                                 Ubicación Seleccionada
                             </span>
-                            <h3 id="locTitle" class="text-xl font-bold text-slate-900 mt-2">Pabellón Cs. de la Computación</h3>
-                            <p id="locCampus" class="text-xs font-semibold text-slate-500 mb-3"><i class="fa-solid fa-location-dot text-red-500"></i> Campus Área de Ingenierías</p>
+                            <h3 id="locTitle" class="text-xl font-bold text-slate-900 mt-2">Pabellón Cs. de la
+                                Computación</h3>
+                            <p id="locCampus" class="text-xs font-semibold text-slate-500 mb-3"><i
+                                    class="fa-solid fa-location-dot text-red-500"></i> Campus Área de Ingenierías</p>
 
-                            <img id="locImg" src="https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=80" alt="Facultad" class="w-full h-36 object-cover rounded-lg shadow-sm mb-3">
+                            <img id="locImg"
+                                src="https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=80"
+                                alt="Facultad" class="w-full h-36 object-cover rounded-lg shadow-sm mb-3">
 
                             <p id="locDesc" class="text-xs text-slate-600 mb-3 leading-relaxed">
-                                Edificio moderno de laboratorios de software, centro de alto rendimiento informático y aulas de la EP de Ciencia de la Computación.
+                                Edificio moderno de laboratorios de software, centro de alto rendimiento informático y
+                                aulas de la EP de Ciencia de la Computación.
                             </p>
 
                             <div class="space-y-2 border-t border-slate-200 pt-3 text-xs">
                                 <div class="flex items-center justify-between text-slate-600">
-                                    <span class="font-medium"><i class="fa-regular fa-clock text-unsa-gold mr-1"></i> Horario de Atención:</span>
+                                    <span class="font-medium"><i class="fa-regular fa-clock text-unsa-gold mr-1"></i>
+                                        Horario de Atención:</span>
                                     <span id="locHours" class="font-semibold text-slate-800">07:00 - 20:00 hrs</span>
                                 </div>
                                 <div class="flex items-start gap-1 text-slate-600">
-                                    <span class="font-medium flex-shrink-0"><i class="fa-solid fa-list-check text-unsa-gold mr-1"></i> Servicios:</span>
-                                    <span id="locServices" class="font-semibold text-slate-800">Labs, WiFi, Aulas Virtuales, Biblioteca de Escuela</span>
+                                    <span class="font-medium flex-shrink-0"><i
+                                            class="fa-solid fa-list-check text-unsa-gold mr-1"></i> Servicios:</span>
+                                    <span id="locServices" class="font-semibold text-slate-800">Labs, WiFi, Aulas
+                                        Virtuales, Biblioteca de Escuela</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Directions Quick Guide Button -->
                         <div class="mt-4 pt-3 border-t border-slate-200">
-                            <button onclick="getDirectionsToCurrent()" class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-2">
+                            <button onclick="getDirectionsToCurrent()"
+                                class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-diamond-turn-right"></i> ¿Cómo llegar desde la puerta principal?
                             </button>
                         </div>
@@ -332,11 +317,13 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">Tablón de Notificaciones y Avisos UNSA</h1>
-                    <p class="text-sm text-slate-500">Mantente informado sobre feriados académicos, comunicados de huelgas, trámites de matrícula y estado de bibliotecas.</p>
+                    <p class="text-sm text-slate-500">Mantente informado sobre feriados académicos, comunicados de
+                        huelgas, trámites de matrícula y estado de bibliotecas.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-medium text-slate-500">Filtrar por Urgencia:</span>
-                    <select id="urgencyFilter" onchange="filterAnnouncements()" class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg p-2 font-medium focus:ring-2 focus:ring-unsa-maroon">
+                    <select id="urgencyFilter" onchange="filterAnnouncements()"
+                        class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg p-2 font-medium focus:ring-2 focus:ring-unsa-maroon">
                         <option value="ALL">Todas las alertas</option>
                         <option value="URGENTE">🚨 Alta Prioridad (Urgentes)</option>
                         <option value="INFO">ℹ️ Información General</option>
@@ -347,19 +334,24 @@
 
             <!-- Categories Tabs Filter -->
             <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-200">
-                <button onclick="filterAnnouncementCategory('ALL', this)" class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
+                <button onclick="filterAnnouncementCategory('ALL', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
                     Todos los avisos
                 </button>
-                <button onclick="filterAnnouncementCategory('Huelgas', this)" class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterAnnouncementCategory('Huelgas', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     📢 Huelgas & Paros
                 </button>
-                <button onclick="filterAnnouncementCategory('Feriados', this)" class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterAnnouncementCategory('Feriados', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     🌴 Feriados Academicos
                 </button>
-                <button onclick="filterAnnouncementCategory('Biblioteca', this)" class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterAnnouncementCategory('Biblioteca', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     📚 Biblioteca Central
                 </button>
-                <button onclick="filterAnnouncementCategory('Tramites', this)" class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterAnnouncementCategory('Tramites', this)"
+                    class="ann-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     📝 Trámites & Matrícula
                 </button>
             </div>
@@ -374,40 +366,50 @@
         <!-- TAB 4: ESTUDIANTE ENSEÑA A ESTUDIANTE -->
         <section id="tab-tutoring-content" class="tab-content hidden space-y-6">
             <!-- Hero Header -->
-            <div class="bg-gradient-to-r from-slate-900 via-unsa-maroon to-unsa-dark rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div
+                class="bg-gradient-to-r from-slate-900 via-unsa-maroon to-unsa-dark rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <span class="bg-unsa-gold text-unsa-slate text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
+                    <span
+                        class="bg-unsa-gold text-unsa-slate text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
                         Peer Tutoring Agustino
                     </span>
                     <h1 class="text-2xl md:text-3xl font-extrabold">Estudiante Enseña a Estudiante</h1>
                     <p class="text-slate-200 text-sm mt-1 max-w-xl">
-                        Aprende con compañeros de cursos superiores que ya aprobaron las asignaturas más exigentes. Refuerza Cálculo, Física, Programación, Química, Medicina y Derecho.
+                        Aprende con compañeros de cursos superiores que ya aprobaron las asignaturas más exigentes.
+                        Refuerza Cálculo, Física, Programación, Química, Medicina y Derecho.
                     </p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                    <button onclick="openModal('tutorRegisterModal')" class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-extrabold px-4 py-3 rounded-xl text-xs transition-transform hover:scale-105 flex items-center justify-center gap-2">
+                    <button onclick="openModal('tutorRegisterModal')"
+                        class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-extrabold px-4 py-3 rounded-xl text-xs transition-transform hover:scale-105 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-chalkboard-user text-sm"></i> Postularme como Tutor
                     </button>
-                    <button onclick="openModal('tutorRequestModal')" class="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-3 rounded-xl text-xs border border-white/20 transition-transform hover:scale-105 flex items-center justify-center gap-2">
+                    <button onclick="openModal('tutorRequestModal')"
+                        class="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-3 rounded-xl text-xs border border-white/20 transition-transform hover:scale-105 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-hand-holding-hand text-sm"></i> Solicitar Asesoría
                     </button>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 justify-between items-center">
+            <div
+                class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 justify-between items-center">
                 <div class="relative w-full md:w-80">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="tutorSearch" oninput="filterTutors()" placeholder="Buscar curso (ej: Cálculo II, Python...)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                    <input type="text" id="tutorSearch" oninput="filterTutors()"
+                        placeholder="Buscar curso (ej: Cálculo II, Python...)"
+                        class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
                 </div>
                 <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                    <select id="tutorFacultyFilter" onchange="filterTutors()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                    <select id="tutorFacultyFilter" onchange="filterTutors()"
+                        class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                         <option value="ALL">Todas las Áreas</option>
                         <option value="Ingenierías">Ingenierías & Ciencias Exactas</option>
                         <option value="Biomédicas">Medicina & Biomédicas</option>
                         <option value="Sociales">Derecho, FIPS & Sociales</option>
                     </select>
-                    <select id="tutorModalityFilter" onchange="filterTutors()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                    <select id="tutorModalityFilter" onchange="filterTutors()"
+                        class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                         <option value="ALL">Todas las Modalidades</option>
                         <option value="Presencial">🏫 Presencial en Campus</option>
                         <option value="Virtual">💻 Virtual (Google Meet / Zoom)</option>
@@ -425,39 +427,49 @@
         <!-- TAB 5: RED DE HUECOS (PUNTO HUECO UNSA) -->
         <section id="tab-huecos-content" class="tab-content hidden space-y-6">
             <!-- Banner Header -->
-            <div class="bg-gradient-to-r from-amber-600 via-unsa-maroon to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div
+                class="bg-gradient-to-r from-amber-600 via-unsa-maroon to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <span class="bg-white text-slate-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
+                    <span
+                        class="bg-white text-slate-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
                         Red Social Agustina
                     </span>
                     <h1 class="text-2xl md:text-3xl font-extrabold">Punto Hueco UNSA</h1>
                     <p class="text-slate-200 text-sm mt-1 max-w-xl">
-                        ¿Tienes horas libres entre clases? Organiza o únete a grupos de estudio en el pasto, partidas de ajedrez, debates o simplemente tómate un café en la cafetería.
+                        ¿Tienes horas libres entre clases? Organiza o únete a grupos de estudio en el pasto, partidas de
+                        ajedrez, debates o simplemente tómate un café en la cafetería.
                     </p>
                 </div>
-                <button onclick="openModal('huecoCreateModal')" class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-extrabold px-5 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
+                <button onclick="openModal('huecoCreateModal')"
+                    class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-extrabold px-5 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-plus-circle"></i> Crear Punto Hueco
                 </button>
             </div>
 
             <!-- Category Pills -->
             <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-200">
-                <button onclick="filterHuecos('ALL', this)" class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
+                <button onclick="filterHuecos('ALL', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
                     Todas las Actividades
                 </button>
-                <button onclick="filterHuecos('Estudiar', this)" class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterHuecos('Estudiar', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     📚 Estudiar / Tareas
                 </button>
-                <button onclick="filterHuecos('Socializar', this)" class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterHuecos('Socializar', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     ☕ Charlar / Conocer Gente
                 </button>
-                <button onclick="filterHuecos('Juegos', this)" class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterHuecos('Juegos', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     ♟️ Juegos de Mesa / Gaming
                 </button>
-                <button onclick="filterHuecos('Deportes', this)" class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterHuecos('Deportes', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     ⚽ Deportes / Vóley / Fut
                 </button>
-                <button onclick="filterHuecos('Creatividad', this)" class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
+                <button onclick="filterHuecos('Creatividad', this)"
+                    class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     🎨 Música & Proyectos
                 </button>
             </div>
@@ -472,24 +484,29 @@
 
 
     <!-- MODAL 1: REPORTAR OBJETO PERDIDO/ENCONTRADO -->
-    <div id="lostFoundModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div id="lostFoundModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                     <i class="fa-solid fa-box-open text-unsa-maroon"></i> Reportar Objeto
                 </h3>
-                <button onclick="closeModal('lostFoundModal')" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+                <button onclick="closeModal('lostFoundModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
             </div>
 
             <form id="lostFoundForm" onsubmit="handleSaveLostFound(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Reporte *</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer text-xs font-bold hover:bg-slate-50">
+                        <label
+                            class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer text-xs font-bold hover:bg-slate-50">
                             <input type="radio" name="status" value="PERDIDO" checked class="accent-unsa-maroon">
                             <span class="text-red-600">🔴 Lo he Perdido</span>
                         </label>
-                        <label class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer text-xs font-bold hover:bg-slate-50">
+                        <label
+                            class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer text-xs font-bold hover:bg-slate-50">
                             <input type="radio" name="status" value="ENCONTRADO" class="accent-unsa-maroon">
                             <span class="text-green-600">🟢 Lo he Encontrado</span>
                         </label>
@@ -498,13 +515,16 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Título del Objeto *</label>
-                    <input type="text" id="lfTitleInput" required placeholder="Ej. Carné universitario a nombre de Carlos Pérez" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                    <input type="text" id="lfTitleInput" required
+                        placeholder="Ej. Carné universitario a nombre de Carlos Pérez"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Categoría *</label>
-                        <select id="lfCategoryInput" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                        <select id="lfCategoryInput" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                             <option value="Documentos">Carné / DNI / Cuadernos</option>
                             <option value="Electrónicos">Laptops / Celulares / Audífonos</option>
                             <option value="Llaves">Llaves / USBs</option>
@@ -514,7 +534,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Área / Campus *</label>
-                        <select id="lfCampusInput" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                        <select id="lfCampusInput" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                             <option value="Ingenierías">Área de Ingenierías</option>
                             <option value="Sociales">Área de Sociales</option>
                             <option value="Biomédicas">Área de Biomédicas</option>
@@ -523,35 +544,47 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Lugar Exacto de pérdida/hallazgo *</label>
-                    <input type="text" id="lfLocationInput" required placeholder="Ej. Aula 204 de Sistemas o Jardines centrales" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Lugar Exacto de pérdida/hallazgo
+                        *</label>
+                    <input type="text" id="lfLocationInput" required
+                        placeholder="Ej. Aula 204 de Sistemas o Jardines centrales"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Fecha y Hora *</label>
-                        <input type="datetime-local" id="lfDateInput" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                        <input type="datetime-local" id="lfDateInput" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono / WhatsApp *</label>
-                        <input type="tel" id="lfPhoneInput" required placeholder="987654321" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                        <input type="tel" id="lfPhoneInput" required placeholder="987654321"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">URL Foto u Objeto (Opcional)</label>
-                    <input type="url" id="lfImgInput" placeholder="https://..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
-                    <p class="text-[10px] text-slate-400 mt-0.5">Si se deja vacío, se asignará una imagen ilustrativa por defecto.</p>
+                    <input type="url" id="lfImgInput" placeholder="https://..."
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Si se deja vacío, se asignará una imagen ilustrativa
+                        por defecto.</p>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Descripción o detalles del objeto</label>
-                    <textarea id="lfDescInput" rows="3" placeholder="Indica color, marcas distintivas o cómo contactar directamente..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none"></textarea>
+                    <textarea id="lfDescInput" rows="3"
+                        placeholder="Indica color, marcas distintivas o cómo contactar directamente..."
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none"></textarea>
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('lostFoundModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Publicar Reporte</button>
+                    <button type="button" onclick="closeModal('lostFoundModal')"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Publicar
+                        Reporte</button>
                 </div>
             </form>
         </div>
@@ -559,35 +592,43 @@
 
 
     <!-- MODAL 2: REGISTRO DE TUTOR -->
-    <div id="tutorRegisterModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div id="tutorRegisterModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                     <i class="fa-solid fa-graduation-cap text-unsa-maroon"></i> Postular como Tutor Agustino
                 </h3>
-                <button onclick="closeModal('tutorRegisterModal')" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+                <button onclick="closeModal('tutorRegisterModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
             </div>
 
             <form id="tutorRegisterForm" onsubmit="handleSaveTutor(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tu Nombre Completo *</label>
-                    <input type="text" id="tutorName" required placeholder="Ej. Maria Elena Flores" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="tutorName" required placeholder="Ej. Maria Elena Flores"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Escuela Profesional / Carrera *</label>
-                        <input type="text" id="tutorCareer" required placeholder="Ej. Ing. de Sistemas" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Escuela Profesional / Carrera
+                            *</label>
+                        <input type="text" id="tutorCareer" required placeholder="Ej. Ing. de Sistemas"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Semestre / Año *</label>
-                        <input type="text" id="tutorSemester" required placeholder="Ej. 8vo Semestre" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                        <input type="text" id="tutorSemester" required placeholder="Ej. 8vo Semestre"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Área / Campus *</label>
-                    <select id="tutorFaculty" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                    <select id="tutorFaculty" required
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                         <option value="Ingenierías">Área de Ingenierías</option>
                         <option value="Biomédicas">Área de Biomédicas</option>
                         <option value="Sociales">Área de Sociales</option>
@@ -595,14 +636,18 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Cursos que Enseñas (Separados por coma) *</label>
-                    <input type="text" id="tutorCourses" required placeholder="Ej. Cálculo II, Algoritmos, Estructura de Datos" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Cursos que Enseñas (Separados por coma)
+                        *</label>
+                    <input type="text" id="tutorCourses" required
+                        placeholder="Ej. Cálculo II, Algoritmos, Estructura de Datos"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Modalidad *</label>
-                        <select id="tutorModality" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                        <select id="tutorModality" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                             <option value="Presencial y Virtual">Presencial y Virtual</option>
                             <option value="Presencial">Solo Presencial (Campus)</option>
                             <option value="Virtual">Solo Virtual (Meet/Zoom)</option>
@@ -610,23 +655,31 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Precio por Hora / Condición *</label>
-                        <input type="text" id="tutorPrice" required placeholder="Ej. Voluntario / S/ 10 x hora" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                        <input type="text" id="tutorPrice" required placeholder="Ej. Voluntario / S/ 10 x hora"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Número de WhatsApp *</label>
-                    <input type="tel" id="tutorPhone" required placeholder="987654321" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="tel" id="tutorPhone" required placeholder="987654321"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Breve Bio / Metodología de enseñanza</label>
-                    <textarea id="tutorBio" rows="2" placeholder="Cuéntale a tus compañeros cómo trabajas y tu disponibilidad..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Breve Bio / Metodología de
+                        enseñanza</label>
+                    <textarea id="tutorBio" rows="2"
+                        placeholder="Cuéntale a tus compañeros cómo trabajas y tu disponibilidad..."
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('tutorRegisterModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Registrar Perfil Tutor</button>
+                    <button type="button" onclick="closeModal('tutorRegisterModal')"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Registrar
+                        Perfil Tutor</button>
                 </div>
             </form>
         </div>
@@ -634,37 +687,48 @@
 
 
     <!-- MODAL 3: SOLICITAR ASESORÍA -->
-    <div id="tutorRequestModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="tutorRequestModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                     <i class="fa-solid fa-hand-holding-hand text-unsa-maroon"></i> Solicitar Asesoría o Grupo
                 </h3>
-                <button onclick="closeModal('tutorRequestModal')" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+                <button onclick="closeModal('tutorRequestModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
             </div>
             <p class="text-xs text-slate-600 mb-4">
-                Publica tu solicitud para que tutores calificados o grupos de estudio de la UNSA te contacten directamente.
+                Publica tu solicitud para que tutores calificados o grupos de estudio de la UNSA te contacten
+                directamente.
             </p>
             <form onsubmit="handleSaveTutorRequest(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Curso o Tema que necesitas *</label>
-                    <input type="text" id="reqCourse" required placeholder="Ej. Química Orgánica / Física 2 / Anatomía" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="reqCourse" required placeholder="Ej. Química Orgánica / Física 2 / Anatomía"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tu Nombre y Facultad *</label>
-                    <input type="text" id="reqStudentInfo" required placeholder="Ej. Juan Mamani - Medicina" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="reqStudentInfo" required placeholder="Ej. Juan Mamani - Medicina"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp de contacto *</label>
-                    <input type="tel" id="reqPhone" required placeholder="987654321" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="tel" id="reqPhone" required placeholder="987654321"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Detalles de la asesoría requerida</label>
-                    <textarea id="reqDetails" rows="2" placeholder="Ej. Preparación para examen parcial la próxima semana..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
+                    <textarea id="reqDetails" rows="2"
+                        placeholder="Ej. Preparación para examen parcial la próxima semana..."
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('tutorRequestModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Enviar Solicitud</button>
+                    <button type="button" onclick="closeModal('tutorRequestModal')"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Enviar
+                        Solicitud</button>
                 </div>
             </form>
         </div>
@@ -672,25 +736,31 @@
 
 
     <!-- MODAL 4: CREAR PUNTO HUECO -->
-    <div id="huecoCreateModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div id="huecoCreateModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                     <i class="fa-solid fa-mug-hot text-amber-600"></i> Crear Nuevo Punto Hueco
                 </h3>
-                <button onclick="closeModal('huecoCreateModal')" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+                <button onclick="closeModal('huecoCreateModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
             </div>
 
             <form id="huecoCreateForm" onsubmit="handleSaveHueco(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Título del Encuentro *</label>
-                    <input type="text" id="huecoTitle" required placeholder="Ej. Grupo de repaso de Cálculo I en el pasto" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="huecoTitle" required
+                        placeholder="Ej. Grupo de repaso de Cálculo I en el pasto"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Categoría *</label>
-                        <select id="huecoCategory" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                        <select id="huecoCategory" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                             <option value="Estudiar">📚 Estudiar / Tareas</option>
                             <option value="Socializar">☕ Charlar / Socializar</option>
                             <option value="Juegos">♟️ Juegos de Mesa / Ajedrez</option>
@@ -700,7 +770,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Campus *</label>
-                        <select id="huecoCampus" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
+                        <select id="huecoCampus" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                             <option value="Ingenierías">Área de Ingenierías</option>
                             <option value="Sociales">Área de Sociales</option>
                             <option value="Biomédicas">Área de Biomédicas</option>
@@ -710,60 +781,74 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Lugar Exacto de Reunión *</label>
-                    <input type="text" id="huecoLocation" required placeholder="Ej. Banquitas frente a Biblioteca Central o Cafetería FIPS" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="text" id="huecoLocation" required
+                        placeholder="Ej. Banquitas frente a Biblioteca Central o Cafetería FIPS"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Horario (Inicio y Fin) *</label>
-                        <input type="text" id="huecoTime" required placeholder="Ej. 11:30 AM - 1:00 PM" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                        <input type="text" id="huecoTime" required placeholder="Ej. 11:30 AM - 1:00 PM"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Aforo / Capacidad Max *</label>
-                        <input type="number" id="huecoCapacity" required min="2" max="30" value="6" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                        <input type="number" id="huecoCapacity" required min="2" max="30" value="6"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Organizado por (Nombre y Carrera) *</label>
-                    <input type="text" id="huecoOrganizer" required placeholder="Ej. Luis (Ing. Mecánica)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Organizado por (Nombre y Carrera)
+                        *</label>
+                    <input type="text" id="huecoOrganizer" required placeholder="Ej. Luis (Ing. Mecánica)"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp de coordinación *</label>
-                    <input type="tel" id="huecoPhone" required placeholder="987654321" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
+                    <input type="tel" id="huecoPhone" required placeholder="987654321"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Descripción o requisitos del plan</label>
-                    <textarea id="huecoDesc" rows="2" placeholder="Traer cuaderno / Traer tablero de ajedrez / Solo ganas de charlar..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
+                    <textarea id="huecoDesc" rows="2"
+                        placeholder="Traer cuaderno / Traer tablero de ajedrez / Solo ganas de charlar..."
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon"></textarea>
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('huecoCreateModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow">Publicar Punto Hueco</button>
+                    <button type="button" onclick="closeModal('huecoCreateModal')"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow">Publicar
+                        Punto Hueco</button>
                 </div>
             </form>
         </div>
     </div>
-
-
     <!-- Toast Notification Container -->
-    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl border border-unsa-gold/40 flex items-center gap-3 transition-all duration-300 transform translate-y-2">
+    <div id="toastNotification"
+        class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl border border-unsa-gold/40 flex items-center gap-3 transition-all duration-300 transform translate-y-2">
         <i class="fa-solid fa-circle-check text-unsa-gold text-lg"></i>
         <span id="toastText" class="text-xs font-semibold">Operación completada con éxito.</span>
     </div>
 
     <!-- Footer -->
     <footer class="bg-unsa-slate text-slate-400 py-8 border-t border-slate-800 text-xs mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-unsa-gold text-unsa-maroon font-black flex items-center justify-center text-lg">
+                <div
+                    class="w-8 h-8 rounded-lg bg-unsa-gold text-unsa-maroon font-black flex items-center justify-center text-lg">
                     U
                 </div>
                 <div>
                     <p class="text-white font-bold text-sm">UNSA Conecta - Portal de Vida Estudiantil</p>
-                    <p class="text-slate-500">Desarrollado para la comunidad agustina de la Universidad Nacional de San Agustín de Arequipa.</p>
+                    <p class="text-slate-500">Desarrollado para la comunidad agustina de la Universidad Nacional de San
+                        Agustín de Arequipa.</p>
                 </div>
             </div>
             <div class="flex items-center gap-6 text-slate-400">
@@ -775,873 +860,6 @@
             </div>
         </div>
     </footer>
-
-
-    <script>
-        // Initial Dataset with local persistence fallback
-        const INITIAL_LOST_FOUND = [
-            {
-                id: 'lf-1',
-                title: 'Carné Universitario a nombre de Diego Quispe',
-                category: 'Documentos',
-                campus: 'Ingenierías',
-                location: 'Entrada del Pabellón de Ciencias de la Computación',
-                datetime: '2026-10-06T10:30',
-                status: 'ENCONTRADO',
-                phone: '954321876',
-                img: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&auto=format&fit=crop&q=80',
-                desc: 'Carné con mica protectora azul. Entregado temporalmente a la consejería del pabellón.'
-            },
-            {
-                id: 'lf-2',
-                title: 'Mochila negra marca HP con cuadernos de Física',
-                category: 'Prendas',
-                campus: 'Ingenierías',
-                location: 'Cancha de básquet lateral',
-                datetime: '2026-10-06T15:00',
-                status: 'PERDIDO',
-                phone: '988123456',
-                img: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80',
-                desc: 'Tiene un llavero en forma de Android y cuadernos rotulados con Ing. Mecánica.'
-            },
-            {
-                id: 'lf-3',
-                title: 'Audífonos inalámbricos Sony gris espacial',
-                category: 'Electrónicos',
-                campus: 'Sociales',
-                location: 'Cafetería de la Escuela de Derecho',
-                datetime: '2026-10-05T12:15',
-                status: 'ENCONTRADO',
-                phone: '977654321',
-                img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=80',
-                desc: 'Encontrados sobre una mesa redonda cerca al pasto.'
-            },
-            {
-                id: 'lf-4',
-                title: 'Manojo de 3 llaves con llavero de UNSA Arequipa',
-                category: 'Llaves',
-                campus: 'Biomédicas',
-                location: 'Bancas de entrada a la EP de Medicina',
-                datetime: '2026-10-07T08:20',
-                status: 'PERDIDO',
-                phone: '912345678',
-                img: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&auto=format&fit=crop&q=80',
-                desc: 'Tiene una llave dorada Yale y dos de candado pequeñas.'
-            }
-        ];
-
-        const INITIAL_ANNOUNCEMENTS = [
-            {
-                id: 'ann-1',
-                title: '🚨 Suspensión de actividades en Campus Sociales por mantenimiento eléctrico',
-                category: 'Huelgas',
-                urgency: 'URGENTE',
-                date: '07 de Octubre, 2026',
-                campus: 'Sociales',
-                content: 'Debido a trabajos programados en la subestación eléctrica del área de Sociales, las clases presenciales se suspenderán desde las 14:00 hrs hasta las 18:00 hrs. Coordinar clases virtuales con los docentes.'
-            },
-            {
-                id: 'ann-2',
-                title: '🌴 Feriado Académico Institucional por Aniversario Arequipeño / Interfacultades',
-                category: 'Feriados',
-                urgency: 'INFO',
-                date: '12 de Octubre, 2026',
-                campus: 'Todos los Campus',
-                content: 'Se recuerda a la comunidad agustina que no habrá actividades académicas ni administrativas el día viernes por las jornadas de integración estudiantil interfacultades.'
-            },
-            {
-                id: 'ann-3',
-                title: '📚 Biblioteca Central UNSA: Ampliación de Horario Nocturno',
-                category: 'Biblioteca',
-                urgency: 'INFO',
-                date: '05 de Octubre, 2026',
-                campus: 'Ingenierías & Sociales',
-                content: 'Atención por exámenes parciales: La sala de lectura de la Biblioteca Central extenderá su horario hasta las 22:00 hrs de lunes a viernes. Requisito presentar carné físico o virtual.'
-            },
-            {
-                id: 'ann-4',
-                title: '📝 Proceso de Regularización de Matrícula y Extemporáneos 2026-B',
-                category: 'Tramites',
-                urgency: 'EVENTO',
-                date: '02 de Octubre, 2026',
-                campus: 'DUA / Dirección Académica',
-                content: 'El módulo de solicitudes extemporáneas en el portal SISUNSA estará habilitado hasta este viernes a las 23:59 hrs. Consultar requisitos en tu dirección de escuela.'
-            }
-        ];
-
-        const INITIAL_TUTORS = [
-            {
-                id: 'tut-1',
-                name: 'Renato Vargas',
-                career: 'Ing. de Sistemas',
-                semester: '9no Semestre',
-                faculty: 'Ingenierías',
-                courses: ['Cálculo II', 'Algoritmos', 'Estructuras de Datos', 'Python'],
-                modality: 'Presencial y Virtual',
-                price: 'Voluntario / Colaborativo',
-                phone: '954112233',
-                rating: 4.9,
-                reviews: 18,
-                avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
-                bio: 'Apasionado por la programación y las matemáticas aplicadas. Me gusta explicar con casos prácticos y ejercicios de exámenes pasados.'
-            },
-            {
-                id: 'tut-2',
-                name: 'Camila Mendoza',
-                career: 'Medicina Humana',
-                semester: '8vo Semestre',
-                faculty: 'Biomédicas',
-                courses: ['Anatomía Humana', 'Fisiología', 'Bioquímica'],
-                modality: 'Presencial',
-                price: 'S/ 12 x hora',
-                phone: '988334455',
-                rating: 5.0,
-                reviews: 24,
-                avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
-                bio: 'Asesora en anfiteatro y laboratorios. Preparación intensiva para pasitos y parciales de la facultad de Medicina.'
-            },
-            {
-                id: 'tut-3',
-                name: 'Gonzalo Huamán',
-                career: 'Derecho',
-                semester: '10mo Semestre',
-                faculty: 'Sociales',
-                courses: ['Derecho Civil', 'Derecho Constitucional', 'Redacción Jurídica'],
-                modality: 'Virtual',
-                price: 'Gratuito',
-                phone: '911223344',
-                rating: 4.8,
-                reviews: 12,
-                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-                bio: 'Miembro del Círculo de Estudios Constitucionales. Ayudo a estudiantes de primeros años a redactar ensayos y analizar doctrina.'
-            }
-        ];
-
-        const INITIAL_HUECOS = [
-            {
-                id: 'hue-1',
-                title: '♟️ Retos de Ajedrez & Conversao',
-                category: 'Juegos',
-                campus: 'Ingenierías',
-                location: 'Pasto frente a la Biblioteca de Ingenierías',
-                time: '11:00 AM - 1:00 PM',
-                capacity: 6,
-                joined: 3,
-                organizer: 'Mateo (Ing. Industrial)',
-                phone: '955443322',
-                desc: 'Traigo 2 tableros. Todos los niveles bienvenidos para pasar la hora libre relajados.'
-            },
-            {
-                id: 'hue-2',
-                title: '📚 Repaso de Parcial de Química General',
-                category: 'Estudiar',
-                campus: 'Biomédicas',
-                location: 'Bancas de la Cafetería Central de Biomédicas',
-                time: '02:00 PM - 04:00 PM',
-                capacity: 5,
-                joined: 4,
-                organizer: 'Lucía (Enfermería)',
-                phone: '966778899',
-                desc: 'Resolvemos la guía de ejercicios del Prof. Paredes antes de la clase de las 4 PM.'
-            },
-            {
-                id: 'hue-3',
-                title: '☕ Charlar sobre música y bandas de Arequipa',
-                category: 'Socializar',
-                campus: 'Sociales',
-                location: 'Cafetería de la Escuela de Comunicación',
-                time: '12:00 PM - 01:30 PM',
-                capacity: 8,
-                joined: 5,
-                organizer: 'Sofi (Arte & Literatura)',
-                phone: '911998877',
-                desc: 'Para matar el hueco entre clases, charlar de rock, indie y proyectos creativos.'
-            }
-        ];
-
-        // LocalStorage Initializers
-        let lostFoundData = JSON.parse(localStorage.getItem('unsa_lost_found')) || INITIAL_LOST_FOUND;
-        let announcementsData = JSON.parse(localStorage.getItem('unsa_announcements')) || INITIAL_ANNOUNCEMENTS;
-        let tutorsData = JSON.parse(localStorage.getItem('unsa_tutors')) || INITIAL_TUTORS;
-        let huecosData = JSON.parse(localStorage.getItem('unsa_huecos')) || INITIAL_HUECOS;
-
-        function saveData() {
-            localStorage.setItem('unsa_lost_found', JSON.stringify(lostFoundData));
-            localStorage.setItem('unsa_announcements', JSON.stringify(announcementsData));
-            localStorage.setItem('unsa_tutors', JSON.stringify(tutorsData));
-            localStorage.setItem('unsa_huecos', JSON.stringify(huecosData));
-        }
-
-        function switchTab(tabId) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-
-            // Show selected
-            const activeContent = document.getElementById(`tab-${tabId}-content`);
-            if (activeContent) activeContent.classList.remove('hidden');
-
-            // Reset navigation button highlights
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-white/20', 'text-white', 'font-bold');
-                btn.classList.add('text-slate-200');
-            });
-
-            const activeBtn = document.getElementById(`nav-${tabId}`);
-            if (activeBtn) {
-                activeBtn.classList.add('bg-white/20', 'text-white', 'font-bold');
-            }
-
-            // Map resize fix when switching to maps tab
-            if (tabId === 'maps') {
-                setTimeout(() => {
-                    if (map) map.invalidateSize();
-                }, 200);
-            }
-        }
-
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('hidden');
-        }
-
-        function dismissUrgentBanner() {
-            document.getElementById('topUrgentBanner').style.display = 'none';
-        }
-
-        function openNotificationToast(text) {
-            const toast = document.getElementById('toastNotification');
-            const toastText = document.getElementById('toastText');
-            toastText.innerText = text;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3500);
-        }
-
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-
-        function renderLostFound(items = lostFoundData) {
-            const grid = document.getElementById('lostFoundGrid');
-            if (items.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-                        <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
-                        <p class="font-bold text-sm">No se encontraron objetos registrados.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = items.map(item => {
-                const isLost = item.status === 'PERDIDO';
-                const statusBadge = isLost 
-                    ? `<span class="bg-red-100 text-red-700 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-red-200 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> PERDIDO</span>`
-                    : `<span class="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> ENCONTRADO</span>`;
-
-                const formattedDate = new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-
-                return `
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
-                        <div>
-                            <div class="relative h-44 overflow-hidden bg-slate-100">
-                                <img src="${item.img || 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400&auto=format&fit=crop&q=80'}" 
-                                     alt="${item.title}" 
-                                     class="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-                                     onerror="this.src='https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400&auto=format&fit=crop&q=80'">
-                                <div class="absolute top-3 left-3">
-                                    ${statusBadge}
-                                </div>
-                                <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-                                    ${item.campus}
-                                </div>
-                            </div>
-
-                            <div class="p-4">
-                                <span class="text-[10px] font-bold uppercase text-unsa-maroon tracking-wider">${item.category}</span>
-                                <h3 class="font-bold text-slate-900 text-sm mt-0.5 line-clamp-2">${item.title}</h3>
-                                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                                    <i class="fa-solid fa-location-dot text-red-500 w-4"></i> ${item.location}
-                                </p>
-                                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                    <i class="fa-regular fa-clock text-unsa-gold w-4"></i> ${formattedDate}
-                                </p>
-                                <p class="text-xs text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                    "${item.desc || 'Sin descripción adicional.'}"
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="p-4 pt-0 border-t border-slate-100 mt-2">
-                            <a href="https://wa.me/51${item.phone}?text=Hola,%20te%20contacto%20desde%20UNSA%20Conecta%20por%20el%20objeto:%20${encodeURIComponent(item.title)}" 
-                               target="_blank" 
-                               class="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> Contactar al WhatsApp (${item.phone})
-                            </a>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterLostFound() {
-            const query = document.getElementById('lfSearch').value.toLowerCase();
-            const status = document.getElementById('lfStatusFilter').value;
-            const campus = document.getElementById('lfCampusFilter').value;
-            const category = document.getElementById('lfCategoryFilter').value;
-
-            const filtered = lostFoundData.filter(item => {
-                const matchesQuery = item.title.toLowerCase().includes(query) || 
-                                     item.location.toLowerCase().includes(query) || 
-                                     item.desc.toLowerCase().includes(query);
-                const matchesStatus = status === 'ALL' || item.status === status;
-                const matchesCampus = campus === 'ALL' || item.campus === campus;
-                const matchesCategory = category === 'ALL' || item.category === category;
-
-                return matchesQuery && matchesStatus && matchesCampus && matchesCategory;
-            });
-
-            renderLostFound(filtered);
-        }
-
-        function handleSaveLostFound(e) {
-            e.preventDefault();
-            const status = document.querySelector('input[name="status"]:checked').value;
-            const title = document.getElementById('lfTitleInput').value;
-            const category = document.getElementById('lfCategoryInput').value;
-            const campus = document.getElementById('lfCampusInput').value;
-            const location = document.getElementById('lfLocationInput').value;
-            const datetime = document.getElementById('lfDateInput').value;
-            const phone = document.getElementById('lfPhoneInput').value;
-            const img = document.getElementById('lfImgInput').value;
-            const desc = document.getElementById('lfDescInput').value;
-
-            const newItem = {
-                id: 'lf-' + Date.now(),
-                title,
-                category,
-                campus,
-                location,
-                datetime,
-                status,
-                phone,
-                img: img || 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400&auto=format&fit=crop&q=80',
-                desc
-            };
-
-            lostFoundData.unshift(newItem);
-            saveData();
-            renderLostFound();
-            closeModal('lostFoundModal');
-            document.getElementById('lostFoundForm').reset();
-            openNotificationToast(' Objeto publicado correctamente en la red de la UNSA.');
-        }
-
-
-        let map;
-        let currentMarkers = [];
-
-        // Coordinates for UNSA Campuses in Arequipa
-        const CAMPUS_COORDS = {
-            ingenierias: { lat: -16.4061, lng: -71.5245, zoom: 17, name: "Área de Ingenierías" },
-            sociales: { lat: -16.4045, lng: -71.5278, zoom: 17, name: "Área de Sociales" },
-            biomedicas: { lat: -16.4082, lng: -71.5175, zoom: 17, name: "Área de Biomédicas" }
-        };
-
-        const UNSA_LOCATIONS = [
-            // Ingenierías
-            {
-                id: 'loc-1',
-                campusKey: 'ingenierias',
-                campusName: 'Área de Ingenierías',
-                title: 'Pabellón Cs. de la Computación',
-                lat: -16.4062,
-                lng: -71.5248,
-                hours: '07:00 - 20:00 hrs',
-                services: 'Labs de Software, Servidores GPU, Aulas Climatizadas',
-                img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=80',
-                desc: 'Edificio de la Escuela Profesional de Ciencia de la Computación, cuenta con laboratorios de alto rendimiento e investigación en IA.'
-            },
-            {
-                id: 'loc-2',
-                campusKey: 'ingenierias',
-                campusName: 'Área de Ingenierías',
-                title: 'Biblioteca de Área de Ingenierías',
-                lat: -16.4058,
-                lng: -71.5242,
-                hours: '07:30 - 21:00 hrs',
-                services: 'Salas de estudio grupal, Cubículos, Repositorio Tesis',
-                img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=500&auto=format&fit=crop&q=80',
-                desc: 'Biblioteca especializada en libros de física, matemáticas, estructuras, minas y sistemas.'
-            },
-            {
-                id: 'loc-3',
-                campusKey: 'ingenierias',
-                campusName: 'Área de Ingenierías',
-                title: 'Pabellón de Ing. Civil y Estructuras',
-                lat: -16.4067,
-                lng: -71.5240,
-                hours: '07:00 - 19:30 hrs',
-                services: 'Laboratorio de Ensayo de Materiales, Aulas Magna',
-                img: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=500&auto=format&fit=crop&q=80',
-                desc: 'Pabellón emblemático con laboratorios para pruebas de resistencia sísmica y concreto.'
-            },
-            // Sociales
-            {
-                id: 'loc-4',
-                campusKey: 'sociales',
-                campusName: 'Área de Sociales',
-                title: 'Facultad de Derecho y Cs. Políticas',
-                lat: -16.4043,
-                lng: -71.5281,
-                hours: '07:30 - 20:00 hrs',
-                services: 'Sala de Juicios Orales, Biblioteca Especializada, Consultorio Jurídico',
-                img: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=80',
-                desc: 'Sede de la carrera de Derecho, equipada con salas de simulación de audiencias y auditorio principal.'
-            },
-            {
-                id: 'loc-5',
-                campusKey: 'sociales',
-                campusName: 'Área de Sociales',
-                title: 'Escuela Profesional de FIPS / Psicología',
-                lat: -16.4048,
-                lng: -71.5273,
-                hours: '08:00 - 19:00 hrs',
-                services: 'Cámara Gesell, Laboratorio de Psicometría, Cafetería',
-                img: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&auto=format&fit=crop&q=80',
-                desc: 'Facultad de Filosofía, Humanidades y Psicología. Punto de encuentro estudiantil por sus jardines.'
-            },
-            // Biomédicas
-            {
-                id: 'loc-6',
-                campusKey: 'biomedicas',
-                campusName: 'Área de Biomédicas',
-                title: 'Facultad de Medicina Humana',
-                lat: -16.4081,
-                lng: -71.5173,
-                hours: '06:30 - 21:00 hrs',
-                services: 'Anfiteatro Anatómico, Lab de Histología, Biblioteca Médica',
-                img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500&auto=format&fit=crop&q=80',
-                desc: 'Sede principal de Medicina, Enfermería y Nutrición en Av. Alcides Carrión.'
-            },
-            {
-                id: 'loc-7',
-                campusKey: 'biomedicas',
-                campusName: 'Área de Biomédicas',
-                title: 'Comedor Universitario Biomédicas',
-                lat: -16.4085,
-                lng: -71.5178,
-                hours: '11:30 - 14:30 hrs',
-                services: 'Servicio de Nutrición, Menú Estudiantil, Ticketera Virtual',
-                img: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=500&auto=format&fit=crop&q=80',
-                desc: 'Comedor universitario subsidiado para estudiantes agustinos acreditados.'
-            }
-        ];
-
-        let selectedLocation = UNSA_LOCATIONS[0];
-
-        function initMap() {
-            // Center default on Ingenierías campus
-            map = L.map('unsaMap').setView([CAMPUS_COORDS.ingenierias.lat, CAMPUS_COORDS.ingenierias.lng], 17);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors | UNSA Conecta'
-            }).addTo(map);
-
-            renderMapMarkers();
-            updateLocationPanel(UNSA_LOCATIONS[0]);
-        }
-
-        function renderMapMarkers(locations = UNSA_LOCATIONS) {
-            // Clear old markers
-            currentMarkers.forEach(m => map.removeLayer(m));
-            currentMarkers = [];
-
-            locations.forEach(loc => {
-                const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-                marker.bindPopup(`
-                    <div class="font-sans text-xs">
-                        <strong class="text-unsa-maroon text-sm font-bold block">${loc.title}</strong>
-                        <span class="text-slate-500">${loc.campusName}</span><br>
-                        <button onclick="selectLocationById('${loc.id}')" class="mt-2 bg-unsa-maroon text-white font-bold px-2 py-1 rounded text-[10px]">
-                            Ver Detalles
-                        </button>
-                    </div>
-                `);
-
-                marker.on('click', () => {
-                    updateLocationPanel(loc);
-                });
-
-                currentMarkers.push(marker);
-            });
-        }
-
-        function zoomToCampus(key) {
-            const coord = CAMPUS_COORDS[key];
-            if (coord && map) {
-                map.flyTo([coord.lat, coord.lng], coord.zoom, { duration: 1.5 });
-            }
-        }
-
-        function selectLocationById(id) {
-            const loc = UNSA_LOCATIONS.find(l => l.id === id);
-            if (loc) {
-                updateLocationPanel(loc);
-                map.flyTo([loc.lat, loc.lng], 18);
-            }
-        }
-
-        function updateLocationPanel(loc) {
-            selectedLocation = loc;
-            document.getElementById('locTitle').innerText = loc.title;
-            document.getElementById('locCampus').innerHTML = `<i class="fa-solid fa-location-dot text-red-500"></i> ${loc.campusName}`;
-            document.getElementById('locImg').src = loc.img;
-            document.getElementById('locDesc').innerText = loc.desc;
-            document.getElementById('locHours').innerText = loc.hours;
-            document.getElementById('locServices').innerText = loc.services;
-        }
-
-        function searchMapLocation() {
-            const query = document.getElementById('mapSearchInput').value.toLowerCase();
-            const filtered = UNSA_LOCATIONS.filter(l => 
-                l.title.toLowerCase().includes(query) || 
-                l.campusName.toLowerCase().includes(query) || 
-                l.services.toLowerCase().includes(query)
-            );
-
-            renderMapMarkers(filtered);
-            if (filtered.length > 0) {
-                selectLocationById(filtered[0].id);
-            }
-        }
-
-        function getDirectionsToCurrent() {
-            if (!selectedLocation) return;
-            openNotificationToast(`Indicaciones para llegar a ${selectedLocation.title}: Ingresa por la garita principal de ${selectedLocation.campusName} y sigue las señalizaciones doradas.`);
-        }
-
-
-        let currentAnnCategory = 'ALL';
-
-        function renderAnnouncements(items = announcementsData) {
-            const grid = document.getElementById('announcementsGrid');
-
-            grid.innerHTML = items.map(ann => {
-                const isUrgent = ann.urgency === 'URGENTE';
-                const urgencyBadge = isUrgent 
-                    ? `<span class="bg-red-600 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i> Urgente</span>`
-                    : ann.urgency === 'EVENTO' 
-                        ? `<span class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">📅 Evento</span>`
-                        : `<span class="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">ℹ️ Información</span>`;
-
-                return `
-                    <div class="bg-white p-5 rounded-2xl border ${isUrgent ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all">
-                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <div class="flex items-center gap-2">
-                                ${urgencyBadge}
-                                <span class="bg-slate-100 text-slate-700 text-[11px] font-bold px-2 py-0.5 rounded-md">${ann.category}</span>
-                            </div>
-                            <span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-calendar mr-1"></i> ${ann.date}</span>
-                        </div>
-                        <h3 class="text-lg font-extrabold text-slate-900 mt-1">${ann.title}</h3>
-                        <p class="text-xs text-slate-500 font-semibold mt-0.5"><i class="fa-solid fa-building-columns text-unsa-maroon mr-1"></i> Campus Afectado: ${ann.campus}</p>
-                        <p class="text-xs text-slate-600 mt-3 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            ${ann.content}
-                        </p>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterAnnouncements() {
-            const urgency = document.getElementById('urgencyFilter').value;
-            let filtered = announcementsData;
-
-            if (urgency !== 'ALL') {
-                filtered = filtered.filter(a => a.urgency === urgency);
-            }
-            if (currentAnnCategory !== 'ALL') {
-                filtered = filtered.filter(a => a.category === currentAnnCategory);
-            }
-
-            renderAnnouncements(filtered);
-        }
-
-        function filterAnnouncementCategory(cat, btn) {
-            currentAnnCategory = cat;
-            document.querySelectorAll('.ann-cat-btn').forEach(b => {
-                b.classList.remove('bg-unsa-maroon', 'text-white');
-                b.classList.add('bg-white', 'text-slate-600');
-            });
-            btn.classList.remove('bg-white', 'text-slate-600');
-            btn.classList.add('bg-unsa-maroon', 'text-white');
-
-            filterAnnouncements();
-        }
-
-
-        function renderTutors(items = tutorsData) {
-            const grid = document.getElementById('tutorsGrid');
-
-            grid.innerHTML = items.map(tut => {
-                const coursesBadges = tut.courses.map(c => 
-                    `<span class="bg-amber-50 text-unsa-maroon font-bold text-[10px] px-2 py-0.5 rounded-md border border-amber-200">${c}</span>`
-                ).join(' ');
-
-                return `
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-start gap-3">
-                                <img src="${tut.avatar}" alt="${tut.name}" class="w-14 h-14 rounded-full object-cover ring-2 ring-unsa-gold">
-                                <div>
-                                    <h3 class="font-bold text-slate-900 text-base">${tut.name}</h3>
-                                    <p class="text-xs font-semibold text-unsa-maroon">${tut.career} (${tut.semester})</p>
-                                    <p class="text-[11px] text-slate-500"><i class="fa-solid fa-graduation-cap"></i> Área de ${tut.faculty}</p>
-                                    <div class="flex items-center gap-1 mt-1 text-amber-500 text-xs font-bold">
-                                        <i class="fa-solid fa-star"></i> ${tut.rating} <span class="text-slate-400 text-[10px]">(${tut.reviews} valoraciones)</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <p class="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Cursos ofertados:</p>
-                                <div class="flex flex-wrap gap-1">
-                                    ${coursesBadges}
-                                </div>
-                            </div>
-
-                            <p class="text-xs text-slate-600 mt-3 line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                                "${tut.bio}"
-                            </p>
-
-                            <div class="mt-3 text-xs space-y-1 text-slate-600">
-                                <p><span class="font-bold">Modalidad:</span> ${tut.modality}</p>
-                                <p><span class="font-bold">Precio/Condición:</span> <span class="text-emerald-700 font-extrabold">${tut.price}</span></p>
-                            </div>
-                        </div>
-
-                        <a href="https://wa.me/51${tut.phone}?text=Hola%20${encodeURIComponent(tut.name)},%20te%20contacto%20desde%20UNSA%20Conecta%20para%20una%20tutoria" 
-                           target="_blank" 
-                           class="w-full mt-4 bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
-                            <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Solicitar Asesoría por WhatsApp
-                        </a>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterTutors() {
-            const query = document.getElementById('tutorSearch').value.toLowerCase();
-            const faculty = document.getElementById('tutorFacultyFilter').value;
-            const modality = document.getElementById('tutorModalityFilter').value;
-
-            const filtered = tutorsData.filter(tut => {
-                const matchesQuery = tut.name.toLowerCase().includes(query) || 
-                                     tut.courses.some(c => c.toLowerCase().includes(query)) ||
-                                     tut.career.toLowerCase().includes(query);
-                const matchesFaculty = faculty === 'ALL' || tut.faculty === faculty;
-                const matchesModality = modality === 'ALL' || tut.modality.includes(modality);
-
-                return matchesQuery && matchesFaculty && matchesModality;
-            });
-
-            renderTutors(filtered);
-        }
-
-        function handleSaveTutor(e) {
-            e.preventDefault();
-            const name = document.getElementById('tutorName').value;
-            const career = document.getElementById('tutorCareer').value;
-            const semester = document.getElementById('tutorSemester').value;
-            const faculty = document.getElementById('tutorFaculty').value;
-            const coursesStr = document.getElementById('tutorCourses').value;
-            const modality = document.getElementById('tutorModality').value;
-            const price = document.getElementById('tutorPrice').value;
-            const phone = document.getElementById('tutorPhone').value;
-            const bio = document.getElementById('tutorBio').value;
-
-            const newTutor = {
-                id: 'tut-' + Date.now(),
-                name,
-                career,
-                semester,
-                faculty,
-                courses: coursesStr.split(',').map(s => s.trim()),
-                modality,
-                price,
-                phone,
-                rating: 5.0,
-                reviews: 1,
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-                bio: bio || 'Estudiante tutor dispuesto a ayudar en cursos clave.'
-            };
-
-            tutorsData.unshift(newTutor);
-            saveData();
-            renderTutors();
-            closeModal('tutorRegisterModal');
-            document.getElementById('tutorRegisterForm').reset();
-            openNotificationToast('¡Te has registrado exitosamente como Tutor Agustino!');
-        }
-
-        function handleSaveTutorRequest(e) {
-            e.preventDefault();
-            closeModal('tutorRequestModal');
-            openNotificationToast('Tu solicitud de asesoría fue enviada al tablón estudiantil.');
-        }
-
-
-        let currentHuecoCat = 'ALL';
-
-        function renderHuecos(items = huecosData) {
-            const grid = document.getElementById('huecosGrid');
-
-            grid.innerHTML = items.map(hue => {
-                const isFull = hue.joined >= hue.capacity;
-                const progressPct = Math.min(100, Math.round((hue.joined / hue.capacity) * 100));
-
-                return `
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="bg-amber-100 text-amber-900 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-200">
-                                    ${hue.category}
-                                </span>
-                                <span class="bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sucediendo Hoy
-                                </span>
-                            </div>
-
-                            <h3 class="font-extrabold text-slate-900 text-base mt-1">${hue.title}</h3>
-                            
-                            <div class="mt-3 space-y-1.5 text-xs text-slate-600">
-                                <p class="flex items-center gap-2">
-                                    <i class="fa-solid fa-location-dot text-red-500 w-4"></i> 
-                                    <span class="font-semibold text-slate-800">${hue.campus}:</span> ${hue.location}
-                                </p>
-                                <p class="flex items-center gap-2">
-                                    <i class="fa-regular fa-clock text-unsa-gold w-4"></i> 
-                                    <span class="font-semibold text-slate-800">Horario:</span> ${hue.time}
-                                </p>
-                                <p class="flex items-center gap-2">
-                                    <i class="fa-solid fa-user-group text-slate-400 w-4"></i> 
-                                    <span class="font-semibold text-slate-800">Organiza:</span> ${hue.organizer}
-                                </p>
-                            </div>
-
-                            <p class="text-xs text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                                "${hue.desc}"
-                            </p>
-
-                            <!-- Capacity Progress Bar -->
-                            <div class="mt-4">
-                                <div class="flex justify-between text-[11px] font-bold mb-1">
-                                    <span class="text-slate-500">Participantes:</span>
-                                    <span class="${isFull ? 'text-red-600' : 'text-emerald-600'}">${hue.joined} / ${hue.capacity} personas</span>
-                                </div>
-                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div class="h-full ${isFull ? 'bg-red-500' : 'bg-emerald-500'} transition-all" style="width: ${progressPct}%"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-                            <button onclick="joinHueco('${hue.id}')" ${isFull ? 'disabled' : ''} class="flex-1 ${isFull ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-user-plus text-xs"></i> ${isFull ? 'Aforo Lleno' : '¡Unirme al Hueco!'}
-                            </button>
-                            <a href="https://wa.me/51${hue.phone}?text=Hola%20${encodeURIComponent(hue.organizer)},%20quiero%20unirme%20al%20Punto%20Hueco:%20${encodeURIComponent(hue.title)}" 
-                               target="_blank" 
-                               class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs flex items-center justify-center" 
-                               title="Chat WhatsApp">
-                                <i class="fa-brands fa-whatsapp text-emerald-600 text-base"></i>
-                            </a>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterHuecos(cat, btn) {
-            currentHuecoCat = cat;
-            document.querySelectorAll('.hueco-cat-btn').forEach(b => {
-                b.classList.remove('bg-unsa-maroon', 'text-white');
-                b.classList.add('bg-white', 'text-slate-600');
-            });
-            btn.classList.remove('bg-white', 'text-slate-600');
-            btn.classList.add('bg-unsa-maroon', 'text-white');
-
-            if (cat === 'ALL') {
-                renderHuecos(huecosData);
-            } else {
-                renderHuecos(huecosData.filter(h => h.category === cat));
-            }
-        }
-
-        function joinHueco(id) {
-            const item = huecosData.find(h => h.id === id);
-            if (item && item.joined < item.capacity) {
-                item.joined += 1;
-                saveData();
-                renderHuecos(currentHuecoCat === 'ALL' ? huecosData : huecosData.filter(h => h.category === currentHuecoCat));
-                openNotificationToast(`Te has unido al grupo "${item.title}". Coordina por WhatsApp con ${item.organizer}.`);
-            }
-        }
-
-        function handleSaveHueco(e) {
-            e.preventDefault();
-            const title = document.getElementById('huecoTitle').value;
-            const category = document.getElementById('huecoCategory').value;
-            const campus = document.getElementById('huecoCampus').value;
-            const location = document.getElementById('huecoLocation').value;
-            const time = document.getElementById('huecoTime').value;
-            const capacity = parseInt(document.getElementById('huecoCapacity').value) || 6;
-            const organizer = document.getElementById('huecoOrganizer').value;
-            const phone = document.getElementById('huecoPhone').value;
-            const desc = document.getElementById('huecoDesc').value;
-
-            const newHueco = {
-                id: 'hue-' + Date.now(),
-                title,
-                category,
-                campus,
-                location,
-                time,
-                capacity,
-                joined: 1,
-                organizer,
-                phone,
-                desc: desc || 'Reunión libre de hora libre en el campus.'
-            };
-
-            huecosData.unshift(newHueco);
-            saveData();
-            renderHuecos();
-            closeModal('huecoCreateModal');
-            document.getElementById('huecoCreateForm').reset();
-            openNotificationToast('¡Punto Hueco publicado! Tus compañeros podrán unirse.');
-        }
-
-
-        window.onload = function() {
-            // Render all components
-            renderLostFound();
-            renderAnnouncements();
-            renderTutors();
-            renderHuecos();
-
-            // Initialize map after short delay for container dimensions
-            setTimeout(() => {
-                initMap();
-            }, 300);
-        };
-    </script>
 </body>
+
 </html>
