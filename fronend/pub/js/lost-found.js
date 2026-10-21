@@ -64,15 +64,15 @@ function renderLostFound(items = lostFoundData) {
 }
 
 function filterLostFound() {
-    const query = document.getElementById('lfSearch').value.toLowerCase();
+    const query = normalizeText(document.getElementById('lfSearch').value.trim());
     const status = document.getElementById('lfStatusFilter').value;
     const campus = document.getElementById('lfCampusFilter').value;
     const category = document.getElementById('lfCategoryFilter').value;
 
     const filtered = lostFoundData.filter(item => {
-        const matchesQuery = item.title.toLowerCase().includes(query) ||
-            item.location.toLowerCase().includes(query) ||
-            item.desc.toLowerCase().includes(query);
+        // Busca también en campus y categoría (el placeholder menciona "facultades").
+        const matchesQuery = [item.title, item.location, item.desc, item.campus, item.category]
+            .some(field => normalizeText(field).includes(query));
         const matchesStatus = status === 'ALL' || item.status === status;
         const matchesCampus = campus === 'ALL' || item.campus === campus;
         const matchesCategory = category === 'ALL' || item.category === category;

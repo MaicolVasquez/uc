@@ -4,6 +4,10 @@ let currentHuecoCat = 'ALL';
 
 function renderHuecos(items = huecosData) {
     const grid = document.getElementById('huecosGrid');
+    if (items.length === 0) {
+        grid.innerHTML = emptyStateHTML('Aún no hay Puntos Hueco en esta categoría. ¡Crea el primero!', 'fa-mug-hot');
+        return;
+    }
 
     grid.innerHTML = items.map(hue => {
         const isFull = hue.joined >= hue.capacity;

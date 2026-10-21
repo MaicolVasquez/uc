@@ -5,6 +5,11 @@ let currentAnnCategory = 'ALL';
 function renderAnnouncements(items = announcementsData) {
     const grid = document.getElementById('announcementsGrid');
 
+    if (items.length === 0) {
+        grid.innerHTML = emptyStateHTML('No hay avisos con esos filtros.', 'fa-bell-slash');
+        return;
+    }
+
     grid.innerHTML = items.map(ann => {
         const isUrgent = ann.urgency === 'URGENTE';
         const urgencyBadge = isUrgent
