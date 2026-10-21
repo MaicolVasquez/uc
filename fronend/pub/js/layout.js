@@ -38,23 +38,6 @@ function buildLayout() {
                 <a href="${n.href}" class="hover:text-white">${n.footer}</a>`).join('');
 
     document.getElementById('layout-top').innerHTML = `
-    <div id="topUrgentBanner"
-        class="bg-amber-500 text-slate-900 px-4 py-2 text-xs md:text-sm font-semibold flex items-center justify-between shadow-md transition-all">
-        <div class="flex items-center gap-2 overflow-hidden whitespace-nowrap text-ellipsis max-w-[85%]">
-            <span
-                class="bg-red-700 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full animate-pulse flex-shrink-0">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Urgente
-            </span>
-            <span id="urgentText">
-                📢 Comunicado Oficial: Suspensión parcial de actividades administrativas en Campus Sociales por
-                mantenimiento eléctrico hoy desde las 14:00 hrs.
-            </span>
-        </div>
-        <button onclick="dismissUrgentBanner()" class="text-slate-800 hover:text-slate-950 font-bold text-lg px-2"
-            title="Cerrar notificación">
-            &times;
-        </button>
-    </div>
 
     <header class="bg-unsa-maroon text-white sticky top-0 z-40 shadow-xl border-b border-unsa-gold/30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
