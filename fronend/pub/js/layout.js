@@ -232,32 +232,3 @@ function emptyStateHTML(message, icon = 'fa-folder-open') {
 
 restoreBannerState();
 initGlobalEvents();
-
-
-// ---------- Utilidades de UI comunes ----------
-function toggleMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    menu.classList.toggle('hidden');
-}
-
-function dismissUrgentBanner() {
-    document.getElementById('topUrgentBanner').style.display = 'none';
-}
-
-function openNotificationToast(text) {
-    const toast = document.getElementById('toastNotification');
-    const toastText = document.getElementById('toastText');
-    toastText.innerText = text;
-    toast.classList.remove('hidden');
-    setTimeout(() => {
-        toast.classList.add('hidden');
-    }, 3500);
-}
-
-function openModal(id) {
-    document.getElementById(id).classList.remove('hidden');
-}
-
-function closeModal(id) {
-    document.getElementById(id).classList.add('hidden');
-}
