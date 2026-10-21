@@ -2,11 +2,11 @@
 // Cada página solo declara <body data-page="..."> y este script pinta el resto.
 
 const NAV_ITEMS = [
-    { id: 'lost-found',    href: 'index.html',           icon: 'fa-box-open',           label: 'Objetos Perdidos',        mobile: 'Objetos Perdidos',        footer: 'Objetos Perdidos' },
-    { id: 'maps',          href: 'mapa.html',            icon: 'fa-map-location-dot',   label: 'UNSA Maps',               mobile: 'UNSA Maps (Croquis)',     footer: 'UNSA Maps' },
-    { id: 'announcements', href: 'notificaciones.html',  icon: 'fa-bullhorn',           label: 'Notificaciones',          mobile: 'Notificaciones e Info',   footer: 'Avisos', badge: true },
-    { id: 'tutoring',      href: 'tutorias.html',        icon: 'fa-graduation-cap',     label: 'Estudiante a Estudiante', mobile: 'Estudiante a Estudiante', footer: 'Tutores' },
-    { id: 'huecos',        href: 'punto-hueco.html',     icon: 'fa-mug-hot',            label: 'Punto Hueco',             mobile: 'Punto Hueco',             footer: 'Punto Hueco' }
+    { id: 'lost-found', href: 'index.html', icon: 'fa-box-open', label: 'Objetos Perdidos', mobile: 'Objetos Perdidos', footer: 'Objetos Perdidos' },
+    { id: 'maps', href: 'mapa.html', icon: 'fa-map-location-dot', label: 'UNSA Maps', mobile: 'UNSA Maps (Croquis)', footer: 'UNSA Maps' },
+    { id: 'announcements', href: 'notificaciones.html', icon: 'fa-bullhorn', label: 'Notificaciones', mobile: 'Notificaciones e Info', footer: 'Avisos', badge: true },
+    { id: 'tutoring', href: 'tutorias.html', icon: 'fa-graduation-cap', label: 'Estudiante a Estudiante', mobile: 'Estudiante a Estudiante', footer: 'Tutores' },
+    { id: 'huecos', href: 'punto-hueco.html', icon: 'fa-mug-hot', label: 'Punto Hueco', mobile: 'Punto Hueco', footer: 'Punto Hueco' }
 ];
 
 function buildLayout() {
@@ -27,6 +27,12 @@ function buildLayout() {
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium ${n.id === current ? 'bg-white/20 text-white font-bold' : 'text-slate-200'} hover:bg-white/10 flex items-center gap-3">
                 <i class="fa-solid ${n.icon} text-unsa-gold w-5"></i> ${n.mobile}
             </a>`).join('');
+
+    const accountMobile = `
+            <a href="cuenta.html"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium ${current === 'cuenta' ? 'bg-white/20 text-white font-bold' : 'text-slate-200'} hover:bg-white/10 flex items-center gap-3 border-t border-white/10 mt-2 pt-3">
+                <i class="fa-solid fa-user text-unsa-gold w-5"></i> <span id="mobileUserLabel">Mi cuenta</span>
+            </a>`;
 
     const footerLinks = NAV_ITEMS.map(n => `
                 <a href="${n.href}" class="hover:text-white">${n.footer}</a>`).join('');
@@ -82,13 +88,16 @@ function buildLayout() {
                         <i class="fa-regular fa-bell text-lg"></i>
                         <span class="absolute top-1 right-1 w-2 h-2 bg-unsa-gold rounded-full"></span>
                     </button>
-                    <div class="flex items-center gap-2 pl-3 border-l border-white/20">
+                    <a href="cuenta.html" id="headerUserLink" title="Mi cuenta"
+                        class="flex items-center gap-2 pl-3 border-l border-white/20 hover:opacity-90 transition-opacity">
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
                             alt="Avatar" class="w-9 h-9 rounded-full ring-2 ring-unsa-gold object-cover">
                         <div class="text-xs">
-                            <p class="font-bold text-white leading-tight">Estudiante Agustino</p>
-                            <p class="text-slate-300 text-[10px]">Ing. de Sistemas</p>
+                            <p id="headerUserName" class="font-bold text-white leading-tight">Estudiante Agustino</p>
+                            <p id="headerUserSub" class="text-slate-300 text-[10px]">Iniciar sesión / Crear cuenta</p>
                         </div>
+                    </a>
+                </div>
                     </div>
                 </div>
 
@@ -103,7 +112,7 @@ function buildLayout() {
         </div>
 
         <!-- Mobile Dropdown Navigation Menu -->
-        <div id="mobileMenu" class="hidden md:hidden bg-unsa-dark border-t border-white/10 px-4 pt-2 pb-4 space-y-1">${mobileNav}
+        <div id="mobileMenu" class="hidden md:hidden bg-unsa-dark border-t border-white/10 px-4 pt-2 pb-4 space-y-1">${mobileNav}${accountMobile}
         </div>
     </header>
 `;
@@ -137,6 +146,31 @@ function buildLayout() {
 
 buildLayout();
 
+// ---------- Sesión (backend Express) ----------
+// Pregunta al servidor quién es el usuario autenticado y actualiza el botón del header.
+// Devuelve el usuario o null (sin sesión / backend apagado / abierto con file://).
+async function refreshHeaderUser() {
+    let user = null;
+    try {
+        const res = await fetch('/api/perfil', { credentials: 'same-origin' });
+        if (res.ok) user = (await res.json()).user;
+    } catch (e) { /* backend no disponible */ }
+
+    const name = document.getElementById('headerUserName');
+    const sub = document.getElementById('headerUserSub');
+    const mobile = document.getElementById('mobileUserLabel');
+    if (user) {
+        name.textContent = user.nombre || user.email.split('@')[0];
+        sub.textContent = user.email;
+        if (mobile) mobile.textContent = user.nombre || user.email;
+    } else {
+        name.textContent = 'Estudiante Agustino';
+        sub.textContent = 'Iniciar sesión / Crear cuenta';
+        if (mobile) mobile.textContent = 'Iniciar sesión / Crear cuenta';
+    }
+    return user;
+}
+
 // ---------- Utilidades de UI comunes ----------
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
@@ -164,3 +198,6 @@ function openModal(id) {
 function closeModal(id) {
     document.getElementById(id).classList.add('hidden');
 }
+
+// Promesa global: las páginas que necesiten el usuario (p. ej. cuenta.html) pueden hacer `await sessionReady`.
+const sessionReady = refreshHeaderUser();
