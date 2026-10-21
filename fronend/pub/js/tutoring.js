@@ -2,6 +2,10 @@
 
 function renderTutors(items = tutorsData) {
     const grid = document.getElementById('tutorsGrid');
+    if (items.length === 0) {
+        grid.innerHTML = emptyStateHTML('No se encontraron tutores con esos filtros.', 'fa-user-graduate');
+        return;
+    }
 
     grid.innerHTML = items.map(tut => {
         const coursesBadges = tut.courses.map(c =>
@@ -51,14 +55,14 @@ function renderTutors(items = tutorsData) {
 }
 
 function filterTutors() {
-    const query = document.getElementById('tutorSearch').value.toLowerCase();
+    const query = normalizeText(document.getElementById('tutorSearch').value.trim());
     const faculty = document.getElementById('tutorFacultyFilter').value;
     const modality = document.getElementById('tutorModalityFilter').value;
 
     const filtered = tutorsData.filter(tut => {
-        const matchesQuery = tut.name.toLowerCase().includes(query) ||
-            tut.courses.some(c => c.toLowerCase().includes(query)) ||
-            tut.career.toLowerCase().includes(query);
+        const matchesQuery = normalizeText(tut.name).includes(query) ||
+            tut.courses.some(c => normalizeText(c).includes(query)) ||
+            normalizeText(tut.career).includes(query);
         const matchesFaculty = faculty === 'ALL' || tut.faculty === faculty;
         const matchesModality = modality === 'ALL' || tut.modality.includes(modality);
 
