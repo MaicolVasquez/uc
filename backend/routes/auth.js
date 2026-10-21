@@ -42,28 +42,6 @@ router.post('/auth/register', async (req, res) => {
     }
 });
 
-// POST /api/auth/login
-router.post('/auth/login', async (req, res) => {
-    try {
-        const email = String(req.body.email || '').trim().toLowerCase();
-        const password = String(req.body.password || '');
-
-        const user = store.findByEmail(email);
-        const ok = user && await bcrypt.compare(password, user.password);
-        // Mismo mensaje para email inexistente o clave errónea (no revelar cuál falló)
-        if (!ok) return res.status(401).json({ error: 'Credenciales inválidas.' });
-
-        // Nuevo ID de sesión al autenticar (previene session fixation)
-        req.session.regenerate((err) => {
-            if (err) return res.status(500).json({ error: 'No se pudo iniciar la sesión.' });
-            req.session.userId = user.id;
-            res.json({ message: 'Sesión iniciada.', user: publicUser(user) });
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error interno del servidor.' });
-    }
-});
 
 // GET /api/perfil  (protegido)
 router.get('/perfil', authMiddleware, (req, res) => {

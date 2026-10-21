@@ -21,8 +21,8 @@ app.use(session({
     cookie: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: false,                 // pon true si usas HTTPS en producción
-        maxAge: 1000 * 60 * 60 * 2     // 2 horas
+        secure: false,              
+        maxAge: 1000 * 60 * 60 * 2     
     }
 }));
 
