@@ -20,7 +20,7 @@
 |lab09 |https://github.com/rescobedoq/enrollments/blob/main/informes/IDWeb_lab09_avance_proyecto.pdf|
 |Informe Final |https://github.com/rescobedoq/enrollments/blob/main/informes/IDWeb_proyecto_informe_final.pdf|
 
-<img width="1218" height="1000" alt="image" src="https://github.com/user-attachments/assets/d918ce6d-0130-48ea-a991-6e50cd7df3cf" />
+<img width="1565" height="1585" alt="WhatsApp Image 2026-10-27 at 11 07 55 PM" src="https://github.com/user-attachments/assets/127b6d1d-3d21-4210-9129-c82dd9788979" />
 
 # Tecnología utilizada[^2]
 
