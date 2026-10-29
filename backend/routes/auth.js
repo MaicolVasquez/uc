@@ -1,87 +1,70 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const store = require('../data/userStore');
-const authMiddleware = require('../middleware/authMiddleware');
-
+const { supabase, nuevoClienteAuth } = require('../db');
+ 
 const router = express.Router();
-const SALT_ROUNDS = 10;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Nunca devolver el hash al cliente
-const publicUser = (u) => ({ id: u.id, email: u.email, nombre: u.nombre, createdAt: u.createdAt });
-
-// POST /api/auth/register
-router.post('/auth/register', async (req, res) => {
-    try {
-        const email = String(req.body.email || '').trim().toLowerCase();
-        const password = String(req.body.password || '');
-        const nombre = String(req.body.nombre || '').trim().slice(0, 60);
-
-        if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Correo electrónico inválido.' });
-        if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
-        if (store.findByEmail(email)) return res.status(409).json({ error: 'Ya existe una cuenta con ese correo.' });
-
-        const hash = await bcrypt.hash(password, SALT_ROUNDS);
-
-        // Re-chequeo: otro registro igual pudo completarse mientras se calculaba el hash
-        if (store.findByEmail(email)) return res.status(409).json({ error: 'Ya existe una cuenta con ese correo.' });
-
-        const user = store.add({
-            id: crypto.randomUUID(),
-            email,
-            nombre,
-            password: hash,
-            createdAt: new Date().toISOString()
-        });
-
-        res.status(201).json({ message: 'Cuenta creada correctamente.', user: publicUser(user) });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error interno del servidor.' });
-    }
+const txt = (v, max) => (v == null ? '' : String(v).trim().slice(0, max));
+const h = fn => (req, res) => fn(req, res).catch(e => {
+    console.error(e);
+    res.status(500).json({ error: 'Error del servidor.' });
 });
-
-// POST /api/auth/login
-router.post('/auth/login', async (req, res) => {
-    try {
-        const email = String(req.body.email || '').trim().toLowerCase();
-        const password = String(req.body.password || '');
-
-        const user = store.findByEmail(email);
-        const ok = user && await bcrypt.compare(password, user.password);
-
-        if (!ok) return res.status(401).json({ error: 'Credenciales inválidas.' });
-
-        // Nuevo ID de sesión al autenticar (previene session fixation)
-        req.session.regenerate((err) => {
-            if (err) return res.status(500).json({ error: 'No se pudo iniciar la sesión.' });
-            req.session.userId = user.id;
-            res.json({ message: 'Sesión iniciada.', user: publicUser(user) });
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+ 
+router.post('/auth/register', h(async (req, res) => {
+    const email = txt(req.body.email, 200).toLowerCase();
+    const password = String(req.body.password || '');
+    const nombre = txt(req.body.nombre, 100) || email.split('@')[0];
+ 
+    if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Correo no válido.' });
+    if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+ 
+    const { data, error } = await supabase.auth.admin.createUser({ email, password, email_confirm: true });
+    if (error) {
+        const yaExiste = /already|registered|exists/i.test(error.message);
+        return res.status(yaExiste ? 409 : 400).json({ error: yaExiste ? 'Ya existe una cuenta con ese correo.' : error.message });
     }
-});
-
-// GET /api/perfil  (protegido)
-router.get('/perfil', authMiddleware, (req, res) => {
-    const user = store.findById(req.session.userId);
-    if (!user) {
-        // La sesión apunta a un usuario que ya no existe
-        return req.session.destroy(() => res.status(401).json({ error: 'Unauthorized: usuario no encontrado.' }));
+ 
+    // upsert por si ya tienes un trigger que crea el perfil automáticamente
+    const { error: e2 } = await supabase.from('perfiles').upsert({ id: data.user.id, nombre });
+    if (e2) {
+        await supabase.auth.admin.deleteUser(data.user.id);   // no dejar usuarios sin perfil
+        throw e2;
     }
-    res.json({ user: publicUser(user) });
-});
-
-// POST /api/auth/logout
+    res.status(201).json({ ok: true });
+}));
+ 
+router.post('/auth/login', h(async (req, res) => {
+    const email = txt(req.body.email, 200).toLowerCase();
+    const password = String(req.body.password || '');
+ 
+    const { data, error } = await nuevoClienteAuth().auth.signInWithPassword({ email, password });
+    if (error || !data.user) return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
+ 
+    req.session.regenerate(err => {
+        if (err) return res.status(500).json({ error: 'No se pudo iniciar sesión.' });
+        req.session.userId = data.user.id;
+        req.session.email = data.user.email;
+        res.json({ ok: true });
+    });
+}));
+ 
 router.post('/auth/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) return res.status(500).json({ error: 'No se pudo cerrar la sesión.' });
+    req.session.destroy(() => {
         res.clearCookie('connect.sid');
-        res.json({ message: 'Sesión cerrada.' });
+        res.json({ ok: true });
     });
 });
-
+ 
+router.get('/perfil', h(async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Sin sesión.' });
+ 
+    const { data: perfil, error } = await supabase
+        .from('perfiles').select('id, rol, nombre, creado_en').eq('id', req.session.userId).single();
+    if (error || !perfil) {
+        return req.session.destroy(() => res.status(401).json({ error: 'Sin sesión.' }));
+    }
+    res.json({
+        user: { id: perfil.id, email: req.session.email, nombre: perfil.nombre, rol: perfil.rol, createdAt: perfil.creado_en }
+    });
+}));
+ 
 module.exports = router;
+ 
