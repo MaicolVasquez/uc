@@ -14,7 +14,7 @@
 | Entregables | URL |
 | :--- | :--- |
 | Repositorio | https://github.com/MaicolVasquez/uc |
-| Link vercel proyecto | [https://github.com/MaicolVasquez/uc](https://unsaconectape.vercel.app/) |
+| Link vercel proyecto | https://unsaconectape.vercel.app/ |
 | **Informes**[^1] | |
 |lab07 |https://github.com/rescobedoq/enrollments/blob/main/informes/IDWeb_lab07_avance_proyecto.pdf|
 |lab08 |https://github.com/rescobedoq/enrollments/blob/main/informes/IDWeb_lab08_avance_proyecto.pdf|
