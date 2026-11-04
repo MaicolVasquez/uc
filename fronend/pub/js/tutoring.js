@@ -35,14 +35,10 @@ function renderTutors(items = tutorsData) {
                 <div>
                     <div class="flex items-start gap-3">
                         <img src="${TUTOR_DEFAULT_AVATAR}" alt="${escapeHtml(tut.name)}" class="w-14 h-14 rounded-full object-cover ring-2 ring-unsa-gold">
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
+                        <div class="flex-1">
                             <div class="flex items-start justify-between gap-2">
                                 <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
-                                <div class="flex items-start justify-between gap-2">
-                                    <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
-                                    <div class="flex gap-1">${editBtn('editTutor', tut)}${deleteBtn('tutors', tut, 'loadTutors')}</div>
-                                </div>
+                                <div class="flex gap-1">${editBtn('editTutor', tut)}${deleteBtn('tutors', tut, 'loadTutors')}</div>
                             </div>
                             <p class="text-xs font-semibold text-unsa-maroon">${escapeHtml(tut.career)} (${escapeHtml(tut.semester)})</p>
                             <p class="text-[11px] text-slate-500"><i class="fa-solid fa-graduation-cap"></i> Área de ${escapeHtml(tut.faculty)}</p>
