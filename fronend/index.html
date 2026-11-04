@@ -101,7 +101,7 @@
             class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-box-open text-unsa-maroon"></i> Reportar Objeto
+                    <i class="fa-solid fa-box-open text-unsa-maroon"></i><span id="lfModalTitle">Reportar Objeto</span>
                 </h3>
                 <button onclick="closeModal('lostFoundModal')"
                     class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
@@ -193,7 +193,7 @@
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" onclick="closeModal('lostFoundModal')"
                         class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit"
+                    <button type="submit" id="lfSubmitBtn"
                         class="px-5 py-2 text-xs font-bold text-white bg-unsa-maroon hover:bg-unsa-dark rounded-lg shadow">Publicar
                         Reporte</button>
                 </div>

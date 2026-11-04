@@ -1,16 +1,17 @@
 // Módulo: Objetos Perdidos
- 
+let lfEditingId = null;
 const LF_DEFAULT_IMG = 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400&auto=format&fit=crop&q=80';
- 
+
 async function loadLostFound() {
     try {
+        await sessionReady;
         lostFoundData = await apiFetch('/api/lost-found');
         filterLostFound();
     } catch (err) {
         handleApiError(err);
     }
 }
- 
+
 function renderLostFound(items = lostFoundData) {
     const grid = document.getElementById('lostFoundGrid');
     if (items.length === 0) {
@@ -21,19 +22,19 @@ function renderLostFound(items = lostFoundData) {
             </div>`;
         return;
     }
- 
+
     grid.innerHTML = items.map(item => {
         const isLost = item.status === 'PERDIDO';
         const statusBadge = isLost
             ? `<span class="bg-red-100 text-red-700 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-red-200 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> PERDIDO</span>`
             : `<span class="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> ENCONTRADO</span>`;
- 
+
         const formattedDate = item.datetime
             ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
             : '';
         const img = escapeHtml(safeUrl(item.img) || LF_DEFAULT_IMG);
         const phone = onlyDigits(item.phone);
- 
+
         return `
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
                 <div>
@@ -42,6 +43,7 @@ function renderLostFound(items = lostFoundData) {
                              class="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
                              onerror="this.src='${LF_DEFAULT_IMG}'">
                         <div class="absolute top-3 left-3">${statusBadge}</div>
+                        <div class="absolute top-3 right-3 flex gap-1">${editBtn('editLostFound', item)}${deleteBtn('lost-found', item, 'loadLostFound')}</div>
                         <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
                             ${escapeHtml(item.campus)}
                         </div>
@@ -72,13 +74,13 @@ function renderLostFound(items = lostFoundData) {
             </div>`;
     }).join('');
 }
- 
+
 function filterLostFound() {
     const query = document.getElementById('lfSearch').value.toLowerCase();
     const status = document.getElementById('lfStatusFilter').value;
     const campus = document.getElementById('lfCampusFilter').value;
     const category = document.getElementById('lfCategoryFilter').value;
- 
+
     const filtered = lostFoundData.filter(item => {
         const matchesQuery = item.title.toLowerCase().includes(query) ||
             item.location.toLowerCase().includes(query) ||
@@ -88,10 +90,10 @@ function filterLostFound() {
         const matchesCategory = category === 'ALL' || item.category === category;
         return matchesQuery && matchesStatus && matchesCampus && matchesCategory;
     });
- 
+
     renderLostFound(filtered);
 }
- 
+
 async function handleSaveLostFound(e) {
     e.preventDefault();
     const payload = {
@@ -105,16 +107,45 @@ async function handleSaveLostFound(e) {
         img: document.getElementById('lfImgInput').value,
         desc: document.getElementById('lfDescInput').value
     };
- 
+
     try {
-        await apiFetch('/api/lost-found', { method: 'POST', body: payload });
+        if (lfEditingId) {
+            await apiFetch(`/api/lost-found/${encodeURIComponent(lfEditingId)}`, { method: 'PUT', body: payload });
+        } else {
+            await apiFetch('/api/lost-found', { method: 'POST', body: payload });
+        }
+        const fueEdicion = !!lfEditingId;
         await loadLostFound();
-        closeModal('lostFoundModal');
-        document.getElementById('lostFoundForm').reset();
-        openNotificationToast('Objeto publicado correctamente en la red de la UNSA.');
+        closeModal('lostFoundModal');   // también limpia el formulario y lfEditingId
+        openNotificationToast(fueEdicion ? 'Publicación actualizada.' : 'Objeto publicado correctamente en la red de la UNSA.');
     } catch (err) {
         handleApiError(err);
     }
 }
- 
+function editLostFound(id) {
+    const it = lostFoundData.find(x => x.id === id);
+    if (!it) return;
+    lfEditingId = id;
+    const radio = document.querySelector(`input[name="status"][value="${it.status}"]`);
+    if (radio) radio.checked = true;
+    document.getElementById('lfTitleInput').value = it.title;
+    document.getElementById('lfCategoryInput').value = it.category;
+    document.getElementById('lfCampusInput').value = it.campus;
+    document.getElementById('lfLocationInput').value = it.location;
+    document.getElementById('lfDateInput').value = (it.datetime || '').slice(0, 16);   // formato datetime-local
+    document.getElementById('lfPhoneInput').value = it.phone;
+    document.getElementById('lfImgInput').value = it.img;
+    document.getElementById('lfDescInput').value = it.desc;
+    setModalMode('lfModalTitle', 'lfSubmitBtn', true, 'Reportar Objeto', 'Publicar Reporte');
+    openModal('lostFoundModal');
+}
+
+document.addEventListener('modalclosed', e => {
+    setModalMode('lfModalTitle', 'lfSubmitBtn', false, 'Reportar Objeto', 'Publicar Reporte');
+    if (e.detail === 'lostFoundModal') {
+        lfEditingId = null;
+        document.getElementById('lostFoundForm').reset();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', loadLostFound);

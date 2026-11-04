@@ -1,23 +1,24 @@
 // Módulo: Punto Hueco
- 
+
 let currentHuecoCat = 'ALL';
- 
+let huecoEditingId = null;
 async function loadHuecos() {
     try {
+        await sessionReady;
         huecosData = await apiFetch('/api/huecos');
         applyHuecoFilter();
     } catch (err) {
         handleApiError(err);
     }
 }
- 
+
 function applyHuecoFilter() {
     renderHuecos(currentHuecoCat === 'ALL' ? huecosData : huecosData.filter(h => h.category === currentHuecoCat));
 }
- 
+
 function renderHuecos(items = huecosData) {
     const grid = document.getElementById('huecosGrid');
- 
+
     if (items.length === 0) {
         grid.innerHTML = `
             <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
@@ -26,11 +27,11 @@ function renderHuecos(items = huecosData) {
             </div>`;
         return;
     }
- 
+
     grid.innerHTML = items.map(hue => {
         const isFull = hue.joined >= hue.capacity;
         const progressPct = hue.capacity ? Math.min(100, Math.round((hue.joined / hue.capacity) * 100)) : 0;
- 
+
         return `
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
                 <div>
@@ -85,11 +86,12 @@ function renderHuecos(items = huecosData) {
                        title="Chat WhatsApp">
                         <i class="fa-brands fa-whatsapp text-emerald-600 text-base"></i>
                     </a>
+                    ${editBtn('editHueco', hue)}${deleteBtn('huecos', hue, 'loadHuecos')}
                 </div>
             </div>`;
     }).join('');
 }
- 
+
 function filterHuecos(cat, btn) {
     currentHuecoCat = cat;
     document.querySelectorAll('.hueco-cat-btn').forEach(b => {
@@ -100,12 +102,12 @@ function filterHuecos(cat, btn) {
     btn.classList.add('bg-unsa-maroon', 'text-white');
     applyHuecoFilter();
 }
- 
+
 async function joinHueco(id) {
     try {
         const updated = await apiFetch(`/api/huecos/${encodeURIComponent(id)}/join`, { method: 'POST' });
         const i = huecosData.findIndex(h => h.id === id);
-        if (i !== -1) huecosData[i] = updated;
+        if (i !== -1) huecosData[i] = { ...updated, mine: huecosData[i].mine };
         applyHuecoFilter();
         openNotificationToast(`Te has unido al grupo "${updated.title}". Coordina por WhatsApp con ${updated.organizer}.`);
     } catch (err) {
@@ -113,7 +115,7 @@ async function joinHueco(id) {
         if (err.status === 409) loadHuecos();   // aforo lleno: refresca los números
     }
 }
- 
+
 async function handleSaveHueco(e) {
     e.preventDefault();
     const payload = {
@@ -127,16 +129,45 @@ async function handleSaveHueco(e) {
         phone: document.getElementById('huecoPhone').value,
         desc: document.getElementById('huecoDesc').value
     };
- 
+
     try {
-        await apiFetch('/api/huecos', { method: 'POST', body: payload });
+        if (huecoEditingId) {
+            await apiFetch(`/api/huecos/${encodeURIComponent(huecoEditingId)}`, { method: 'PUT', body: payload });
+        } else {
+            await apiFetch('/api/huecos', { method: 'POST', body: payload });
+        }
+        const fueEdicion = !!huecoEditingId;
         await loadHuecos();
         closeModal('huecoCreateModal');
-        document.getElementById('huecoCreateForm').reset();
-        openNotificationToast('¡Punto Hueco publicado! Tus compañeros podrán unirse.');
+        openNotificationToast(fueEdicion ? 'Punto Hueco actualizado.' : '¡Punto Hueco publicado! Tus compañeros podrán unirse.');
     } catch (err) {
         handleApiError(err);
     }
 }
- 
+
+function editHueco(id) {
+    const h = huecosData.find(x => x.id === id);
+    if (!h) return;
+    huecoEditingId = id;
+    document.getElementById('huecoTitle').value = h.title;
+    document.getElementById('huecoCategory').value = h.category;
+    document.getElementById('huecoCampus').value = h.campus;
+    document.getElementById('huecoLocation').value = h.location;
+    document.getElementById('huecoTime').value = h.time;
+    document.getElementById('huecoCapacity').value = h.capacity;
+    document.getElementById('huecoOrganizer').value = h.organizer;
+    document.getElementById('huecoPhone').value = h.phone;
+    document.getElementById('huecoDesc').value = h.desc;
+    setModalMode('huecoModalTitle', 'huecoSubmitBtn', true, 'Crear Nuevo Punto Hueco', 'Publicar Punto Hueco');
+    openModal('huecoCreateModal');
+}
+
+document.addEventListener('modalclosed', e => {
+    setModalMode('huecoModalTitle', 'huecoSubmitBtn', false, 'Crear Nuevo Punto Hueco', 'Publicar Punto Hueco');
+    if (e.detail === 'huecoCreateModal') {
+        huecoEditingId = null;
+        document.getElementById('huecoCreateForm').reset();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', loadHuecos);

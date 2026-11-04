@@ -180,6 +180,7 @@ function openModal(id) {
 
 function closeModal(id) {
     document.getElementById(id).classList.add('hidden');
+    document.dispatchEvent(new CustomEvent('modalclosed', { detail: id }));
 }
 
 // Promesa global: las páginas que necesiten el usuario (p. ej. cuenta.html) pueden hacer `await sessionReady`.

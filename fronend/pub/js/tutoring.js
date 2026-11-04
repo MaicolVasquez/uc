@@ -1,19 +1,21 @@
 // Módulo: Estudiante a Estudiante (Tutorías)
- 
-const TUTOR_DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';
- 
+let tutorEditingId = null;
+const TUTOR_DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';      // arriba del archivo
+
+const editingId = tutorEditingId;
 async function loadTutors() {
     try {
+        await sessionReady;
         tutorsData = await apiFetch('/api/tutors');
         filterTutors();
     } catch (err) {
         handleApiError(err);
     }
 }
- 
+
 function renderTutors(items = tutorsData) {
     const grid = document.getElementById('tutorsGrid');
- 
+
     if (items.length === 0) {
         grid.innerHTML = `
             <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
@@ -22,12 +24,12 @@ function renderTutors(items = tutorsData) {
             </div>`;
         return;
     }
- 
+
     grid.innerHTML = items.map(tut => {
         const coursesBadges = tut.courses.map(c =>
             `<span class="bg-amber-50 text-unsa-maroon font-bold text-[10px] px-2 py-0.5 rounded-md border border-amber-200">${escapeHtml(c)}</span>`
         ).join(' ');
- 
+
         return `
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
                 <div>
@@ -35,6 +37,13 @@ function renderTutors(items = tutorsData) {
                         <img src="${TUTOR_DEFAULT_AVATAR}" alt="${escapeHtml(tut.name)}" class="w-14 h-14 rounded-full object-cover ring-2 ring-unsa-gold">
                         <div>
                             <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
+                            <div class="flex items-start justify-between gap-2">
+                                <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
+                                <div class="flex items-start justify-between gap-2">
+                                    <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
+                                    <div class="flex gap-1">${editBtn('editTutor', tut)}${deleteBtn('tutors', tut, 'loadTutors')}</div>
+                                </div>
+                            </div>
                             <p class="text-xs font-semibold text-unsa-maroon">${escapeHtml(tut.career)} (${escapeHtml(tut.semester)})</p>
                             <p class="text-[11px] text-slate-500"><i class="fa-solid fa-graduation-cap"></i> Área de ${escapeHtml(tut.faculty)}</p>
                         </div>
@@ -63,12 +72,12 @@ function renderTutors(items = tutorsData) {
             </div>`;
     }).join('');
 }
- 
+
 function filterTutors() {
     const query = document.getElementById('tutorSearch').value.toLowerCase();
     const faculty = document.getElementById('tutorFacultyFilter').value;
     const modality = document.getElementById('tutorModalityFilter').value;
- 
+
     const filtered = tutorsData.filter(tut => {
         const matchesQuery = tut.name.toLowerCase().includes(query) ||
             tut.courses.some(c => c.toLowerCase().includes(query)) ||
@@ -77,10 +86,10 @@ function filterTutors() {
         const matchesModality = modality === 'ALL' || tut.modality.includes(modality);
         return matchesQuery && matchesFaculty && matchesModality;
     });
- 
+
     renderTutors(filtered);
 }
- 
+
 async function handleSaveTutor(e) {
     e.preventDefault();
     const payload = {
@@ -94,18 +103,23 @@ async function handleSaveTutor(e) {
         phone: document.getElementById('tutorPhone').value,
         bio: document.getElementById('tutorBio').value
     };
- 
+
+    const editingId = tutorEditingId;
+
     try {
-        await apiFetch('/api/tutors', { method: 'POST', body: payload });
+        if (editingId) {
+            await apiFetch(`/api/tutors/${encodeURIComponent(editingId)}`, { method: 'PUT', body: payload });
+        } else {
+            await apiFetch('/api/tutors', { method: 'POST', body: payload });
+        }
         await loadTutors();
         closeModal('tutorRegisterModal');
-        document.getElementById('tutorRegisterForm').reset();
-        openNotificationToast('¡Te has registrado exitosamente como Tutor Agustino!');
+        openNotificationToast(editingId ? 'Publicación actualizada.' : '¡Te has registrado exitosamente como Tutor Agustino!');
     } catch (err) {
         handleApiError(err);
     }
 }
- 
+
 async function handleSaveTutorRequest(e) {
     e.preventDefault();
     const payload = {
@@ -114,7 +128,7 @@ async function handleSaveTutorRequest(e) {
         phone: document.getElementById('reqPhone').value,
         details: document.getElementById('reqDetails').value
     };
- 
+
     try {
         await apiFetch('/api/asesorias', { method: 'POST', body: payload });
         closeModal('tutorRequestModal');
@@ -124,5 +138,30 @@ async function handleSaveTutorRequest(e) {
         handleApiError(err);
     }
 }
- 
+
+function editTutor(id) {
+    const t = tutorsData.find(x => x.id === id);
+    if (!t) return;
+    tutorEditingId = id;
+    document.getElementById('tutorName').value = t.name;
+    document.getElementById('tutorCareer').value = t.career;
+    document.getElementById('tutorSemester').value = t.semester;
+    document.getElementById('tutorFaculty').value = t.faculty;
+    document.getElementById('tutorCourses').value = t.courses.join(', ');
+    document.getElementById('tutorModality').value = t.modality;
+    document.getElementById('tutorPrice').value = t.price;
+    document.getElementById('tutorPhone').value = t.phone;
+    document.getElementById('tutorBio').value = t.bio;
+    openModal('tutorRegisterModal');
+}
+
+document.addEventListener('modalclosed', e => {
+    s
+    tutorEditingId = null;
+    if (e.detail === 'tutorRegisterModal') {
+        document.getElementById('tutorRegisterForm').reset();
+        document.getElementById('tutorEditId').value = '';   // reset() no limpia campos ocultos
+    }
+});
+
 document.addEventListener('DOMContentLoaded', loadTutors);

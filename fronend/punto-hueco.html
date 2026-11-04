@@ -83,7 +83,8 @@
             class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-mug-hot text-amber-600"></i> Crear Nuevo Punto Hueco
+                    <i class="fa-solid fa-mug-hot text-amber-600"></i><span id="huecoModalTitle">Crear Nuevo Punto
+                        Hueco</span>
                 </h3>
                 <button onclick="closeModal('huecoCreateModal')"
                     class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
@@ -163,7 +164,7 @@
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" onclick="closeModal('huecoCreateModal')"
                         class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit"
+                    <button type="submit" id="huecoSubmitBtn"
                         class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow">Publicar
                         Punto Hueco</button>
                 </div>

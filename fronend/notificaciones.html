@@ -36,6 +36,12 @@
                         <option value="INFO">ℹ️ Información General</option>
                         <option value="EVENTO">📅 Eventos y Asambleas</option>
                     </select>
+
+                    <!-- Solo visible para administradores (lo activa announcements.js) -->
+                    <button id="annCreateBtn" onclick="openModal('annCreateModal')"
+                        class="hidden ml-2 bg-unsa-maroon hover:bg-unsa-dark text-white font-bold px-3 py-2 rounded-lg text-xs whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> Nuevo anuncio
+                    </button>
                 </div>
             </div>
 
@@ -71,6 +77,43 @@
 
     </main>
 
+    <!-- Modal: crear anuncio (solo admin) -->
+    <div id="annCreateModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <form id="annCreateForm" onsubmit="handleSaveAnnouncement(event)"
+            class="bg-white rounded-2xl p-6 w-full max-w-lg space-y-3 shadow-2xl">
+            <h3 class="font-extrabold text-lg text-slate-900">Nuevo anuncio</h3>
+
+            <input id="annTitle" required maxlength="150" placeholder="Título"
+                class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+
+            <div class="grid grid-cols-2 gap-3">
+                <select id="annCategory" class="border border-slate-200 rounded-lg p-2 text-sm">
+                    <option value="Huelgas">📢 Huelgas & Paros</option>
+                    <option value="Feriados">🌴 Feriados Académicos</option>
+                    <option value="Biblioteca">📚 Biblioteca Central</option>
+                    <option value="Tramites">📝 Trámites & Matrícula</option>
+                </select>
+                <select id="annUrgency" class="border border-slate-200 rounded-lg p-2 text-sm">
+                    <option value="INFO">ℹ️ Información</option>
+                    <option value="URGENTE">🚨 Urgente</option>
+                    <option value="EVENTO">📅 Evento</option>
+                </select>
+            </div>
+
+            <input id="annCampus" maxlength="80" placeholder="Campus afectado (ej. Todos los campus)"
+                class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+
+            <textarea id="annContent" required maxlength="2000" rows="4" placeholder="Contenido del aviso"
+                class="w-full border border-slate-200 rounded-lg p-2 text-sm"></textarea>
+
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeModal('annCreateModal')"
+                    class="px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                <button type="submit"
+                    class="bg-unsa-maroon hover:bg-unsa-dark text-white font-bold px-4 py-2 rounded-lg text-sm">Publicar</button>
+            </div>
+        </form>
+    </div>
 
     <!-- Toast + Footer (inyectados desde pub/js/layout.js) -->
     <div id="layout-bottom"></div>
