@@ -68,6 +68,9 @@ async function handleRegister(e) {
         const res = await fetch('/api/perfil', { credentials: 'same-origin' });
         renderProfile((await res.json()).user);
         openNotificationToast('¡Cuenta creada! Bienvenido a UNSA Conecta.');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
     } catch (err) {
         showAuthError(err.message);
     }
@@ -84,6 +87,9 @@ async function handleLogin(e) {
         const res = await fetch('/api/perfil', { credentials: 'same-origin' });
         renderProfile((await res.json()).user);
         openNotificationToast('Sesión iniciada correctamente.');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
     } catch (err) {
         showAuthError(err.message);
     }
