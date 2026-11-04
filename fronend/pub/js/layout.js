@@ -185,3 +185,12 @@ function closeModal(id) {
 
 // Promesa global: las páginas que necesiten el usuario (p. ej. cuenta.html) pueden hacer `await sessionReady`.
 const sessionReady = refreshHeaderUser();
+
+// Verificar la promesa y redirigir si es nula
+sessionReady.then(user => {
+    const currentPage = document.body.dataset.page;
+
+    if (!user && currentPage !== 'cuenta') {
+        window.location.replace('cuenta.html');
+    }
+});
