@@ -121,6 +121,8 @@ async function refreshHeaderUser() {
         if (res.ok) user = (await res.json()).user;
     } catch (e) { /* backend no disponible */ }
 
+    window.currentUser = user;
+
     const name = document.getElementById('headerUserName');
     const sub = document.getElementById('headerUserSub');
     const mobile = document.getElementById('mobileUserLabel');
