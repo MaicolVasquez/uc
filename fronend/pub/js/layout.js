@@ -106,24 +106,6 @@ function buildLayout() {
         <i class="fa-solid fa-circle-check text-unsa-gold text-lg"></i>
         <span id="toastText" class="text-xs font-semibold">Operación completada con éxito.</span>
     </div>
-
-    <footer class="bg-unsa-slate text-slate-400 py-8 border-t border-slate-800 text-xs mt-12">
-        <div
-            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div
-                    class="w-8 h-8 rounded-lg bg-unsa-gold text-unsa-maroon font-black flex items-center justify-center text-lg">
-                    U
-                </div>
-                <div>
-                    <p class="text-white font-bold text-sm">UNSA Conecta - Portal de Vida Estudiantil</p>
-                    <p class="text-slate-500">Desarrollado para la comunidad agustina de la Universidad Nacional de San
-                        Agustín de Arequipa.</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-6 text-slate-400">${footerLinks}</div>
-        </div>
-    </footer>
 `;
 }
 
