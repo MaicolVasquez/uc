@@ -30,6 +30,8 @@ function renderHuecos(items = huecosData) {
 
     grid.innerHTML = items.map(hue => {
         const isFull = hue.joined >= hue.capacity;
+        const alreadyJoined = !!hue.joinedByMe;
+        const disableJoin = isFull || alreadyJoined;
         const progressPct = hue.capacity ? Math.min(100, Math.round((hue.joined / hue.capacity) * 100)) : 0;
 
         return `
@@ -77,8 +79,8 @@ function renderHuecos(items = huecosData) {
                 </div>
  
                 <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-                    <button onclick="joinHueco('${escapeHtml(hue.id)}')" ${isFull ? 'disabled' : ''} class="flex-1 ${isFull ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-user-plus text-xs"></i> ${isFull ? 'Aforo Lleno' : '¡Unirme al Hueco!'}
+                    <button onclick="joinHueco('${escapeHtml(hue.id)}')" ${disableJoin ? 'disabled' : ''} class="flex-1 ${disableJoin ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-user-plus text-xs"></i> ${alreadyJoined ? 'Ya estás unido' : (isFull ? 'Aforo Lleno' : '¡Unirme al Hueco!')}
                     </button>
                     <a href="https://wa.me/51${onlyDigits(hue.phone)}?text=Hola%20${encodeURIComponent(hue.organizer)},%20quiero%20unirme%20al%20Punto%20Hueco:%20${encodeURIComponent(hue.title)}"
                        target="_blank" rel="noopener"
