@@ -2,6 +2,39 @@
 let tutorEditingId = null;
 const TUTOR_DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';      // arriba del archivo
 
+const CAREERS_BY_AREA = {
+    'Biomédicas': [
+        'Agronomía','Biología','Ciencias de la Nutrición','Enfermería','Ingeniería Pesquera','Medicina Humana'
+    ],
+    'Ingenierías': [
+        'Arquitectura','Ciencia de la Computación','Física','Ingeniería Ambiental','Ingeniería Civil',
+        'Ingeniería de Industrias Alimentarias','Ingeniería de Materiales','Ingeniería de Minas',
+        'Ingeniería de Sistemas','Ingeniería de Telecomunicaciones','Ingeniería Eléctrica',
+        'Ingeniería Electrónica','Ingeniería Geofísica','Ingeniería Geológica','Ingeniería Industrial',
+        'Ingeniería Mecánica','Ingeniería Mecatrónica','Ingeniería Metalúrgica','Ingeniería Química',
+        'Ingeniería Sanitaria','Matemáticas','Química'
+    ],
+    'Sociales': [
+        'Administración','Antropología','Artes','Banca y Seguros','Ciencias de la Comunicación',
+        'Contabilidad','Derecho','Economía','Educación','Filosofía','Finanzas','Historia',
+        'Literatura y Lingüística','Marketing','Psicología','Relaciones Industriales','Sociología',
+        'Trabajo Social','Turismo y Hotelería'
+    ]
+};
+
+// Llena el select de carreras según el área elegida
+function fillCareers(area, selected = '') {
+    const select = document.getElementById('tutorCareer');
+    const careers = [...(CAREERS_BY_AREA[area] || [])];
+
+    // Si un tutor antiguo tiene una carrera escrita a mano que no está en la lista, la conservamos
+    if (selected && !careers.includes(selected)) careers.push(selected);
+
+    select.innerHTML = '<option value="" disabled selected>Selecciona tu carrera</option>' +
+        careers.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+    if (selected) select.value = selected;
+}
 const editingId = tutorEditingId;
 async function loadTutors() {
     try {
@@ -140,9 +173,9 @@ function editTutor(id) {
     if (!t) return;
     tutorEditingId = id;
     document.getElementById('tutorName').value = t.name;
-    document.getElementById('tutorCareer').value = t.career;
-    document.getElementById('tutorSemester').value = t.semester;
     document.getElementById('tutorFaculty').value = t.faculty;
+    fillCareers(t.faculty, t.career);
+    document.getElementById('tutorSemester').value = t.semester;
     document.getElementById('tutorCourses').value = t.courses.join(', ');
     document.getElementById('tutorModality').value = t.modality;
     document.getElementById('tutorPrice').value = t.price;
@@ -152,12 +185,17 @@ function editTutor(id) {
 }
 
 document.addEventListener('modalclosed', e => {
-    s
     tutorEditingId = null;
     if (e.detail === 'tutorRegisterModal') {
         document.getElementById('tutorRegisterForm').reset();
-        document.getElementById('tutorEditId').value = '';   // reset() no limpia campos ocultos
+        // reset() vuelve el área a la primera opción pero no dispara "change", así que rellenamos a mano
+        fillCareers(document.getElementById('tutorFaculty').value);
     }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    fillCareers(document.getElementById('tutorFaculty').value);
+    loadTutors();
 });
 
 document.addEventListener('DOMContentLoaded', loadTutors);
