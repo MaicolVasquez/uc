@@ -79,16 +79,23 @@ function renderHuecos(items = huecosData) {
                 </div>
  
                 <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-                    <button onclick="joinHueco('${escapeHtml(hue.id)}')" ${disableJoin ? 'disabled' : ''} class="flex-1 ${disableJoin ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-user-plus text-xs"></i> ${alreadyJoined ? 'Ya estás unido' : (isFull ? 'Aforo Lleno' : '¡Unirme al Hueco!')}
-                    </button>
-                    <a href="https://wa.me/51${onlyDigits(hue.phone)}?text=Hola%20${encodeURIComponent(hue.organizer)},%20quiero%20unirme%20al%20Punto%20Hueco:%20${encodeURIComponent(hue.title)}"
-                       target="_blank" rel="noopener"
-                       class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs flex items-center justify-center"
-                       title="Chat WhatsApp">
-                        <i class="fa-brands fa-whatsapp text-emerald-600 text-base"></i>
-                    </a>
-                    ${editBtn('editHueco', hue)}${deleteBtn('huecos', hue, 'loadHuecos')}
+                    ${hue.mine ? `
+                        <!-- Botón de gestionar para el creador -->
+                        <button onclick="abrirModalGestion('${escapeHtml(hue.id)}')" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow transition-colors flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-gear"></i> Gestionar mi Hueco
+                        </button>
+                    ` : `
+                        <!-- Botones normales para otros usuarios -->
+                        <button onclick="joinHueco('${escapeHtml(hue.id)}')" ${disableJoin ? 'disabled' : ''} class="flex-1 ${disableJoin ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-user-plus text-xs"></i> ${alreadyJoined ? 'Ya estás unido' : (isFull ? 'Aforo Lleno' : '¡Unirme al Hueco!')}
+                        </button>
+                        <a href="https://wa.me/51${onlyDigits(hue.phone)}?text=Hola%20${encodeURIComponent(hue.organizer)},%20quiero%20unirme%20al%20Punto%20Hueco:%20${encodeURIComponent(hue.title)}"
+                           target="_blank" rel="noopener"
+                           class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs flex items-center justify-center"
+                           title="Chat WhatsApp">
+                            <i class="fa-brands fa-whatsapp text-emerald-600 text-base"></i>
+                        </a>
+                    `}
                 </div>
             </div>`;
     }).join('');
@@ -173,3 +180,89 @@ document.addEventListener('modalclosed', e => {
 });
 
 document.addEventListener('DOMContentLoaded', loadHuecos);
+
+// ==========================================
+// LÓGICA DEL MODAL DE GESTIÓN (Para creadores)
+// ==========================================
+let telefonosActuales = [];
+
+async function abrirModalGestion(id) {
+    // 1. Buscar el hueco específico localmente para asegurarnos de que existe
+    const h = huecosData.find(x => x.id === id);
+    if (!h) return;
+
+    // 2. Mostrar el modal quitando la clase 'hidden' de Tailwind
+    const modal = document.getElementById('huecoManageModal');
+    if (modal) modal.classList.remove('hidden');
+
+    const lista = document.getElementById('listaParticipantesModal');
+    lista.innerHTML = '<li class="text-sm text-slate-500 italic text-center py-4">Cargando participantes...</li>';
+
+    // 3. Configurar botón de Editar (Reutiliza tu lógica existente)
+    document.getElementById('btnEditarHueco').onclick = () => {
+        closeModal('huecoManageModal'); // Cierra este modal
+        editHueco(id); // Abre el modal de creación en modo edición
+    };
+
+    // 4. Configurar botón de Eliminar/Cancelar Evento
+    document.getElementById('btnEliminarHueco').onclick = async () => {
+        if (confirm("¿Estás seguro de cancelar este Punto Hueco? Esta acción no se puede deshacer.")) {
+            try {
+                await apiFetch(`/api/huecos/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                closeModal('huecoManageModal');
+                await loadHuecos(); // Recarga la grilla de huecos
+                openNotificationToast("Punto Hueco eliminado correctamente.");
+            } catch (err) {
+                handleApiError(err);
+            }
+        }
+    };
+
+    // 5. Cargar participantes reales desde el Backend
+    try {
+        const participantes = await apiFetch(`/api/huecos/${encodeURIComponent(id)}/participantes`);
+
+        // Guardamos los teléfonos para el botón de copiar a WhatsApp
+        telefonosActuales = participantes.map(p => p.telefono || '');
+        lista.innerHTML = '';
+
+        if (participantes.length === 0) {
+            lista.innerHTML = '<li class="text-sm text-slate-500 italic text-center py-4">Nadie se ha unido todavía.</li>';
+            return;
+        }
+
+        // Inyectamos el HTML de cada participante
+        participantes.forEach(p => {
+            lista.innerHTML += `
+                <li class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 mb-2">
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">
+                            <i class="fa-solid fa-user text-slate-400 mr-1"></i> ${escapeHtml(p.nombre)}
+                        </p>
+                        <p class="text-xs text-slate-500">${escapeHtml(p.carrera)}</p>
+                    </div>
+                </li>
+            `;
+        });
+    } catch (err) {
+        console.error(err);
+        lista.innerHTML = '<li class="text-sm text-red-500 text-center py-4">Error al cargar participantes.</li>';
+    }
+}
+
+function copiarNumerosWhatsApp() {
+    // Filtramos por si hay usuarios que no registraron su número
+    const numerosValidos = telefonosActuales.filter(n => n && n.trim() !== '');
+
+    if (numerosValidos.length === 0) {
+        alert("No hay números registrados para copiar.");
+        return;
+    }
+
+    const textoCopiar = numerosValidos.join(', ');
+    navigator.clipboard.writeText(textoCopiar).then(() => {
+        openNotificationToast("¡Números copiados al portapapeles! Ya puedes crear tu grupo de WhatsApp.");
+    }).catch(err => {
+        alert("Tu navegador bloqueó el copiado automático. Selecciona y copia manualmente: " + textoCopiar);
+    });
+}
