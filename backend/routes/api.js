@@ -283,6 +283,30 @@ router.post('/huecos/:id/join', requireAuth, h(async (req, res) => {
     res.json(mapHueco(data[0]));
 }));
 
+// Obtener participantes de un Punto Hueco (Para el modal del creador)
+router.get('/huecos/:id/participantes', h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+
+    const { data, error } = await supabase
+        .from('hueco_participantes')
+        .select(`
+            usuario_id,
+            perfiles ( nombre )
+        `)
+        .eq('hueco_id', req.params.id);
+
+    if (error) throw error;
+
+    const participantes = data.map(p => ({
+        id: p.usuario_id,
+        nombre: (p.perfiles && p.perfiles.nombre) ? p.perfiles.nombre : 'Usuario Desconocido',
+        carrera: 'Estudiante UNSA',
+        telefono: ''
+    }));
+
+    res.json(participantes);
+}));
+
 // =====================================================
 // NOTIFICACIONES / AVISOS
 // =====================================================
