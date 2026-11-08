@@ -5,9 +5,9 @@ let currentMarkers = [];
 
 // Coordinates for UNSA Campuses in Arequipa
 const CAMPUS_COORDS = {
-    ingenierias: { lat: -16.4061, lng: -71.5245, zoom: 17, name: "Área de Ingenierías" },
-    sociales: { lat: -16.4045, lng: -71.5278, zoom: 17, name: "Área de Sociales" },
-    biomedicas: { lat: -16.4082, lng: -71.5175, zoom: 17, name: "Área de Biomédicas" }
+    ingenierias: { lat: -16.404847519276583, lng: -71.52654518189568, zoom: 17, name: "Área de Ingenierías" },
+    sociales:    { lat: -16.40587738269871,  lng: -71.52057711573453, zoom: 17, name: "Área de Sociales" },
+    biomedicas:  { lat: -16.413179842280762, lng: -71.53404182627942, zoom: 17, name: "Área de Biomédicas" }
 };
 
 const UNSA_LOCATIONS = [
@@ -17,8 +17,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'ingenierias',
         campusName: 'Área de Ingenierías',
         title: 'Pabellón Cs. de la Computación',
-        lat: -16.4062,
-        lng: -71.5248,
+        lat: -16.404920,
+        lng: -71.526480,
         hours: '07:00 - 20:00 hrs',
         services: 'Labs de Software, Servidores GPU, Aulas Climatizadas',
         img: 'https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=80',
@@ -29,8 +29,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'ingenierias',
         campusName: 'Área de Ingenierías',
         title: 'Biblioteca de Área de Ingenierías',
-        lat: -16.4058,
-        lng: -71.5242,
+        lat: -16.405450,
+        lng: -71.525620,
         hours: '07:30 - 21:00 hrs',
         services: 'Salas de estudio grupal, Cubículos, Repositorio Tesis',
         img: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=500&auto=format&fit=crop&q=80',
@@ -41,8 +41,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'ingenierias',
         campusName: 'Área de Ingenierías',
         title: 'Pabellón de Ing. Civil y Estructuras',
-        lat: -16.4067,
-        lng: -71.5240,
+        lat: -16.405100,
+        lng: -71.524950,
         hours: '07:00 - 19:30 hrs',
         services: 'Laboratorio de Ensayo de Materiales, Aulas Magna',
         img: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=500&auto=format&fit=crop&q=80',
@@ -54,8 +54,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'sociales',
         campusName: 'Área de Sociales',
         title: 'Facultad de Derecho y Cs. Políticas',
-        lat: -16.4043,
-        lng: -71.5281,
+        lat: -16.405820,
+        lng: -71.520450,
         hours: '07:30 - 20:00 hrs',
         services: 'Sala de Juicios Orales, Biblioteca Especializada, Consultorio Jurídico',
         img: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=80',
@@ -66,8 +66,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'sociales',
         campusName: 'Área de Sociales',
         title: 'Escuela Profesional de FIPS / Psicología',
-        lat: -16.4048,
-        lng: -71.5273,
+        lat: -16.406150,
+        lng: -71.521100,
         hours: '08:00 - 19:00 hrs',
         services: 'Cámara Gesell, Laboratorio de Psicometría, Cafetería',
         img: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&auto=format&fit=crop&q=80',
@@ -79,8 +79,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'biomedicas',
         campusName: 'Área de Biomédicas',
         title: 'Facultad de Medicina Humana',
-        lat: -16.4081,
-        lng: -71.5173,
+        lat: -16.412850,
+        lng: -71.533800,
         hours: '06:30 - 21:00 hrs',
         services: 'Anfiteatro Anatómico, Lab de Histología, Biblioteca Médica',
         img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=500&auto=format&fit=crop&q=80',
@@ -91,8 +91,8 @@ const UNSA_LOCATIONS = [
         campusKey: 'biomedicas',
         campusName: 'Área de Biomédicas',
         title: 'Comedor Universitario Biomédicas',
-        lat: -16.4085,
-        lng: -71.5178,
+        lat: -16.413500,
+        lng: -71.534400,
         hours: '11:30 - 14:30 hrs',
         services: 'Servicio de Nutrición, Menú Estudiantil, Ticketera Virtual',
         img: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=500&auto=format&fit=crop&q=80',
@@ -140,10 +140,19 @@ function renderMapMarkers(locations = UNSA_LOCATIONS) {
     });
 }
 
+function setActiveCampusButton(key) {
+    document.querySelectorAll('.campus-btn').forEach(btn => {
+        const active = btn.dataset.campus === key;
+        btn.classList.toggle('bg-white', active);
+        btn.classList.toggle('shadow-sm', active);
+    });
+}
+
 function zoomToCampus(key) {
     const coord = CAMPUS_COORDS[key];
     if (coord && map) {
         map.flyTo([coord.lat, coord.lng], coord.zoom, { duration: 1.5 });
+        setActiveCampusButton(key);
     }
 }
 
