@@ -30,6 +30,8 @@ function renderHuecos(items = huecosData) {
 
     grid.innerHTML = items.map(hue => {
         const isFull = hue.joined >= hue.capacity;
+        const alreadyJoined = !!hue.joinedByMe;
+        const disableJoin = isFull || alreadyJoined;
         const progressPct = hue.capacity ? Math.min(100, Math.round((hue.joined / hue.capacity) * 100)) : 0;
 
         return `

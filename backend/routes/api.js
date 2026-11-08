@@ -51,11 +51,12 @@ const mapTutor = (r, uid) => ({
     modality: r.modalidad || '', price: r.precio || '', phone: r.telefono || '', bio: r.bio || '',
     mine: !!uid && r.usuario_id === uid
 });
-const mapHueco = (r, uid) => ({
+const mapHueco = (r, uid, joinedByMe = false) => ({
     id: r.id, title: r.titulo, category: r.categoria || '', campus: r.campus || '',
     location: r.lugar_exacto || '', time: r.horario || '', capacity: r.aforo || 0,
     joined: r.unidos ?? 1, organizer: r.organizador || '', phone: r.telefono || '', desc: r.descripcion || '',
-    mine: !!uid && r.usuario_id === uid
+    mine: !!uid && r.usuario_id === uid,
+    joinedByMe
 });
 const mapAnn = r => ({
     id: r.id, title: r.titulo, category: r.categoria || '', urgency: r.urgencia || 'INFO',
@@ -220,7 +221,16 @@ router.get('/huecos', h(async (req, res) => {
     const { data, error } = await supabase.from('punto_hueco').select('*')
         .eq('estado', 'aprobado').order('creado_en', { ascending: false });
     if (error) throw error;
-    res.json(data.map(r => mapHueco(r, req.session.userId)));
+
+    // Huecos a los que ya se unió este usuario
+    let unidos = new Set();
+    if (req.session.userId) {
+        const { data: mios, error: e2 } = await supabase.from('hueco_participantes')
+            .select('hueco_id').eq('usuario_id', req.session.userId);
+        if (e2) throw e2;
+        unidos = new Set(mios.map(m => m.hueco_id));
+    }
+    res.json(data.map(r => mapHueco(r, req.session.userId, unidos.has(r.id))));
 }));
 
 router.post('/huecos', requireAuth, h(async (req, res) => {
@@ -275,12 +285,24 @@ router.put('/huecos/:id', requireAuth, h(async (req, res) => {
 }));
 router.delete('/huecos/:id', requireAuth, borrarPublicacion('punto_hueco'));
 
-// Unirse: incremento atómico en la BD (función SQL) para evitar pasarse del aforo
+// Unirse: una sola vez por usuario y sin pasarse del aforo (todo lo hace la función SQL)
 router.post('/huecos/:id/join', requireAuth, h(async (req, res) => {
-    const { data, error } = await supabase.rpc('unirse_punto_hueco', { p_id: req.params.id });
-    if (error) throw error;
-    if (!data || data.length === 0) return res.status(409).json({ error: 'El aforo está lleno o el Punto Hueco no existe.' });
-    res.json(mapHueco(data[0]));
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    const userId = req.session.userId;
+
+    const { data, error } = await supabase.rpc('unirse_punto_hueco', {
+        p_id: req.params.id,
+        p_usuario: userId
+    });
+
+    if (error) {
+        if (error.code === '23505') return res.status(409).json({ error: 'Ya te uniste a este Punto Hueco.' });
+        if (error.code === '23503') return res.status(404).json({ error: 'El Punto Hueco no existe.' });
+        if ((error.message || '').includes('AFORO_LLENO')) return res.status(409).json({ error: 'El aforo está lleno.' });
+        throw error;
+    }
+    if (!data || data.length === 0) return res.status(409).json({ error: 'No se pudo unir al Punto Hueco.' });
+    res.json(mapHueco(data[0], userId, true));
 }));
 
 // Obtener participantes de un Punto Hueco (Para el modal del creador)
