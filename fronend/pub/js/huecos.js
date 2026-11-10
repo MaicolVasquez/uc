@@ -79,23 +79,56 @@ function renderHuecos(items = huecosData) {
                 </div>
  
                 <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-                    ${hue.mine ? `
-                        <!-- Botón de gestionar para el creador -->
-                        <button onclick="abrirModalGestion('${escapeHtml(hue.id)}')" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow transition-colors flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-gear"></i> Gestionar mi Hueco
-                        </button>
-                    ` : `
-                        <!-- Botones normales para otros usuarios -->
-                        <button onclick="joinHueco('${escapeHtml(hue.id)}')" ${disableJoin ? 'disabled' : ''} class="flex-1 ${disableJoin ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-user-plus text-xs"></i> ${alreadyJoined ? 'Ya estás unido' : (isFull ? 'Aforo Lleno' : '¡Unirme al Hueco!')}
-                        </button>
-                        <a href="https://wa.me/51${onlyDigits(hue.phone)}?text=Hola%20${encodeURIComponent(hue.organizer)},%20quiero%20unirme%20al%20Punto%20Hueco:%20${encodeURIComponent(hue.title)}"
-                           target="_blank" rel="noopener"
-                           class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs flex items-center justify-center"
-                           title="Chat WhatsApp">
-                            <i class="fa-brands fa-whatsapp text-emerald-600 text-base"></i>
-                        </a>
-                    `}
+                    
+${hue.mine ? `
+
+    <div class="flex gap-2 w-full">
+
+        <button
+            onclick="abrirModalGestion('${escapeHtml(hue.id)}')"
+            class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-2">
+
+            <i class="fa-solid fa-gear"></i>
+            Gestionar
+
+        </button>
+
+        <button
+            onclick="abrirChatPuntoHueco('${escapeHtml(hue.id)}')"
+            class="flex-1 bg-unsa-maroon hover:bg-unsa-bright text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-2">
+
+            <i class="fa-solid fa-comments"></i>
+            Chat grupal
+
+        </button>
+
+    </div>
+
+` : alreadyJoined ? `
+
+    <button
+        onclick="abrirChatPuntoHueco('${escapeHtml(hue.id)}')"
+        class="w-full bg-unsa-maroon hover:bg-unsa-bright text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2">
+
+        <i class="fa-solid fa-comments"></i>
+        Abrir chat grupal
+
+    </button>
+
+` : `
+
+    <button
+        onclick="joinHueco('${escapeHtml(hue.id)}')"
+        ${disableJoin ? 'disabled' : ''}
+        class="w-full ${disableJoin ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2">
+
+        <i class="fa-solid fa-user-plus"></i>
+        ${isFull ? 'Aforo lleno' : '¡Unirme al Hueco!'}
+
+    </button>
+
+`}
+
                 </div>
             </div>`;
     }).join('');
@@ -112,18 +145,48 @@ function filterHuecos(cat, btn) {
     applyHuecoFilter();
 }
 
+
 async function joinHueco(id) {
+
     try {
-        const updated = await apiFetch(`/api/huecos/${encodeURIComponent(id)}/join`, { method: 'POST' });
+
+        const updated = await apiFetch(
+            `/api/huecos/${encodeURIComponent(id)}/join`,
+            {
+                method: 'POST'
+            }
+        );
+
         const i = huecosData.findIndex(h => h.id === id);
-        if (i !== -1) huecosData[i] = { ...updated, mine: huecosData[i].mine };
+
+        if (i !== -1) {
+
+            huecosData[i] = {
+                ...updated,
+                mine: huecosData[i].mine,
+                joinedByMe: true
+            };
+
+        }
+
         applyHuecoFilter();
-        openNotificationToast(`Te has unido al grupo "${updated.title}". Coordina por WhatsApp con ${updated.organizer}.`);
+
+        openNotificationToast(
+            `Te has unido a "${updated.title}". Ya formas parte de su chat grupal.`
+        );
+
     } catch (err) {
+
         handleApiError(err);
-        if (err.status === 409) loadHuecos();   // aforo lleno: refresca los números
+
+        if (err.status === 409) {
+            loadHuecos();
+        }
+
     }
+
 }
+
 
 async function handleSaveHueco(e) {
     e.preventDefault();
@@ -148,7 +211,11 @@ async function handleSaveHueco(e) {
         const fueEdicion = !!huecoEditingId;
         await loadHuecos();
         closeModal('huecoCreateModal');
-        openNotificationToast(fueEdicion ? 'Punto Hueco actualizado.' : '¡Punto Hueco publicado! Tus compañeros podrán unirse.');
+        openNotificationToast(
+    fueEdicion
+        ? 'Punto Hueco actualizado correctamente.'
+        : '¡Punto Hueco creado! Su chat grupal ya está disponible.'
+);
     } catch (err) {
         handleApiError(err);
     }
@@ -184,7 +251,6 @@ document.addEventListener('DOMContentLoaded', loadHuecos);
 // ==========================================
 // LÓGICA DEL MODAL DE GESTIÓN (Para creadores)
 // ==========================================
-let telefonosActuales = [];
 
 async function abrirModalGestion(id) {
     // 1. Buscar el hueco específico localmente para asegurarnos de que existe
@@ -223,7 +289,6 @@ async function abrirModalGestion(id) {
         const participantes = await apiFetch(`/api/huecos/${encodeURIComponent(id)}/participantes`);
 
         // Guardamos los teléfonos para el botón de copiar a WhatsApp
-        telefonosActuales = participantes.map(p => p.telefono || '');
         lista.innerHTML = '';
 
         if (participantes.length === 0) {
@@ -250,19 +315,27 @@ async function abrirModalGestion(id) {
     }
 }
 
-function copiarNumerosWhatsApp() {
-    // Filtramos por si hay usuarios que no registraron su número
-    const numerosValidos = telefonosActuales.filter(n => n && n.trim() !== '');
 
-    if (numerosValidos.length === 0) {
-        alert("No hay números registrados para copiar.");
-        return;
+/* =====================================================
+   ABRIR CHAT GRUPAL DE PUNTO HUECO
+===================================================== */
+
+async function abrirChatPuntoHueco(id) {
+
+    try {
+
+        const data = await apiFetch(
+            `/api/huecos/${encodeURIComponent(id)}/conversacion`
+        );
+
+        // Abrir Mi perfil directamente en el grupo correspondiente.
+        window.location.href =
+            `cuenta.html?chat=${encodeURIComponent(data.conversacionId)}`;
+
+    } catch (err) {
+
+        handleApiError(err);
+
     }
 
-    const textoCopiar = numerosValidos.join(', ');
-    navigator.clipboard.writeText(textoCopiar).then(() => {
-        openNotificationToast("¡Números copiados al portapapeles! Ya puedes crear tu grupo de WhatsApp.");
-    }).catch(err => {
-        alert("Tu navegador bloqueó el copiado automático. Selecciona y copia manualmente: " + textoCopiar);
-    });
 }
