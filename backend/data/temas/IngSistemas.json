@@ -1,0 +1,1574 @@
+{
+  "version": 1,
+  "escuela": "Ingeniería de Sistemas",
+  "componentes": {
+    "A": "Formación Básica",
+    "B": "Formación Especializada",
+    "C": "Formación Profesional y Otros",
+    "D": "Est.Gen.: Capacidades de Aprendizaje",
+    "E": "Est.Gen.: Form.Humanist.Ident. y Ciudadanía",
+    "F": "Estudios Específicos",
+    "G": "Estudios de Especialidad"
+  },
+  "areas": [
+    "Matemática y Estadística",
+    "Programación y Algoritmos",
+    "Desarrollo Web y Móvil",
+    "Ingeniería de Software",
+    "Datos e Inteligencia Artificial",
+    "Redes, Sistemas y Seguridad",
+    "Gestión, Empresa e Investigación",
+    "Estudios Generales"
+  ],
+  "cursos": [
+    {
+      "codigo": "2501101",
+      "nombre": "Álgebra Lineal",
+      "area": "Matemática y Estadística",
+      "semestre": 1,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Álgebra"
+      ],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501102",
+      "nombre": "Estructuras Discretas I",
+      "area": "Matemática y Estadística",
+      "semestre": 1,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Discretas 1"
+      ],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501103",
+      "nombre": "Introducción al Desarrollo de Software",
+      "area": "Programación y Algoritmos",
+      "semestre": 1,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501104",
+      "nombre": "Introducción a la Ingeniería",
+      "area": "Estudios Generales",
+      "semestre": 1,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501105",
+      "nombre": "Relaciones Humanas en Empresas de Desarrollo de Software y Base Tecnológica",
+      "area": "Estudios Generales",
+      "semestre": 1,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501106",
+      "nombre": "Metodología del Trabajo Académico",
+      "area": "Estudios Generales",
+      "semestre": 1,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501107",
+      "nombre": "Matemática Básica",
+      "area": "Matemática y Estadística",
+      "semestre": 1,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501208",
+      "nombre": "Cálculo en una Variable",
+      "area": "Matemática y Estadística",
+      "semestre": 2,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Cálculo 1",
+        "Cálculo I"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501101",
+          "cuenta": true
+        },
+        {
+          "codigo": "2501107",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2501209",
+      "nombre": "Estructuras Discretas II",
+      "area": "Matemática y Estadística",
+      "semestre": 2,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Discretas 2"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501102",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2501210",
+      "nombre": "Introducción al Desarrollo Web",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 2,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501103",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2501211",
+      "nombre": "Desarrollo de Software Orientado a Objetos",
+      "area": "Programación y Algoritmos",
+      "semestre": 2,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "POO",
+        "Programación Orientada a Objetos"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501103",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2501212",
+      "nombre": "Lingüística, Comprensión y Redacción Académica",
+      "area": "Estudios Generales",
+      "semestre": 2,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501213",
+      "nombre": "Realidad Nacional",
+      "area": "Estudios Generales",
+      "semestre": 2,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2501214",
+      "nombre": "Taller de Narrativa Digital",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 2,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2502115",
+      "nombre": "Cálculo en Varias Variables",
+      "area": "Matemática y Estadística",
+      "semestre": 3,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Cálculo 2",
+        "Cálculo II"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501208",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502116",
+      "nombre": "Estructura de Datos y Algoritmos",
+      "area": "Programación y Algoritmos",
+      "semestre": 3,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "ED",
+        "Estructuras de Datos"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501209",
+          "cuenta": false
+        },
+        {
+          "codigo": "2501211",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502117",
+      "nombre": "Desarrollo de Aplicaciones Web",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 3,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501210",
+          "cuenta": true
+        },
+        {
+          "codigo": "2501211",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2502118",
+      "nombre": "Enfoque Empresarial",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 3,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501105",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2502119",
+      "nombre": "Desarrollo Emocional, Gestión de Conflictos y Liderazgo",
+      "area": "Estudios Generales",
+      "semestre": 3,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501105",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502120",
+      "nombre": "Inglés",
+      "area": "Estudios Generales",
+      "semestre": 3,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2502121",
+      "nombre": "Ciudadanía e Interculturalidad",
+      "area": "Estudios Generales",
+      "semestre": 3,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2502122",
+      "nombre": "Taller de Internet de las Cosas",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 3,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2502223",
+      "nombre": "Estadística Matemática, Probabilidades y Métodos Empíricos",
+      "area": "Matemática y Estadística",
+      "semestre": 4,
+      "componente": "D",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Estadística",
+        "Probabilidades"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502115",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502224",
+      "nombre": "Arquitectura de Computadoras",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 4,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502116",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2502225",
+      "nombre": "Análisis y Diseño de Algoritmos",
+      "area": "Programación y Algoritmos",
+      "semestre": 4,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "ADA",
+        "Algoritmos"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502116",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502226",
+      "nombre": "Interacción Humano Computador",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 4,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "IHC"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502117",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502227",
+      "nombre": "Organización y Métodos",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 4,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502118",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2502228",
+      "nombre": "Ecología y Conservación Ambiental",
+      "area": "Estudios Generales",
+      "semestre": 4,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2502229",
+      "nombre": "Políticas Públicas y Anticorrupción",
+      "area": "Estudios Generales",
+      "semestre": 4,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2503130",
+      "nombre": "Investigación de Operaciones",
+      "area": "Matemática y Estadística",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Investigación Operativa",
+        "IO"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502115",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503131",
+      "nombre": "Redes y Comunicación de Datos",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Redes"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502224",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503132",
+      "nombre": "Tópicos Avanzados de la Interacción Humano Computador",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502226",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503133",
+      "nombre": "Procesos de Desarrollo e Ingeniería de Software",
+      "area": "Ingeniería de Software",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502225",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2503134",
+      "nombre": "Sistemas de Información",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502227",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503135",
+      "nombre": "Taller de Innovación, Creatividad y Emprendimiento",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502119",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2503136",
+      "nombre": "Metodología de la Investigación Científica en Sistemas",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501212",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2503137",
+      "nombre": "Taller de Simulación en Lego",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 5,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": false,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2503238",
+      "nombre": "Métodos Numéricos",
+      "area": "Matemática y Estadística",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503130",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503239",
+      "nombre": "Sistemas Operativos",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "SO"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502224",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503240",
+      "nombre": "Tecnologías de Objetos",
+      "area": "Ingeniería de Software",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503133",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503241",
+      "nombre": "Ingeniería de Requerimientos",
+      "area": "Ingeniería de Software",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Requerimientos"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503133",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2503242",
+      "nombre": "Base de Datos",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "BD",
+        "Bases de Datos"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503134",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2503243",
+      "nombre": "Taller de Business Analytics",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503134",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2503244",
+      "nombre": "Redacción de Artículos e Informes de Investigación",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 6,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2501212",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2504145",
+      "nombre": "Física Computacional",
+      "area": "Matemática y Estadística",
+      "semestre": 7,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503238",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504146",
+      "nombre": "Inteligencia Artificial",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 7,
+      "componente": "G",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "IA"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2502223",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2504147",
+      "nombre": "Seguridad Informática",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 7,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503131",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504148",
+      "nombre": "Sistemas Distribuidos y Paralelos",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 7,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503239",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504149",
+      "nombre": "Diseño y Arquitectura de Software",
+      "area": "Ingeniería de Software",
+      "semestre": 7,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "Arquitectura de Software"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503241",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504150",
+      "nombre": "Calidad y Pruebas de Software",
+      "area": "Ingeniería de Software",
+      "semestre": 7,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503241",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504151",
+      "nombre": "Taller de Blockchain",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 7,
+      "componente": "G",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2504252",
+      "nombre": "Gestión de Proyectos",
+      "area": "Ingeniería de Software",
+      "semestre": 8,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504149",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504253",
+      "nombre": "Mantenimiento, Configuración, Despliegue y Evolución de Software",
+      "area": "Ingeniería de Software",
+      "semestre": 8,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504149",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504254",
+      "nombre": "Tecnologías de Información",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 8,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503242",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2504255",
+      "nombre": "Introducción al Desarrollo de Software Ágil",
+      "area": "Ingeniería de Software",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Software Ágil",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503240",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504256",
+      "nombre": "Introducción al Desarrollo Móvil",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Desarrollo Móvil",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504148",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2504257",
+      "nombre": "Introducción al Desarrollo de Videojuegos",
+      "area": "Programación y Algoritmos",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Videojuegos",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504146",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2504258",
+      "nombre": "Introducción a la Ciberseguridad",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503131",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504259",
+      "nombre": "Criptografía y Autenticación",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504147",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504260",
+      "nombre": "Seguridad de Software y Hacking Ético",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503131",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504261",
+      "nombre": "Machine Learning I",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Machine Learning",
+      "alias": [
+        "ML 1"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504146",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2504262",
+      "nombre": "Visualización de Datos",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Machine Learning",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503132",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2504263",
+      "nombre": "Base de Datos NoSQL",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 8,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciencia de Datos",
+      "alias": [
+        "NoSQL"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503242",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505164",
+      "nombre": "Proyecto Integrador I",
+      "area": "Ingeniería de Software",
+      "semestre": 9,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": false,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504252",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505165",
+      "nombre": "Gestión de Emprendimiento de Software",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2503135",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505166",
+      "nombre": "Fundamentos de Trabajo de Investigación",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 9,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504252",
+          "cuenta": false
+        },
+        {
+          "codigo": "2503136",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505167",
+      "nombre": "Ética General y Deontología",
+      "area": "Estudios Generales",
+      "semestre": 9,
+      "componente": "E",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": []
+    },
+    {
+      "codigo": "2505168",
+      "nombre": "Fundamentos de Desarrollo de Software en la Nube",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Desarrollo en la Nube",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504148",
+          "cuenta": false
+        }
+      ]
+    },
+    {
+      "codigo": "2505169",
+      "nombre": "Tópicos Avanzados de Desarrollo Móvil",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Desarrollo Móvil",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504256",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505170",
+      "nombre": "Tópicos y Técnicas Avanzadas de Desarrollo de Software Ágil",
+      "area": "Ingeniería de Software",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Software Ágil",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504255",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505171",
+      "nombre": "Tópicos Avanzados en Ciberseguridad",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504258",
+          "cuenta": true
+        },
+        {
+          "codigo": "2504259",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505172",
+      "nombre": "Gobierno de la Seguridad de Información",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504260",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505173",
+      "nombre": "Seguridad Basada en Inteligencia Artificial",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504260",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505174",
+      "nombre": "Machine Learning II",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Machine Learning",
+      "alias": [
+        "ML 2"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504261",
+          "cuenta": true
+        },
+        {
+          "codigo": "2504262",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505175",
+      "nombre": "Gestión de Datos",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciencia de Datos",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504263",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505176",
+      "nombre": "Big Data y Cloud Computing",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 9,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciencia de Datos",
+      "alias": [
+        "Big Data"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504263",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505277",
+      "nombre": "Proyecto Integrador II",
+      "area": "Ingeniería de Software",
+      "semestre": 10,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": false,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505164",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505278",
+      "nombre": "Prácticas Preprofesionales",
+      "area": "Ingeniería de Software",
+      "semestre": 10,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": false,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505164",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505279",
+      "nombre": "Trabajo de Investigación",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 10,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": false,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505166",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505280",
+      "nombre": "Arquitectura Empresarial",
+      "area": "Gestión, Empresa e Investigación",
+      "semestre": 10,
+      "componente": "F",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504254",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505281",
+      "nombre": "Tópicos Avanzados de Desarrollo de Videojuegos",
+      "area": "Programación y Algoritmos",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Videojuegos",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2504257",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505282",
+      "nombre": "Desarrollo de Aplicaciones en la Nube Full Stack",
+      "area": "Desarrollo Web y Móvil",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Desarrollo en la Nube",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505168",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505283",
+      "nombre": "Auditoría Digital Forense",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505172",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505284",
+      "nombre": "Aspectos Legales de Seguridad y Continuidad de la Organización",
+      "area": "Redes, Sistemas y Seguridad",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciberseguridad",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505172",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505285",
+      "nombre": "Deep Learning",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Machine Learning",
+      "alias": [
+        "DL"
+      ],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505174",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505286",
+      "nombre": "Minería de Datos",
+      "area": "Datos e Inteligencia Artificial",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": true,
+      "tutorable": true,
+      "mencion": "Ciencia de Datos",
+      "alias": [],
+      "temas": [],
+      "requisitos": [
+        {
+          "codigo": "2505175",
+          "cuenta": true
+        }
+      ]
+    },
+    {
+      "codigo": "2505287",
+      "nombre": "Taller de DevOps",
+      "area": "Ingeniería de Software",
+      "semestre": 10,
+      "componente": "G",
+      "electivo": false,
+      "tutorable": true,
+      "mencion": null,
+      "alias": [
+        "DevOps"
+      ],
+      "temas": [],
+      "requisitos": []
+    }
+  ]
+}
