@@ -58,10 +58,164 @@ const mapHueco = (r, uid, joinedByMe = false) => ({
     mine: !!uid && r.usuario_id === uid,
     joinedByMe
 });
-const mapAnn = r => ({
-    id: r.id, title: r.titulo, category: r.categoria || '', urgency: r.urgencia || 'INFO',
-    campus: r.campus_afectado || '', content: r.contenido || '', date: (r.creado_en || '').slice(0, 10)
-});
+
+/* =====================================================
+   PERFIL: HISTORIAL DE ACTIVIDAD DEL USUARIO
+===================================================== */
+
+router.get('/perfil/actividad', requireAuth, h(async (req, res) => {
+
+    const usuarioId = req.session.userId;
+
+    // Consultar las publicaciones realizadas por el usuario
+    const resultados = await Promise.all([
+
+        supabase.from('objetos_perdidos')
+            .select('id, titulo, tipo, categoria, lugar_exacto, creado_en, estado')
+            .eq('usuario_id', usuarioId)
+            .order('creado_en', { ascending: false }),
+
+        supabase.from('tutores')
+            .select('id, nombre_completo, carrera, cursos, creado_en, estado')
+            .eq('usuario_id', usuarioId)
+            .order('creado_en', { ascending: false }),
+
+        supabase.from('punto_hueco')
+            .select('id, titulo, categoria, lugar_exacto, horario, creado_en, estado')
+            .eq('usuario_id', usuarioId)
+            .order('creado_en', { ascending: false }),
+
+        supabase.from('asesorias')
+            .select('*')
+            .eq('usuario_id', usuarioId),
+
+        supabase.from('hueco_participantes')
+            .select('hueco_id')
+            .eq('usuario_id', usuarioId)
+
+    ]);
+
+    // Comprobar errores de las consultas
+    for (const resultado of resultados) {
+        if (resultado.error) throw resultado.error;
+    }
+
+    const [objetos, tutores, huecos, asesorias, participaciones] = resultados;
+
+    // Consultar información de los grupos a los que se unió
+    const idsHuecos = [
+        ...new Set((participaciones.data || []).map(p => p.hueco_id))
+    ];
+
+    let huecosUnidos = [];
+
+    if (idsHuecos.length > 0) {
+
+        const { data, error } = await supabase
+            .from('punto_hueco')
+            .select('id, titulo, categoria, horario, lugar_exacto')
+            .in('id', idsHuecos);
+
+        if (error) throw error;
+
+        huecosUnidos = data || [];
+    }
+
+    // Construir el historial sin exponer teléfonos ni datos privados
+    const actividades = [];
+
+    (objetos.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'objeto',
+            titulo: r.tipo === 'PERDIDO'
+                ? 'Publicaste un objeto perdido'
+                : 'Publicaste un objeto encontrado',
+            descripcion: `${r.titulo} · ${r.categoria || 'Sin categoría'} · ${r.lugar_exacto || ''}`,
+            fecha: r.creado_en,
+            estado: r.estado
+        });
+
+    });
+
+    (tutores.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'tutoria',
+            titulo: 'Publicaste un perfil de tutoría',
+            descripcion: `${r.nombre_completo} · ${r.carrera || ''} · ${r.cursos || ''}`,
+            fecha: r.creado_en,
+            estado: r.estado
+        });
+
+    });
+
+    (huecos.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'hueco',
+            titulo: 'Creaste un Punto Hueco',
+            descripcion: `${r.titulo} · ${r.categoria || ''} · ${r.horario || ''}`,
+            fecha: r.creado_en,
+            estado: r.estado
+        });
+
+    });
+
+    (asesorias.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'asesoria',
+            titulo: 'Solicitaste una asesoría',
+            descripcion: r.curso_tema || 'Solicitud de asesoría académica',
+            fecha: r.creado_en || null,
+            estado: r.estado
+        });
+
+    });
+
+    // Mostrar también los grupos a los que pertenece.
+    // La tabla actual no proporciona un campo de fecha de unión.
+    huecosUnidos.forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'participacion',
+            titulo: 'Participas en un Punto Hueco',
+            descripcion: `${r.titulo} · ${r.categoria || ''} · ${r.horario || ''}`,
+            fecha: null,
+            estado: 'participando'
+        });
+
+    });
+
+    // Ordenar por fecha cuando existe una fecha registrada.
+    actividades.sort((a, b) => {
+        return new Date(b.fecha || 0) - new Date(a.fecha || 0);
+    });
+
+    // Resumen estadístico
+    res.json({
+
+        resumen: {
+            publicaciones: (objetos.data || []).length +
+                (tutores.data || []).length,
+
+            huecosCreados: (huecos.data || []).length,
+
+            huecosUnidos: (participaciones.data || []).length
+        },
+
+        actividades
+
+    });
+
+}));
+
 
 // =====================================================
 // OBJETOS PERDIDOS
