@@ -101,6 +101,524 @@ let studentSearchController = null;
 // En la etapa 5 utilizaremos esta información para abrir el chat.
 window.selectedStudentForChat = null;
 
+/* =====================================================
+   ESTADO DEL SISTEMA DE MENSAJERIA
+===================================================== */
+
+let activeConversationId = null;
+
+let activeConversationTitle = '';
+
+let chatPollingTimer = null;
+
+let lastMessagesSignature = '';
+
+let lastConversationRefresh = 0;
+
+async function chatRequest(url, options = {}) {
+
+    const response = await fetch(url, {
+
+        credentials: 'same-origin',
+
+        ...options,
+
+        headers: {
+            ...(options.body ? {
+                'Content-Type': 'application/json'
+            } : {}),
+            ...(options.headers || {})
+        }
+
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.error || 'No se pudo completar la operación.'
+        );
+
+    }
+
+    return data;
+
+}
+
+/* =====================================================
+   LISTAR CONVERSACIONES
+===================================================== */
+
+async function cargarConversaciones() {
+
+    const container = document.getElementById('conversationList');
+
+    if (!container) return;
+
+    try {
+
+        const data = await chatRequest('/api/conversaciones');
+
+        const conversaciones = data.conversaciones || [];
+
+        container.replaceChildren();
+
+        if (conversaciones.length === 0) {
+
+            const empty = document.createElement('div');
+
+            empty.className = 'text-center py-10';
+
+            empty.innerHTML = `
+                <i class="fa-regular fa-message text-2xl text-slate-300"></i>
+                <p class="text-sm font-bold text-slate-600 mt-3">
+                    Todavía no tienes conversaciones
+                </p>
+                <p class="text-xs text-slate-400 mt-1">
+                    Busca estudiantes para comenzar a conversar.
+                </p>
+            `;
+
+            container.appendChild(empty);
+
+            return;
+
+        }
+
+        conversaciones.forEach(conv => {
+
+            const button = document.createElement('button');
+
+            button.type = 'button';
+
+            button.className =
+                'w-full text-left flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 hover:border-amber-300 transition-colors';
+
+            if (conv.id === activeConversationId) {
+
+                button.classList.add('bg-red-50', 'border-red-200');
+
+            }
+
+            const avatar = document.createElement('div');
+
+            avatar.className =
+                'w-10 h-10 shrink-0 rounded-full bg-red-100 text-unsa-maroon flex items-center justify-center font-bold';
+
+            avatar.textContent =
+                (conv.titulo || 'U').charAt(0).toUpperCase();
+
+            const info = document.createElement('div');
+
+            info.className = 'flex-1 min-w-0';
+
+            const title = document.createElement('p');
+
+            title.className =
+                'text-sm font-bold text-slate-700 truncate';
+
+            title.textContent = conv.titulo || 'Conversación';
+
+            const subtitle = document.createElement('p');
+
+            subtitle.className = 'text-xs text-slate-400 mt-1';
+
+            subtitle.textContent =
+                conv.tipo === 'grupo'
+                    ? 'Grupo de Punto Hueco'
+                    : 'Conversación privada';
+
+            info.appendChild(title);
+            info.appendChild(subtitle);
+
+            button.appendChild(avatar);
+            button.appendChild(info);
+
+            button.addEventListener('click', () => {
+
+                abrirChat(
+                    conv.id,
+                    conv.titulo,
+                    conv.tipo
+                );
+
+            });
+
+            container.appendChild(button);
+
+        });
+
+        lastConversationRefresh = Date.now();
+
+    } catch (error) {
+
+        console.error('Error cargando conversaciones:', error);
+
+        container.textContent =
+            'No se pudieron cargar las conversaciones.';
+
+    }
+
+}
+
+/* =====================================================
+   CREAR O ABRIR CHAT PRIVADO
+===================================================== */
+
+async function abrirConversacionDirecta(usuarioId, nombre) {
+
+    try {
+
+        const data = await chatRequest(
+            '/api/conversaciones/directas',
+            {
+                method: 'POST',
+
+                body: JSON.stringify({
+                    destinatarioId: usuarioId
+                })
+            }
+        );
+
+        await cargarConversaciones();
+
+        await abrirChat(
+            data.conversacionId,
+            nombre,
+            'directa'
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        const status = document.getElementById('studentSearchStatus');
+
+        if (status) {
+            status.textContent = error.message;
+        }
+
+    }
+
+}
+
+/* =====================================================
+   CARGAR MENSAJES
+===================================================== */
+
+async function cargarMensajes(conversacionId, forceRender = false) {
+
+    const container = document.getElementById('chatMessages');
+
+    const status = document.getElementById('chatStatus');
+
+    const data = await chatRequest(
+        `/api/conversaciones/${conversacionId}/mensajes?limit=50`
+    );
+
+    // Evitar mostrar mensajes de otra conversación
+    if (conversacionId !== activeConversationId) return;
+
+    const mensajes = data.mensajes || [];
+
+    const signature = JSON.stringify(
+        mensajes.map(m => [m.id, m.contenido, m.editado, m.eliminado])
+    );
+
+    if (!forceRender && signature === lastMessagesSignature) {
+        return;
+    }
+
+    const cercaDelFinal =
+        container.scrollHeight -
+        container.scrollTop -
+        container.clientHeight < 120;
+
+    lastMessagesSignature = signature;
+
+    container.replaceChildren();
+
+    if (mensajes.length === 0) {
+
+        const empty = document.createElement('p');
+
+        empty.className =
+            'text-center text-xs text-slate-400 py-12';
+
+        empty.textContent =
+            'Todavía no hay mensajes. ¡Saluda y comienza a conversar!';
+
+        container.appendChild(empty);
+
+    }
+
+    mensajes.forEach(mensaje => {
+
+        const row = document.createElement('div');
+
+        row.className = `flex ${
+            mensaje.esMio
+                ? 'justify-end'
+                : 'justify-start'
+        }`;
+
+        const bubble = document.createElement('div');
+
+        bubble.className = `
+            max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3
+            ${
+                mensaje.esMio
+                    ? 'bg-unsa-maroon text-white rounded-br-sm'
+                    : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'
+            }
+        `;
+
+        const content = document.createElement('p');
+
+        content.className = 'text-sm whitespace-pre-wrap break-words';
+
+        content.textContent = mensaje.contenido;
+
+        const time = document.createElement('p');
+
+        time.className = `
+            text-[10px] mt-2 text-right
+            ${
+                mensaje.esMio
+                    ? 'text-white/70'
+                    : 'text-slate-400'
+            }
+        `;
+
+        const date = new Date(mensaje.creadoEn);
+
+        time.textContent = Number.isNaN(date.getTime())
+            ? ''
+            : date.toLocaleTimeString('es-PE', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+        if (mensaje.editado) {
+            time.textContent += ' · editado';
+        }
+
+        bubble.appendChild(content);
+        bubble.appendChild(time);
+
+        row.appendChild(bubble);
+
+        container.appendChild(row);
+
+    });
+
+    if (cercaDelFinal || forceRender) {
+
+        container.scrollTop = container.scrollHeight;
+
+    }
+
+    status.textContent = 'Mensajes actualizados.';
+
+}
+
+/* =====================================================
+   ABRIR VENTANA DE CHAT
+===================================================== */
+
+async function abrirChat(conversacionId, titulo, tipo = 'directa') {
+
+    // Detener la actualización de la conversación anterior
+    if (chatPollingTimer) {
+        clearInterval(chatPollingTimer);
+        chatPollingTimer = null;
+    }
+
+    activeConversationId = conversacionId;
+
+    activeConversationTitle = titulo || 'Conversación';
+
+    lastMessagesSignature = '';
+
+    // Cambiar de perfil a chat
+    document.getElementById('profileOverview')
+        .classList.add('hidden');
+
+    document.getElementById('chatPanel')
+        .classList.remove('hidden');
+
+    document.getElementById('chatTitle').textContent =
+        activeConversationTitle;
+
+    document.getElementById('chatAvatar').textContent =
+        activeConversationTitle.charAt(0).toUpperCase();
+
+    document.getElementById('chatSubtitle').textContent =
+        tipo === 'grupo'
+            ? 'Grupo de estudiantes'
+            : 'Conversación privada';
+
+    document.getElementById('chatStatus').textContent =
+        'Cargando mensajes...';
+
+    try {
+
+        await cargarMensajes(conversacionId, true);
+
+        // Actualización automática cada 4 segundos
+        chatPollingTimer = setInterval(async () => {
+
+            if (!activeConversationId) return;
+
+            try {
+
+                await cargarMensajes(activeConversationId);
+
+                if (Date.now() - lastConversationRefresh > 15000) {
+
+                    await cargarConversaciones();
+
+                }
+
+            } catch (error) {
+
+                console.error('Error actualizando chat:', error);
+
+            }
+
+        }, 4000);
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById('chatStatus').textContent =
+            'No se pudieron recuperar los mensajes.';
+
+    }
+
+}
+
+/* =====================================================
+   ENVIAR MENSAJES
+===================================================== */
+
+async function enviarMensaje(event) {
+
+    event.preventDefault();
+
+    if (!activeConversationId) return;
+
+    const input = document.getElementById('chatMessageInput');
+
+    const button = document.getElementById('chatSendButton');
+
+    const contenido = input.value.trim();
+
+    if (!contenido) return;
+
+    if (contenido.length > 2000) return;
+
+    button.disabled = true;
+
+    button.textContent = 'Enviando...';
+
+    try {
+
+        const conversacionId = activeConversationId;
+
+        const data = await chatRequest(
+            `/api/conversaciones/${conversacionId}/mensajes`,
+            {
+                method: 'POST',
+
+                body: JSON.stringify({
+                    contenido
+                })
+            }
+        );
+
+        if (activeConversationId !== conversacionId) return;
+
+        input.value = '';
+
+        // Mostrar inmediatamente el mensaje guardado
+        await cargarMensajes(conversacionId, true);
+
+        await cargarConversaciones();
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById('chatStatus').textContent =
+            error.message || 'No se pudo enviar el mensaje.';
+
+    } finally {
+
+        button.disabled = false;
+
+        button.innerHTML =
+            '<i class="fa-solid fa-paper-plane mr-1"></i> Enviar';
+
+    }
+
+}
+
+/* =====================================================
+   VOLVER AL PERFIL
+===================================================== */
+
+function cerrarChat() {
+
+    if (chatPollingTimer) {
+
+        clearInterval(chatPollingTimer);
+
+        chatPollingTimer = null;
+
+    }
+
+    activeConversationId = null;
+
+    lastMessagesSignature = '';
+
+    document.getElementById('chatPanel')
+        .classList.add('hidden');
+
+    document.getElementById('profileOverview')
+        .classList.remove('hidden');
+
+    cargarConversaciones();
+
+}
+
+/* =====================================================
+   INICIALIZAR MENSAJERIA
+===================================================== */
+
+function inicializarMensajeria() {
+
+    const form = document.getElementById('chatForm');
+
+    const backButton = document.getElementById('backToProfile');
+
+    if (!form || !backButton) return;
+
+    // Evitar duplicar eventos
+    if (form.dataset.initialized === 'true') return;
+
+    form.dataset.initialized = 'true';
+
+    form.addEventListener('submit', enviarMensaje);
+
+    backButton.addEventListener('click', cerrarChat);
+
+    cargarConversaciones();
+
+}
+
 
 // Buscar estudiantes en el backend
 async function buscarEstudiantes(termino) {
@@ -229,26 +747,35 @@ async function buscarEstudiantes(termino) {
 
 
 // Seleccionar al estudiante encontrado
-function seleccionarEstudiante(usuario) {
+
+async function seleccionarEstudiante(usuario) {
 
     window.selectedStudentForChat = {
+
         id: usuario.id,
+
         nombre: usuario.nombre,
+
         rol: usuario.rol
+
     };
 
     const notice = document.getElementById('selectedStudentNotice');
+
     const name = document.getElementById('selectedStudentName');
 
     name.textContent = usuario.nombre;
 
     notice.classList.remove('hidden');
 
-    openNotificationToast(
-        `${usuario.nombre} fue seleccionado correctamente.`
+    // Abrir el chat privado
+    await abrirConversacionDirecta(
+        usuario.id,
+        usuario.nombre
     );
 
 }
+
 
 
 // Activar el buscador
@@ -511,8 +1038,13 @@ async function loadProfileActivity() {
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await sessionReady;   // definido en layout.js
     if (user) {
-        inicializarBuscadorEstudiantes();
-        renderProfile(user);
+
+    renderProfile(user);
+
+    inicializarBuscadorEstudiantes();
+
+    inicializarMensajeria();
+
     } else {
         showAuthTab('login');
         showView('forms');
