@@ -59,6 +59,56 @@ const mapHueco = (r, uid, joinedByMe = false) => ({
     joinedByMe
 });
 
+const mapAnn = r => ({
+    id: r.id, 
+    title: r.titulo, 
+    category: r.categoria || '', 
+    urgency: r.urgencia || 'INFO',
+    campus: r.campus_afectado || '', 
+    content: r.contenido || '', 
+    date: (r.creado_en || '').slice(0, 10)
+}); // <--- FALTABA CERRAR AQUÍ
+
+/* =====================================================
+   BUSCADOR DE ESTUDIANTES
+===================================================== */
+
+router.get('/usuarios/buscar', requireAuth, h(async (req, res) => {
+
+    // Limpiar y validar el término de búsqueda
+    const termino = txt(req.query.q, 60)
+        .replace(/[\\%_*]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // Exigir al menos dos caracteres
+    if (termino.length < 2) {
+        return res.json({ usuarios: [] });
+    }
+
+    // Buscar usuarios registrados por nombre
+    const { data, error } = await supabase
+        .from('perfiles')
+        .select('id, nombre, rol')
+        .ilike('nombre', `%${termino}%`)
+        .neq('id', req.session.userId)
+        .neq('rol', 'admin')
+        .order('nombre', { ascending: true })
+        .limit(10);
+
+    if (error) throw error;
+
+    // Devolver únicamente información necesaria
+    const usuarios = (data || []).map(usuario => ({
+        id: usuario.id,
+        nombre: usuario.nombre || 'Usuario UNSA',
+        rol: usuario.rol || 'estudiante'
+    }));
+
+    res.json({ usuarios });
+
+}));
+
 /* =====================================================
    PERFIL: HISTORIAL DE ACTIVIDAD DEL USUARIO
 ===================================================== */
