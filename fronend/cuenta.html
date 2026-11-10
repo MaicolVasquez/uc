@@ -188,22 +188,23 @@
                     </h3>
 
                     <div id="conversationList"
-                        class="min-h-[250px] flex flex-col items-center justify-center text-center px-4">
+    class="min-h-[180px] space-y-2">
 
-                        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-                            <i class="fa-regular fa-message text-2xl text-slate-400"></i>
-                        </div>
+    <div class="text-center py-10">
 
-                        <h4 class="font-bold text-slate-700 text-sm">
-                            Todavía no tienes conversaciones
-                        </h4>
+        <i class="fa-regular fa-message text-2xl text-slate-300"></i>
 
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            Cuando comiences a conversar con otros estudiantes,
-                            tus chats aparecerán aquí.
-                        </p>
+        <p class="text-sm font-bold text-slate-600 mt-3">
+            Todavía no tienes conversaciones
+        </p>
 
-                    </div>
+        <p class="text-xs text-slate-400 mt-1">
+            Busca estudiantes para comenzar a conversar.
+        </p>
+
+    </div>
+
+</div>
 
                 </div>
 
@@ -224,6 +225,7 @@
 
         <!-- PANEL DERECHO: PERFIL Y ACTIVIDAD -->
         <div class="min-w-0 space-y-6">
+            <div id="profileOverview" class="space-y-6"></div>
 
             <!-- ENCABEZADO DEL PERFIL -->
             <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -413,6 +415,105 @@
                     Cerrar sesión
 
                 </button>
+</div>
+
+<!-- PANEL DE CONVERSACION -->
+<section id="chatPanel"
+    class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <!-- ENCABEZADO -->
+    <header class="p-5 border-b border-slate-100 flex items-center gap-3">
+
+        <button
+            type="button"
+            id="backToProfile"
+            class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+        </button>
+
+        <div class="w-11 h-11 shrink-0 rounded-full bg-red-100 text-unsa-maroon flex items-center justify-center font-bold">
+
+            <span id="chatAvatar">U</span>
+
+        </div>
+
+        <div class="min-w-0 flex-1">
+
+            <h2 id="chatTitle"
+                class="font-extrabold text-slate-800 truncate">
+                Conversación
+            </h2>
+
+            <p id="chatSubtitle"
+                class="text-xs text-slate-400">
+                Mensajes privados
+            </p>
+
+        </div>
+
+        <span class="text-xs text-emerald-600 font-semibold">
+            <i class="fa-solid fa-lock mr-1"></i>
+            Privado
+        </span>
+
+    </header>
+
+
+    <!-- MENSAJES -->
+    <div id="chatMessages"
+        class="h-[55vh] min-h-[320px] max-h-[620px] overflow-y-auto p-5 bg-slate-50 space-y-4"
+        role="log"
+        aria-live="polite"
+        aria-label="Mensajes de la conversación">
+
+        <div class="flex flex-col items-center justify-center h-full text-center">
+
+            <i class="fa-regular fa-comments text-4xl text-slate-300"></i>
+
+            <p class="text-sm text-slate-500 mt-3">
+                Inicia una conversación.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ESTADO DEL CHAT -->
+    <div id="chatStatus"
+        class="px-5 pt-2 text-xs text-slate-400"
+        aria-live="polite">
+    </div>
+
+
+    <!-- ESCRIBIR MENSAJE -->
+    <form id="chatForm"
+        class="p-4 border-t border-slate-100 flex items-end gap-3">
+
+        <textarea
+            id="chatMessageInput"
+            maxlength="2000"
+            rows="2"
+            required
+            placeholder="Escribe un mensaje..."
+            class="flex-1 resize-none rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold"
+        ></textarea>
+
+        <button
+            type="submit"
+            id="chatSendButton"
+            class="h-11 px-5 rounded-xl bg-unsa-maroon hover:bg-unsa-bright text-white font-bold text-sm transition-colors">
+
+            <i class="fa-solid fa-paper-plane mr-1"></i>
+            Enviar
+
+        </button>
+
+    </form>
+
+</section>
 
             </div>
 
