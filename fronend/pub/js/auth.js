@@ -87,6 +87,7 @@ function renderProfile(user) {
     document.getElementById('profileHuecosJoinedCount').textContent = '—';
 
     showView('profile');
+    loadProfileActivity();
 }
 
 
@@ -146,6 +147,160 @@ async function handleLogout() {
     showAuthTab('login');
     showView('forms');
     openNotificationToast('Sesión cerrada.');
+}
+
+// ==========================================
+// PERFIL: CARGAR ACTIVIDAD REAL
+// ==========================================
+
+async function loadProfileActivity() {
+
+    const timeline = document.getElementById('activityTimeline');
+    const emptyState = document.getElementById('activityEmptyState');
+
+    if (!timeline || !emptyState) return;
+
+    const posts = document.getElementById('profilePostsCount');
+    const created = document.getElementById('profileHuecosCreatedCount');
+    const joined = document.getElementById('profileHuecosJoinedCount');
+
+    timeline.replaceChildren();
+    timeline.classList.add('hidden');
+
+    emptyState.classList.remove('hidden');
+
+    try {
+
+        const response = await fetch('/api/perfil/actividad', {
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'No se pudo cargar la actividad.');
+        }
+
+        // Actualizar estadísticas
+        posts.textContent = data.resumen.publicaciones;
+        created.textContent = data.resumen.huecosCreados;
+        joined.textContent = data.resumen.huecosUnidos;
+
+        const actividades = data.actividades || [];
+
+        if (actividades.length === 0) {
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+        timeline.classList.remove('hidden');
+
+        actividades.forEach(actividad => {
+
+            const article = document.createElement('article');
+            article.className = 'p-5 flex gap-4';
+
+            const iconos = {
+                objeto: 'fa-box-open',
+                tutoria: 'fa-graduation-cap',
+                hueco: 'fa-mug-hot',
+                asesoria: 'fa-book-open',
+                participacion: 'fa-people-group'
+            };
+
+            const colores = {
+                objeto: 'bg-red-50 text-unsa-maroon',
+                tutoria: 'bg-blue-50 text-blue-600',
+                hueco: 'bg-amber-50 text-amber-600',
+                asesoria: 'bg-indigo-50 text-indigo-600',
+                participacion: 'bg-emerald-50 text-emerald-600'
+            };
+
+            const iconContainer = document.createElement('div');
+            iconContainer.className =
+                `w-11 h-11 shrink-0 rounded-xl flex items-center justify-center ${colores[actividad.tipo] || 'bg-slate-100 text-slate-500'}`;
+
+            const icon = document.createElement('i');
+            icon.className = `fa-solid ${iconos[actividad.tipo] || 'fa-circle-info'}`;
+
+            iconContainer.appendChild(icon);
+
+            const content = document.createElement('div');
+            content.className = 'flex-1 min-w-0';
+
+            const title = document.createElement('h3');
+            title.className = 'text-sm font-bold text-slate-800';
+            title.textContent = actividad.titulo;
+
+            const description = document.createElement('p');
+            description.className = 'text-xs text-slate-500 mt-1 break-words';
+            description.textContent = actividad.descripcion;
+
+            const footer = document.createElement('div');
+            footer.className = 'flex flex-wrap items-center gap-2 mt-3';
+
+            const statusLabels = {
+                aprobado: 'Aprobado',
+                pendiente: 'Pendiente de aprobación',
+                rechazado: 'Rechazado',
+                participando: 'Participando'
+            };
+
+            const estado = document.createElement('span');
+            estado.className =
+                'text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-600';
+
+            estado.textContent =
+                statusLabels[actividad.estado] || 'Registrado';
+
+            footer.appendChild(estado);
+
+            const date = document.createElement('span');
+            date.className = 'text-[10px] text-slate-400';
+
+            if (actividad.fecha) {
+
+                const parsedDate = new Date(actividad.fecha);
+
+                date.textContent = Number.isNaN(parsedDate.getTime())
+                    ? 'Fecha no disponible'
+                    : parsedDate.toLocaleDateString('es-PE', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+
+            } else {
+
+                date.textContent = 'Sin fecha de unión registrada';
+
+            }
+
+            footer.appendChild(date);
+
+            content.appendChild(title);
+            content.appendChild(description);
+            content.appendChild(footer);
+
+            article.appendChild(iconContainer);
+            article.appendChild(content);
+
+            timeline.appendChild(article);
+
+        });
+
+    } catch (error) {
+
+        console.error('Error cargando actividad:', error);
+
+        timeline.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+
+        emptyState.textContent =
+            'No se pudo cargar tu actividad. Comprueba tu conexión e inténtalo nuevamente.';
+
+    }
+
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
