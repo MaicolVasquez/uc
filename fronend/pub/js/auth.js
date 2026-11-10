@@ -250,6 +250,7 @@ async function cargarConversaciones() {
         });
 
         lastConversationRefresh = Date.now();
+        return conversaciones;
 
     } catch (error) {
 
@@ -257,6 +258,7 @@ async function cargarConversaciones() {
 
         container.textContent =
             'No se pudieron cargar las conversaciones.';
+            return [];
 
     }
 
@@ -591,6 +593,11 @@ function cerrarChat() {
         .classList.remove('hidden');
 
     cargarConversaciones();
+    const url = new URL(window.location.href);
+
+url.searchParams.delete('chat');
+
+window.history.replaceState({}, '', url);
 
 }
 
@@ -598,7 +605,12 @@ function cerrarChat() {
    INICIALIZAR MENSAJERIA
 ===================================================== */
 
-function inicializarMensajeria() {
+
+/* =====================================================
+   INICIALIZAR MENSAJERIA Y ABRIR GRUPO DESDE PUNTO HUECO
+===================================================== */
+
+async function inicializarMensajeria() {
 
     const form = document.getElementById('chatForm');
 
@@ -606,7 +618,6 @@ function inicializarMensajeria() {
 
     if (!form || !backButton) return;
 
-    // Evitar duplicar eventos
     if (form.dataset.initialized === 'true') return;
 
     form.dataset.initialized = 'true';
@@ -615,9 +626,39 @@ function inicializarMensajeria() {
 
     backButton.addEventListener('click', cerrarChat);
 
-    cargarConversaciones();
+    // Cargar todas las conversaciones del estudiante.
+    const conversaciones = await cargarConversaciones();
+
+    // Comprobar si venimos desde una tarjeta de Punto Hueco.
+    const params = new URLSearchParams(window.location.search);
+
+    const chatId = params.get('chat');
+
+    if (!chatId) return;
+
+    // Buscar el grupo entre las conversaciones autorizadas.
+    const conversacion = conversaciones.find(
+        c => c.id === chatId
+    );
+
+    if (!conversacion) {
+
+        openNotificationToast(
+            'No tienes acceso a esa conversación.'
+        );
+
+        return;
+
+    }
+
+    await abrirChat(
+        conversacion.id,
+        conversacion.titulo,
+        conversacion.tipo
+    );
 
 }
+
 
 
 // Buscar estudiantes en el backend

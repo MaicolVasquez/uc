@@ -509,9 +509,97 @@ router.post('/huecos/:id/join', requireAuth, h(async (req, res) => {
     res.json(mapHueco(data[0], userId, true));
 }));
 
+/* =====================================================
+   OBTENER CHAT GRUPAL DE PUNTO HUECO
+===================================================== */
+
+router.get('/huecos/:id/conversacion', requireAuth, h(async (req, res) => {
+
+    const huecoId = req.params.id;
+    const usuarioId = req.session.userId;
+
+    if (!UUID_RE.test(huecoId)) {
+        return bad(res, 'Identificador de Punto Hueco no válido.');
+    }
+
+    // Buscar la conversación vinculada al encuentro
+    const { data: conversacion, error: e1 } = await supabase
+        .from('conversaciones')
+        .select('id, titulo, tipo')
+        .eq('punto_hueco_id', huecoId)
+        .eq('tipo', 'grupo')
+        .maybeSingle();
+
+    if (e1) throw e1;
+
+    if (!conversacion) {
+        return res.status(404).json({
+            error: 'Este Punto Hueco todavía no tiene una conversación.'
+        });
+    }
+
+    // Comprobar que el usuario pertenece al grupo
+    const { data: participacion, error: e2 } = await supabase
+        .from('conversacion_participantes')
+        .select('usuario_id')
+        .eq('conversacion_id', conversacion.id)
+        .eq('usuario_id', usuarioId)
+        .eq('activo', true)
+        .maybeSingle();
+
+    if (e2) throw e2;
+
+    if (!participacion) {
+        return res.status(403).json({
+            error: 'Debes unirte al Punto Hueco para acceder a su chat.'
+        });
+    }
+
+    res.json({
+
+        conversacionId: conversacion.id,
+
+        titulo: conversacion.titulo,
+
+        tipo: conversacion.tipo
+
+    });
+
+}));
+
 // Obtener participantes de un Punto Hueco (Para el modal del creador)
-router.get('/huecos/:id/participantes', h(async (req, res) => {
-    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+
+router.get('/huecos/:id/participantes', requireAuth, h(async (req, res) => {
+
+    if (!UUID_RE.test(req.params.id)) {
+        return bad(res, 'ID no válido.');
+    }
+
+    // Comprobar quién organizó el encuentro
+    const { data: hueco, error: e1 } = await supabase
+        .from('punto_hueco')
+        .select('usuario_id')
+        .eq('id', req.params.id)
+        .maybeSingle();
+
+    if (e1) throw e1;
+
+    if (!hueco) {
+        return res.status(404).json({
+            error: 'Punto Hueco no encontrado.'
+        });
+    }
+
+    const administrador = await esAdmin(req.session.userId);
+
+    if (
+        hueco.usuario_id !== req.session.userId &&
+        !administrador
+    ) {
+        return res.status(403).json({
+            error: 'Solo el organizador puede consultar los participantes.'
+        });
+    }
 
     const { data, error } = await supabase
         .from('hueco_participantes')
@@ -523,15 +611,16 @@ router.get('/huecos/:id/participantes', h(async (req, res) => {
 
     if (error) throw error;
 
-    const participantes = data.map(p => ({
+    const participantes = (data || []).map(p => ({
         id: p.usuario_id,
-        nombre: (p.perfiles && p.perfiles.nombre) ? p.perfiles.nombre : 'Usuario Desconocido',
-        carrera: 'Estudiante UNSA',
-        telefono: ''
+        nombre: p.perfiles?.nombre || 'Usuario UNSA',
+        carrera: 'Estudiante UNSA'
     }));
 
     res.json(participantes);
+
 }));
+
 
 // =====================================================
 // NOTIFICACIONES / AVISOS
