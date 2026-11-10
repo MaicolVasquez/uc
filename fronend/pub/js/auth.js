@@ -38,17 +38,57 @@ function showView(view) {
     document.getElementById('profileCard').classList.toggle('hidden', view !== 'profile');
 }
 
+
 function renderProfile(user) {
-    const name = user.nombre || user.email.split('@')[0];
-    document.getElementById('profileInitial').textContent = name.charAt(0).toUpperCase();
+
+    const email = user.email || '';
+    const name = (user.nombre || email.split('@')[0] || 'Estudiante').trim();
+
+    // Inicial del usuario
+    document.getElementById('profileInitial').textContent =
+        name.charAt(0).toUpperCase() || 'U';
+
+    // Información personal
     document.getElementById('profileName').textContent = name;
-    document.getElementById('profileEmail').textContent = user.email;
-    document.getElementById('profileId').textContent = user.id.slice(0, 8) + '…';
-    document.getElementById('profileDate').textContent = new Date(user.createdAt).toLocaleDateString('es-PE', {
-        day: '2-digit', month: 'long', year: 'numeric'
-    });
+    document.getElementById('profileEmail').textContent = email;
+
+    // Rol de usuario
+    const roles = {
+        estudiante: 'Estudiante',
+        docente: 'Docente',
+        admin: 'Administrador'
+    };
+
+    const role = String(user.rol || '').toLowerCase();
+
+    document.getElementById('profileRole').textContent =
+        roles[role] || 'Miembro UNSA';
+
+    // Identificador
+    document.getElementById('profileId').textContent =
+        user.id ? user.id.slice(0, 8) + '…' : '—';
+
+    // Fecha de registro
+    const createdAt = user.createdAt ? new Date(user.createdAt) : null;
+
+    const formattedDate = createdAt && !Number.isNaN(createdAt.getTime())
+        ? createdAt.toLocaleDateString('es-PE', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        })
+        : 'No disponible';
+
+    document.getElementById('profileDate').textContent = formattedDate;
+
+    // Los indicadores se conectarán con la base de datos
+    document.getElementById('profilePostsCount').textContent = '—';
+    document.getElementById('profileHuecosCreatedCount').textContent = '—';
+    document.getElementById('profileHuecosJoinedCount').textContent = '—';
+
     showView('profile');
 }
+
 
 async function handleRegister(e) {
     e.preventDefault();

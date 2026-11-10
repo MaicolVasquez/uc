@@ -17,15 +17,15 @@
     <div id="layout-top"></div>
 
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <section id="tab-cuenta-content" class="max-w-md mx-auto">
+        <section id="tab-cuenta-content" class="w-full">
 
             <!-- Cargando -->
-            <div id="authLoading" class="text-center text-slate-500 py-16 text-sm">
+            <div id="authLoading" class="text-center text-slate-500 py-16 text-sm max-w-md mx-auto">
                 <i class="fa-solid fa-spinner fa-spin mr-2"></i> Verificando sesión...
             </div>
 
             <!-- Formularios (sin sesión) -->
-            <div id="authForms" class="hidden bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div id="authForms" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
                 <div class="bg-gradient-to-r from-unsa-maroon to-unsa-bright text-white p-6 text-center">
                     <div
                         class="w-14 h-14 mx-auto rounded-2xl bg-unsa-gold text-unsa-maroon flex items-center justify-center text-2xl mb-3 shadow-lg">
@@ -104,28 +104,288 @@
             </div>
 
             <!-- Perfil (con sesión) -->
-            <div id="profileCard" class="hidden bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-unsa-maroon to-unsa-bright text-white p-6 text-center">
-                    <div class="w-16 h-16 mx-auto rounded-full bg-unsa-gold text-unsa-maroon flex items-center justify-center text-2xl font-black mb-3 shadow-lg"
-                        id="profileInitial">U</div>
-                    <h1 class="text-xl font-extrabold" id="profileName">—</h1>
-                    <p class="text-xs text-yellow-100 mt-1" id="profileEmail">—</p>
-                </div>
-                <div class="p-6 space-y-3 text-sm">
-                    <div class="flex justify-between border-b border-slate-100 pb-2">
-                        <span class="text-slate-500">ID de usuario</span>
-                        <span class="font-mono text-xs text-slate-700" id="profileId">—</span>
+            
+<!-- Perfil rediseñado -->
+<div id="profileCard" class="hidden w-full">
+
+    <div class="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6 items-start">
+
+        <!-- PANEL IZQUIERDO: MENSAJES -->
+        <aside class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+            <div class="p-5 border-b border-slate-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-slate-800">
+                            <i class="fa-solid fa-comments text-unsa-maroon mr-2"></i>
+                            Mensajes
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Tus conversaciones universitarias
+                        </p>
                     </div>
-                    <div class="flex justify-between border-b border-slate-100 pb-2">
-                        <span class="text-slate-500">Cuenta creada</span>
-                        <span class="text-slate-700" id="profileDate">—</span>
-                    </div>
-                    <button type="button" onclick="handleLogout()"
-                        class="w-full mt-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
-                    </button>
+                    <span class="text-xs font-bold text-slate-400">0 chats</span>
                 </div>
             </div>
+
+            <div class="p-4">
+
+                <label for="chatSearch"
+                    class="block text-xs font-bold text-slate-600 mb-2">
+                    Buscar estudiantes
+                </label>
+
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+
+                    <input
+                        type="search"
+                        id="chatSearch"
+                        disabled
+                        placeholder="Buscar por nombre..."
+                        class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm cursor-not-allowed">
+                </div>
+
+                <p class="text-[11px] text-slate-400 mt-2">
+                    El buscador estará disponible en la siguiente etapa.
+                </p>
+
+                <div class="mt-7">
+
+                    <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-4">
+                        Conversaciones recientes
+                    </h3>
+
+                    <div id="conversationList"
+                        class="min-h-[250px] flex flex-col items-center justify-center text-center px-4">
+
+                        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                            <i class="fa-regular fa-message text-2xl text-slate-400"></i>
+                        </div>
+
+                        <h4 class="font-bold text-slate-700 text-sm">
+                            Todavía no tienes conversaciones
+                        </h4>
+
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            Cuando comiences a conversar con otros estudiantes,
+                            tus chats aparecerán aquí.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100">
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-shield-halved text-unsa-maroon mt-1"></i>
+                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                        Tus conversaciones serán privadas y estarán
+                        disponibles únicamente para sus participantes.
+                    </p>
+                </div>
+            </div>
+
+        </aside>
+
+
+        <!-- PANEL DERECHO: PERFIL Y ACTIVIDAD -->
+        <div class="min-w-0 space-y-6">
+
+            <!-- ENCABEZADO DEL PERFIL -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+                <div class="bg-gradient-to-r from-unsa-maroon to-unsa-bright p-6 sm:p-8 text-white">
+
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+
+                        <div id="profileInitial"
+                            class="w-20 h-20 shrink-0 rounded-2xl bg-unsa-gold text-unsa-maroon flex items-center justify-center text-3xl font-black shadow-lg">
+                            U
+                        </div>
+
+                        <div class="text-center sm:text-left flex-1 min-w-0">
+
+                            <span class="text-xs text-yellow-200 font-bold uppercase tracking-wider">
+                                Mi perfil universitario
+                            </span>
+
+                            <h1 id="profileName"
+                                class="text-2xl font-extrabold mt-1 break-words">
+                                —
+                            </h1>
+
+                            <p id="profileEmail"
+                                class="text-sm text-yellow-100 mt-2 break-all">
+                                —
+                            </p>
+
+                            <div class="mt-3">
+                                <span id="profileRole"
+                                    class="inline-flex bg-white/15 border border-white/20 rounded-full px-3 py-1 text-xs font-bold">
+                                    Estudiante
+                                </span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- INFORMACIÓN DE LA CUENTA -->
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div class="bg-slate-50 rounded-xl p-4">
+                        <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+                            <i class="fa-solid fa-fingerprint"></i>
+                            Identificador de usuario
+                        </div>
+
+                        <p id="profileId"
+                            class="font-mono text-sm font-bold text-slate-700 mt-2 break-all">
+                            —
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl p-4">
+                        <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold">
+                            <i class="fa-regular fa-calendar"></i>
+                            Fecha de registro
+                        </div>
+
+                        <p id="profileDate"
+                            class="font-bold text-sm text-slate-700 mt-2">
+                            —
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ESTADÍSTICAS DEL USUARIO -->
+            <section>
+
+                <div class="mb-4">
+                    <h2 class="text-lg font-extrabold text-slate-800">
+                        Mi actividad
+                    </h2>
+
+                    <p class="text-xs text-slate-500 mt-1">
+                        Tu participación dentro de UNSA Conecta
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 text-unsa-maroon flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-newspaper"></i>
+                        </div>
+
+                        <p id="profilePostsCount"
+                            class="text-2xl font-extrabold text-slate-800">—</p>
+
+                        <p class="text-xs text-slate-500 mt-1">
+                            Publicaciones
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-map-pin"></i>
+                        </div>
+
+                        <p id="profileHuecosCreatedCount"
+                            class="text-2xl font-extrabold text-slate-800">—</p>
+
+                        <p class="text-xs text-slate-500 mt-1">
+                            Puntos Hueco creados
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-people-group"></i>
+                        </div>
+
+                        <p id="profileHuecosJoinedCount"
+                            class="text-2xl font-extrabold text-slate-800">—</p>
+
+                        <p class="text-xs text-slate-500 mt-1">
+                            Grupos participantes
+                        </p>
+                    </div>
+
+                </div>
+
+                <p class="text-[11px] text-slate-400 mt-3">
+                    Las estadísticas se conectarán con tus publicaciones y participaciones.
+                </p>
+
+            </section>
+
+
+            <!-- HISTORIAL DE ACTIVIDAD -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+                <div class="p-5 border-b border-slate-100">
+                    <h2 class="font-extrabold text-slate-800">
+                        <i class="fa-solid fa-clock-rotate-left text-unsa-maroon mr-2"></i>
+                        Historial de actividad
+                    </h2>
+
+                    <p class="text-xs text-slate-500 mt-1">
+                        Consulta tus publicaciones y participaciones.
+                    </p>
+                </div>
+
+                <div id="activityEmptyState"
+                    class="py-12 px-6 text-center">
+
+                    <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-chart-line text-2xl text-slate-400"></i>
+                    </div>
+
+                    <h3 class="font-bold text-slate-700">
+                        Tu actividad aparecerá aquí
+                    </h3>
+
+                    <p class="text-sm text-slate-400 mt-2 max-w-sm mx-auto">
+                        Aquí podrás consultar tus objetos perdidos,
+                        publicaciones, tutorías y actividades de Punto Hueco.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- CERRAR SESIÓN -->
+            <div class="flex justify-end">
+
+                <button
+                    type="button"
+                    onclick="handleLogout()"
+                    class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Cerrar sesión
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
         </section>
     </main>
 
