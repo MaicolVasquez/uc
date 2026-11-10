@@ -90,6 +90,211 @@ function renderProfile(user) {
     loadProfileActivity();
 }
 
+/* =====================================================
+   BUSCADOR DE ESTUDIANTES
+===================================================== */
+
+let studentSearchTimer = null;
+let studentSearchController = null;
+
+// Guardamos temporalmente al estudiante seleccionado.
+// En la etapa 5 utilizaremos esta información para abrir el chat.
+window.selectedStudentForChat = null;
+
+
+// Buscar estudiantes en el backend
+async function buscarEstudiantes(termino) {
+
+    const results = document.getElementById('studentSearchResults');
+    const status = document.getElementById('studentSearchStatus');
+
+    if (!results || !status) return;
+
+    // Cancelar la búsqueda anterior si todavía está ejecutándose
+    if (studentSearchController) {
+        studentSearchController.abort();
+    }
+
+    studentSearchController = new AbortController();
+
+    results.replaceChildren();
+    status.textContent = 'Buscando estudiantes...';
+
+    try {
+
+        const response = await fetch(
+            `/api/usuarios/buscar?q=${encodeURIComponent(termino)}`,
+            {
+                credentials: 'same-origin',
+                signal: studentSearchController.signal
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Error al buscar estudiantes.');
+        }
+
+        const usuarios = data.usuarios || [];
+
+        if (usuarios.length === 0) {
+
+            status.textContent = 'No encontramos estudiantes con ese nombre.';
+
+            return;
+        }
+
+        status.textContent =
+            `${usuarios.length} estudiante(s) encontrado(s).`;
+
+        usuarios.forEach(usuario => {
+
+            // Contenedor del resultado
+            const card = document.createElement('div');
+
+            card.className =
+                'flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-unsa-gold hover:bg-slate-50 transition-colors';
+
+            // Avatar
+            const avatar = document.createElement('div');
+
+            avatar.className =
+                'w-10 h-10 shrink-0 rounded-full bg-red-100 text-unsa-maroon flex items-center justify-center font-bold';
+
+            avatar.textContent =
+                usuario.nombre.charAt(0).toUpperCase();
+
+            // Información
+            const info = document.createElement('div');
+
+            info.className = 'flex-1 min-w-0';
+
+            const name = document.createElement('p');
+
+            name.className =
+                'text-sm font-bold text-slate-800 truncate';
+
+            name.textContent = usuario.nombre;
+
+            const role = document.createElement('p');
+
+            role.className = 'text-xs text-slate-400';
+
+            const roles = {
+                estudiante: 'Estudiante UNSA',
+                docente: 'Docente UNSA'
+            };
+
+            role.textContent =
+                roles[String(usuario.rol).toLowerCase()] || 'Miembro UNSA';
+
+            info.appendChild(name);
+            info.appendChild(role);
+
+            // Botón de selección
+            const button = document.createElement('button');
+
+            button.type = 'button';
+
+            button.className =
+                'text-xs font-bold text-unsa-maroon hover:underline shrink-0';
+
+            button.textContent = 'Seleccionar';
+
+            button.addEventListener('click', () => {
+                seleccionarEstudiante(usuario);
+            });
+
+            card.appendChild(avatar);
+            card.appendChild(info);
+            card.appendChild(button);
+
+            results.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        if (error.name === 'AbortError') return;
+
+        console.error('Error en el buscador:', error);
+
+        status.textContent =
+            'No se pudo realizar la búsqueda. Inténtalo nuevamente.';
+
+    }
+
+}
+
+
+// Seleccionar al estudiante encontrado
+function seleccionarEstudiante(usuario) {
+
+    window.selectedStudentForChat = {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        rol: usuario.rol
+    };
+
+    const notice = document.getElementById('selectedStudentNotice');
+    const name = document.getElementById('selectedStudentName');
+
+    name.textContent = usuario.nombre;
+
+    notice.classList.remove('hidden');
+
+    openNotificationToast(
+        `${usuario.nombre} fue seleccionado correctamente.`
+    );
+
+}
+
+
+// Activar el buscador
+function inicializarBuscadorEstudiantes() {
+
+    const input = document.getElementById('chatSearch');
+
+    if (!input) return;
+
+    input.disabled = false;
+
+    input.addEventListener('input', () => {
+
+        clearTimeout(studentSearchTimer);
+
+        const termino = input.value.trim();
+
+        const results = document.getElementById('studentSearchResults');
+        const status = document.getElementById('studentSearchStatus');
+
+        // Cancelar búsquedas anteriores
+        if (studentSearchController) {
+            studentSearchController.abort();
+        }
+
+        results.replaceChildren();
+
+        if (termino.length < 2) {
+
+            status.textContent =
+                'Escribe al menos 2 caracteres para buscar.';
+
+            return;
+        }
+
+        status.textContent = 'Preparando búsqueda...';
+
+        // Esperar brevemente para no consultar por cada tecla
+        studentSearchTimer = setTimeout(() => {
+            buscarEstudiantes(termino);
+        }, 350);
+
+    });
+
+}
+
 
 async function handleRegister(e) {
     e.preventDefault();
@@ -306,6 +511,7 @@ async function loadProfileActivity() {
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await sessionReady;   // definido en layout.js
     if (user) {
+        inicializarBuscadorEstudiantes();
         renderProfile(user);
     } else {
         showAuthTab('login');
