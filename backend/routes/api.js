@@ -97,25 +97,9 @@ const mapHueco = (r, uid, joinedByMe = false) => ({
     mine: !!uid && r.usuario_id === uid,
     joinedByMe
 });
-<<<<<<< Updated upstream
-const mapAnn = r => ({
+0000000const mapAnn = r => ({
     id: r.id, title: r.titulo, category: r.categoria || '', urgency: r.urgencia || 'INFO',
     campus: r.campus_afectado || '', content: r.contenido || '', date: (r.creado_en || '').slice(0, 10)
-});
-=======
-
-const mapAnn = (r, nombres = new Map(), uid = null) => ({
-    id: r.id,
-    title: r.titulo,
-    category: r.categoria || '',
-    urgency: r.urgencia || 'INFO',
-    campus: r.campus_afectado || '',
-    content: r.contenido || '',
-    date: (r.creado_en || '').slice(0, 10),
-    image: r.imagen_url || '',
-    eventAt: r.fecha_evento || null,
-    authorName: nombres.get(r.admin_id) || '',
-    mine: !!uid && r.admin_id === uid
 });
 /* =====================================================
    BUSCADOR DE ESTUDIANTES
@@ -314,7 +298,7 @@ router.get('/perfil/actividad', requireAuth, h(async (req, res) => {
 
 }));
 
->>>>>>> Stashed changes
+
 
 // =====================================================
 // OBJETOS PERDIDOS
@@ -558,6 +542,119 @@ router.post('/huecos/:id/join', requireAuth, h(async (req, res) => {
     res.json(mapHueco(data[0], userId, true));
 }));
 
+/* =====================================================
+   OBTENER CHAT GRUPAL DE PUNTO HUECO
+===================================================== */
+
+router.get('/huecos/:id/conversacion', requireAuth, h(async (req, res) => {
+
+    const huecoId = req.params.id;
+    const usuarioId = req.session.userId;
+
+    if (!UUID_RE.test(huecoId)) {
+        return bad(res, 'Identificador de Punto Hueco no válido.');
+    }
+
+    // Buscar la conversación vinculada al encuentro
+    const { data: conversacion, error: e1 } = await supabase
+        .from('conversaciones')
+        .select('id, titulo, tipo')
+        .eq('punto_hueco_id', huecoId)
+        .eq('tipo', 'grupo')
+        .maybeSingle();
+
+    if (e1) throw e1;
+
+    if (!conversacion) {
+        return res.status(404).json({
+            error: 'Este Punto Hueco todavía no tiene una conversación.'
+        });
+    }
+
+    // Comprobar que el usuario pertenece al grupo
+    const { data: participacion, error: e2 } = await supabase
+        .from('conversacion_participantes')
+        .select('usuario_id')
+        .eq('conversacion_id', conversacion.id)
+        .eq('usuario_id', usuarioId)
+        .eq('activo', true)
+        .maybeSingle();
+
+    if (e2) throw e2;
+
+    if (!participacion) {
+        return res.status(403).json({
+            error: 'Debes unirte al Punto Hueco para acceder a su chat.'
+        });
+    }
+
+    res.json({
+
+        conversacionId: conversacion.id,
+
+        titulo: conversacion.titulo,
+
+        tipo: conversacion.tipo
+
+    });
+
+}));
+
+// Obtener participantes de un Punto Hueco (Para el modal del creador)
+
+router.get('/huecos/:id/participantes', requireAuth, h(async (req, res) => {
+
+    if (!UUID_RE.test(req.params.id)) {
+        return bad(res, 'ID no válido.');
+    }
+
+    // Comprobar quién organizó el encuentro
+    const { data: hueco, error: e1 } = await supabase
+        .from('punto_hueco')
+        .select('usuario_id')
+        .eq('id', req.params.id)
+        .maybeSingle();
+
+    if (e1) throw e1;
+
+    if (!hueco) {
+        return res.status(404).json({
+            error: 'Punto Hueco no encontrado.'
+        });
+    }
+
+    const administrador = await esAdmin(req.session.userId);
+
+    if (
+        hueco.usuario_id !== req.session.userId &&
+        !administrador
+    ) {
+        return res.status(403).json({
+            error: 'Solo el organizador puede consultar los participantes.'
+        });
+    }
+
+    const { data, error } = await supabase
+        .from('hueco_participantes')
+        .select(`
+            usuario_id,
+            perfiles ( nombre )
+        `)
+        .eq('hueco_id', req.params.id);
+
+    if (error) throw error;
+
+    const participantes = (data || []).map(p => ({
+        id: p.usuario_id,
+        nombre: p.perfiles?.nombre || 'Usuario UNSA',
+        carrera: 'Estudiante UNSA'
+    }));
+
+    res.json(participantes);
+
+}));
+
+
 // =====================================================
 // NOTIFICACIONES / AVISOS
 // =====================================================
@@ -636,6 +733,365 @@ router.patch('/admin/:tabla/:id/estado', requireAdmin, h(async (req, res) => {
     const { error } = await supabase.from(tabla).update({ estado }).eq('id', id);
     if (error) throw error;
     res.json({ ok: true });
+}));
+
+
+/* =====================================================
+   MENSAJERIA PRIVADA
+===================================================== */
+
+// Comprobar que el usuario pertenece al chat
+async function verificarParticipante(conversacionId, usuarioId) {
+
+    const { data, error } = await supabase
+        .from('conversacion_participantes')
+        .select('conversacion_id, usuario_id, rol, ultimo_leido_en')
+        .eq('conversacion_id', conversacionId)
+        .eq('usuario_id', usuarioId)
+        .eq('activo', true)
+        .maybeSingle();
+
+    if (error) throw error;
+
+    return data;
+}
+
+/* =====================================================
+   CREAR O RECUPERAR CONVERSACION PRIVADA
+===================================================== */
+
+router.post('/conversaciones/directas', requireAuth, h(async (req, res) => {
+
+    const solicitanteId = req.session.userId;
+
+    const destinatarioId = txt(
+        req.body?.destinatarioId,
+        36
+    );
+
+    if (!UUID_RE.test(destinatarioId)) {
+        return bad(res, 'Identificador de estudiante no válido.');
+    }
+
+    if (solicitanteId === destinatarioId) {
+        return bad(res, 'No puedes iniciar una conversación contigo mismo.');
+    }
+
+    // Crear o recuperar una conversación existente.
+    // La función SQL garantiza que no se duplique la pareja.
+    const { data, error } = await supabase.rpc(
+        'obtener_o_crear_chat_directo',
+        {
+            p_solicitante: solicitanteId,
+            p_destinatario: destinatarioId
+        }
+    );
+
+    if (error) {
+
+        if ((error.message || '').includes('USUARIO_NO_EXISTE')) {
+            return res.status(404).json({
+                error: 'El estudiante seleccionado no existe.'
+            });
+        }
+
+        if ((error.message || '').includes('NO_PUEDES_CONVERSAR')) {
+            return bad(res, 'No puedes conversar contigo mismo.');
+        }
+
+        throw error;
+    }
+
+    res.status(200).json({
+        ok: true,
+        conversacionId: data,
+        mensaje: 'Conversación disponible.'
+    });
+
+}));
+
+/* =====================================================
+   LISTAR CONVERSACIONES DEL USUARIO
+===================================================== */
+
+router.get('/conversaciones', requireAuth, h(async (req, res) => {
+
+    const usuarioId = req.session.userId;
+
+    // Buscar las conversaciones donde participa el usuario
+    const { data: propias, error: e1 } = await supabase
+        .from('conversacion_participantes')
+        .select('conversacion_id, rol, ultimo_leido_en')
+        .eq('usuario_id', usuarioId)
+        .eq('activo', true);
+
+    if (e1) throw e1;
+
+    if (!propias || propias.length === 0) {
+        return res.json({ conversaciones: [] });
+    }
+
+    const ids = propias.map(p => p.conversacion_id);
+
+    // Consultar las conversaciones
+    const { data: conversaciones, error: e2 } = await supabase
+        .from('conversaciones')
+        .select('id, tipo, titulo, creado_en, actualizado_en')
+        .in('id', ids)
+        .order('actualizado_en', { ascending: false });
+
+    if (e2) throw e2;
+
+    // Consultar participantes de esas conversaciones
+    const { data: participantes, error: e3 } = await supabase
+        .from('conversacion_participantes')
+        .select('conversacion_id, usuario_id, rol')
+        .in('conversacion_id', ids)
+        .eq('activo', true);
+
+    if (e3) throw e3;
+
+    // Consultar nombres de los participantes
+    const usuarioIds = [
+        ...new Set((participantes || []).map(p => p.usuario_id))
+    ];
+
+    const { data: perfiles, error: e4 } = await supabase
+        .from('perfiles')
+        .select('id, nombre, rol')
+        .in('id', usuarioIds);
+
+    if (e4) throw e4;
+
+    const perfilMap = new Map(
+        (perfiles || []).map(p => [p.id, p])
+    );
+
+    const propiaMap = new Map(
+        propias.map(p => [p.conversacion_id, p])
+    );
+
+    const resultado = conversaciones.map(conv => {
+
+        const miembros = participantes
+            .filter(p => p.conversacion_id === conv.id)
+            .map(p => {
+
+                const perfil = perfilMap.get(p.usuario_id);
+
+                return {
+                    id: p.usuario_id,
+                    nombre: perfil?.nombre || 'Usuario UNSA',
+                    rol: perfil?.rol || 'estudiante',
+                    esMiCuenta: p.usuario_id === usuarioId,
+                    rolEnChat: p.rol
+                };
+
+            });
+
+        const otroUsuario = miembros.find(
+            p => p.id !== usuarioId
+        );
+
+        const miParticipacion = propiaMap.get(conv.id);
+
+        return {
+
+            id: conv.id,
+
+            tipo: conv.tipo,
+
+            titulo: conv.tipo === 'directa'
+                ? otroUsuario?.nombre || 'Conversación privada'
+                : conv.titulo || 'Grupo de estudiantes',
+
+            actualizadoEn: conv.actualizado_en,
+
+            ultimoLeidoEn: miParticipacion?.ultimo_leido_en || null,
+
+            participantes: miembros
+
+        };
+
+    });
+
+    res.json({
+        conversaciones: resultado
+    });
+
+}));
+
+/* =====================================================
+   OBTENER MENSAJES DE UNA CONVERSACION
+===================================================== */
+
+router.get('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
+
+    const conversacionId = req.params.id;
+    const usuarioId = req.session.userId;
+
+    if (!UUID_RE.test(conversacionId)) {
+        return bad(res, 'Identificador de conversación no válido.');
+    }
+
+    // Comprobar participación
+    const participacion = await verificarParticipante(
+        conversacionId,
+        usuarioId
+    );
+
+    if (!participacion) {
+        return res.status(403).json({
+            error: 'No tienes acceso a esta conversación.'
+        });
+    }
+
+    // Paginación
+    const limite = Math.min(
+        50,
+        Math.max(1, parseInt(req.query.limit, 10) || 30)
+    );
+
+    let consulta = supabase
+        .from('mensajes')
+        .select('id, remitente_id, contenido, creado_en, editado_en, eliminado_en')
+        .eq('conversacion_id', conversacionId)
+        .order('creado_en', { ascending: false })
+        .limit(limite);
+
+    // Permitir cargar mensajes anteriores
+    if (req.query.before) {
+
+        const fecha = new Date(req.query.before);
+
+        if (Number.isNaN(fecha.getTime())) {
+            return bad(res, 'Fecha de paginación no válida.');
+        }
+
+        consulta = consulta.lt(
+            'creado_en',
+            fecha.toISOString()
+        );
+
+    }
+
+    const { data, error } = await consulta;
+
+    if (error) throw error;
+
+    // Registrar última lectura
+    const { error: e2 } = await supabase
+        .from('conversacion_participantes')
+        .update({
+            ultimo_leido_en: new Date().toISOString()
+        })
+        .eq('conversacion_id', conversacionId)
+        .eq('usuario_id', usuarioId)
+        .eq('activo', true);
+
+    if (e2) throw e2;
+
+    // Entregar mensajes en orden cronológico
+    const mensajes = (data || [])
+        .reverse()
+        .map(m => ({
+
+            id: m.id,
+
+            remitenteId: m.remitente_id,
+
+            contenido: m.eliminado_en
+                ? 'Mensaje eliminado'
+                : m.contenido,
+
+            creadoEn: m.creado_en,
+
+            editado: !!m.editado_en,
+
+            eliminado: !!m.eliminado_en,
+
+            esMio: m.remitente_id === usuarioId
+
+        }));
+
+    res.json({
+        mensajes
+    });
+
+}));
+
+/* =====================================================
+   ENVIAR MENSAJE
+===================================================== */
+
+router.post('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
+
+    const conversacionId = req.params.id;
+    const usuarioId = req.session.userId;
+
+    if (!UUID_RE.test(conversacionId)) {
+        return bad(res, 'Identificador de conversación no válido.');
+    }
+
+    const contenido = String(req.body?.contenido || '').trim();
+
+    if (!contenido) {
+        return bad(res, 'El mensaje no puede estar vacío.');
+    }
+
+    if (contenido.length > 2000) {
+        return bad(res, 'El mensaje no puede superar los 2000 caracteres.');
+    }
+
+    // Verificar que el remitente pertenece al chat
+    const participacion = await verificarParticipante(
+        conversacionId,
+        usuarioId
+    );
+
+    if (!participacion) {
+        return res.status(403).json({
+            error: 'No puedes enviar mensajes a esta conversación.'
+        });
+    }
+
+    // Insertar mensaje
+    const { data, error } = await supabase
+        .from('mensajes')
+        .insert({
+
+            conversacion_id: conversacionId,
+
+            remitente_id: usuarioId,
+
+            contenido
+
+        })
+        .select('id, remitente_id, contenido, creado_en')
+        .single();
+
+    if (error) throw error;
+
+    res.status(201).json({
+
+        ok: true,
+
+        mensaje: {
+
+            id: data.id,
+
+            remitenteId: data.remitente_id,
+
+            contenido: data.contenido,
+
+            creadoEn: data.creado_en,
+
+            esMio: true
+
+        }
+
+    });
+
 }));
 
 module.exports = router;

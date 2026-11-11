@@ -171,6 +171,50 @@
             </form>
         </div>
     </div>
+    <!-- Modal de Gestión de Punto Hueco (Para el Creador) -->
+    <div id="huecoManageModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+
+            <!-- Cabecera -->
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-gear text-slate-600"></i> Gestionar mi Hueco
+                </h3>
+                <button onclick="closeModal('huecoManageModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+            </div>
+
+            <!-- Cuerpo: Lista de Participantes -->
+            <div class="flex-grow overflow-y-auto mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-sm font-bold text-slate-700">Compañeros unidos:</h4>
+                    <div class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
+    <i class="fa-solid fa-comments text-unsa-maroon mr-1"></i>
+    Todos los integrantes pueden coordinar mediante el chat grupal de este Punto Hueco.
+</div>
+                </div>
+
+                <ul id="listaParticipantesModal" class="space-y-2">
+                    <!-- Los participantes se inyectarán aquí desde JS -->
+                    <li class="text-sm text-slate-500 italic text-center py-4">Cargando participantes...</li>
+                </ul>
+            </div>
+
+            <!-- Acciones (Botones que antes estaban en la tarjeta) -->
+            <div class="border-t border-slate-100 pt-4 grid grid-cols-2 gap-3">
+                <button id="btnEditarHueco"
+                    class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                    <i class="fa-solid fa-pen"></i> Editar Info
+                </button>
+                <button id="btnEliminarHueco"
+                    class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-sm">
+                    <i class="fa-solid fa-trash"></i> Cancelar Evento
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast + Footer (inyectados desde pub/js/layout.js) -->
     <div id="layout-bottom"></div>
