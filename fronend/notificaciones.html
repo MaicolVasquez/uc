@@ -25,7 +25,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">Tablón de Notificaciones y Avisos UNSA</h1>
                     <p class="text-sm text-slate-500">Mantente informado sobre feriados académicos, comunicados de
-                        huelgas, trámites de matrícula y estado de bibliotecas.</p>
+                        huelgas, trámites de matrícula, estado de bibliotecas.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-medium text-slate-500">Filtrar por Urgencia:</span>
@@ -68,45 +68,82 @@
                     📝 Trámites & Matrícula
                 </button>
             </div>
-
+            
             <!-- Grid List of Announcements -->
-            <div id="announcementsGrid" class="space-y-4">
-                <!-- Rendered dynamically -->
-            </div>
-        </section>
+            <div id="announcementsGrid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"></div>
+            
+            </section>
 
     </main>
 
-    <!-- Modal: crear anuncio (solo admin) -->
-    <div id="annCreateModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <!-- Modal: crear anuncio (admin y delegado) -->
+    <div id="annCreateModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+        onclick="if(event.target===this) closeModal('annCreateModal')">
         <form id="annCreateForm" onsubmit="handleSaveAnnouncement(event)"
-            class="bg-white rounded-2xl p-6 w-full max-w-lg space-y-3 shadow-2xl">
-            <h3 class="font-extrabold text-lg text-slate-900">Nuevo anuncio</h3>
+            class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
 
-            <input id="annTitle" required maxlength="150" placeholder="Título"
-                class="w-full border border-slate-200 rounded-lg p-2 text-sm">
-
-            <div class="grid grid-cols-2 gap-3">
-                <select id="annCategory" class="border border-slate-200 rounded-lg p-2 text-sm">
-                    <option value="Huelgas">📢 Huelgas & Paros</option>
-                    <option value="Feriados">🌴 Feriados Académicos</option>
-                    <option value="Biblioteca">📚 Biblioteca Central</option>
-                    <option value="Tramites">📝 Trámites & Matrícula</option>
-                </select>
-                <select id="annUrgency" class="border border-slate-200 rounded-lg p-2 text-sm">
-                    <option value="INFO">ℹ️ Información</option>
-                    <option value="URGENTE">🚨 Urgente</option>
-                    <option value="EVENTO">📅 Evento</option>
-                </select>
+            <div class="sticky top-0 bg-white px-6 pt-5 pb-3 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-extrabold text-lg text-slate-900">Nuevo anuncio</h3>
+                <button type="button" onclick="closeModal('annCreateModal')"
+                    class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
             </div>
 
-            <input id="annCampus" maxlength="80" placeholder="Campus afectado (ej. Todos los campus)"
-                class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Título *</label>
+                    <input id="annTitle" required maxlength="150" placeholder="Ej. Paro de docentes"
+                        class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+                </div>
 
-            <textarea id="annContent" required maxlength="2000" rows="4" placeholder="Contenido del aviso"
-                class="w-full border border-slate-200 rounded-lg p-2 text-sm"></textarea>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Categoría</label>
+                        <select id="annCategory" class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+                            <option value="Huelgas">📢 Huelgas & Paros</option>
+                            <option value="Feriados">🌴 Feriados Académicos</option>
+                            <option value="Biblioteca">📚 Biblioteca Central</option>
+                            <option value="Tramites">📝 Trámites & Matrícula</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Urgencia</label>
+                        <select id="annUrgency" class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+                            <option value="INFO">ℹ️ Información</option>
+                            <option value="URGENTE">🚨 Urgente</option>
+                            <option value="EVENTO">📅 Evento</option>
+                        </select>
+                    </div>
+                </div>
 
-            <div class="flex justify-end gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">¿Cuándo será? (fecha y hora)</label>
+                        <input id="annEventAt" type="datetime-local"
+                            class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Campus afectado</label>
+                        <input id="annCampus" maxlength="80" placeholder="Ej. Todos los campus"
+                            class="w-full border border-slate-200 rounded-lg p-2 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Imagen (opcional)</label>
+                    <input id="annImage" type="file" accept="image/jpeg,image/png,image/webp"
+                        onchange="previewAnnImage(this)"
+                        class="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:text-slate-700 file:font-bold">
+                    <img id="annImagePreview" class="hidden mt-3 rounded-xl max-h-48 object-cover border border-slate-200" alt="">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Descripción *</label>
+                    <textarea id="annContent" required maxlength="2000" rows="5" placeholder="Detalles del aviso"
+                        class="w-full border border-slate-200 rounded-lg p-2 text-sm"></textarea>
+                </div>
+            </div>
+
+            <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
                 <button type="button" onclick="closeModal('annCreateModal')"
                     class="px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
                 <button type="submit"
@@ -114,7 +151,7 @@
             </div>
         </form>
     </div>
-
+    
     <!-- Toast + Footer (inyectados desde pub/js/layout.js) -->
     <div id="layout-bottom"></div>
 
