@@ -52,8 +52,6 @@ function buildLayout() {
                         <div class="flex items-center gap-2">
                             <span class="font-extrabold text-xl tracking-tight text-white">UNSA<span
                                     class="text-unsa-gold">Conecta</span></span>
-                            <span
-                                class="bg-unsa-bright text-xs px-2 py-0.5 rounded-md border border-white/20 font-medium text-yellow-100">v2.5</span>
                         </div>
                         <p class="text-[11px] text-slate-300 hidden sm:block">Universidad Nacional de San Agustín de
                             Arequipa</p>
@@ -69,7 +67,6 @@ function buildLayout() {
                         onclick="openNotificationToast('Bienvenido a UNSA Conecta. Todos tus datos están vigentes.')"
                         class="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10 relative">
                         <i class="fa-regular fa-bell text-lg"></i>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-unsa-gold rounded-full"></span>
                     </button>
                     <a href="cuenta.html" id="headerUserLink" title="Mi cuenta"
                         class="flex items-center gap-2 pl-3 border-l border-white/20 hover:opacity-90 transition-opacity">
