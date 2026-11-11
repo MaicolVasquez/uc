@@ -108,10 +108,10 @@
 <!-- Perfil rediseñado -->
 <div id="profileCard" class="hidden w-full">
 
-    <div class="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-5 lg:gap-7 items-start">
 
         <!-- PANEL IZQUIERDO: MENSAJES -->
-        <aside class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <aside class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
 
             <div class="p-5 border-b border-slate-100">
                 <div class="flex items-center justify-between">
@@ -124,11 +124,16 @@
                             Tus conversaciones universitarias
                         </p>
                     </div>
-                    <span class="text-xs font-bold text-slate-400">0 chats</span>
+                    <span
+    id="conversationCount"
+    class="text-xs font-bold text-slate-400"
+    aria-live="polite">
+    Cargando...
+</span>
                 </div>
             </div>
 
-            <div class="p-4">
+            <div class="p-4 min-h-0 flex-1 overflow-y-auto">
 
 
 <div class="p-4">
@@ -224,8 +229,9 @@
 
 
         <!-- PANEL DERECHO: PERFIL Y ACTIVIDAD -->
-        <div class="min-w-0 space-y-6">
-            <div id="profileOverview" class="space-y-6"></div>
+        <div class="min-w-0 space-y-7">
+
+    <div id="profileOverview" class="space-y-6">
 
             <!-- ENCABEZADO DEL PERFIL -->
             <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -357,50 +363,54 @@
                 </div>
 
                 <p class="text-[11px] text-slate-400 mt-3">
-                    Las estadísticas se conectarán con tus publicaciones y participaciones.
-                </p>
+    Resumen de tus publicaciones y participación en las actividades de UNSA Conecta.
+</p>
 
             </section>
 
 
-            <!-- HISTORIAL DE ACTIVIDAD -->
-            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            
+<!-- HISTORIAL DE ACTIVIDAD -->
+<section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-                <div class="p-5 border-b border-slate-100">
-                    <h2 class="font-extrabold text-slate-800">
-                        <i class="fa-solid fa-clock-rotate-left text-unsa-maroon mr-2"></i>
-                        Historial de actividad
-                    </h2>
+    <!-- ENCABEZADO -->
+    <div class="p-5 border-b border-slate-100">
+        <h2 class="font-extrabold text-slate-800">
+            <i class="fa-solid fa-clock-rotate-left text-unsa-maroon mr-2"></i>
+            Historial de actividad
+        </h2>
 
-                    <p class="text-xs text-slate-500 mt-1">
-                        Consulta tus publicaciones y participaciones.
-                    </p>
-                </div>
+        <p class="text-xs text-slate-500 mt-1">
+            Consulta tus publicaciones y participaciones.
+        </p>
+    </div>
 
-                <div id="activityEmptyState"
-                    class="py-12 px-6 text-center">
+    <!-- ESTADO VACÍO -->
+    <div id="activityEmptyState"
+        class="py-12 px-6 text-center">
 
-<div id="activityTimeline"
-    class="hidden divide-y divide-slate-100">
-</div>
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-chart-line text-2xl text-slate-400"></i>
+        </div>
 
+        <h3 class="font-bold text-slate-700">
+            Tu actividad aparecerá aquí
+        </h3>
 
-                    <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                        <i class="fa-solid fa-chart-line text-2xl text-slate-400"></i>
-                    </div>
+        <p class="text-sm text-slate-400 mt-2 max-w-sm mx-auto">
+            Aquí podrás consultar tus objetos perdidos,
+            publicaciones, tutorías y actividades de Punto Hueco.
+        </p>
 
-                    <h3 class="font-bold text-slate-700">
-                        Tu actividad aparecerá aquí
-                    </h3>
+    </div>
 
-                    <p class="text-sm text-slate-400 mt-2 max-w-sm mx-auto">
-                        Aquí podrás consultar tus objetos perdidos,
-                        publicaciones, tutorías y actividades de Punto Hueco.
-                    </p>
+    <!-- LISTA DE ACTIVIDADES -->
+    <div id="activityTimeline"
+        class="hidden divide-y divide-slate-100">
+    </div>
 
-                </div>
+</section>
 
-            </section>
 
 
             <!-- CERRAR SESIÓN -->
@@ -416,7 +426,7 @@
 
                 </button>
 </div>
-
+</div> <!-- FIN DEL PANEL DE PERFIL -->
 <!-- PANEL DE CONVERSACION -->
 <section id="chatPanel"
     class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

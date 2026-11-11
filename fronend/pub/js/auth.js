@@ -81,7 +81,7 @@ function renderProfile(user) {
 
     document.getElementById('profileDate').textContent = formattedDate;
 
-    // Los indicadores se conectarán con la base de datos
+    // Inicializar los indicadores mientras se cargan los datos reales.
     document.getElementById('profilePostsCount').textContent = '—';
     document.getElementById('profileHuecosCreatedCount').textContent = '—';
     document.getElementById('profileHuecosJoinedCount').textContent = '—';
@@ -154,15 +154,31 @@ async function cargarConversaciones() {
 
     const container = document.getElementById('conversationList');
 
-    if (!container) return;
+if (!container) return [];
 
-    try {
+try {
 
-        const data = await chatRequest('/api/conversaciones');
+    const data = await chatRequest('/api/conversaciones');
 
-        const conversaciones = data.conversaciones || [];
+    const conversaciones = Array.isArray(data.conversaciones)
+        ? data.conversaciones
+        : [];
 
-        container.replaceChildren();
+    // Actualizar contador de conversaciones
+    const countElement = document.getElementById('conversationCount');
+
+    if (countElement) {
+        const total = conversaciones.length;
+
+        countElement.textContent =
+            `${total} ${total === 1 ? 'chat' : 'chats'}`;
+    }
+
+    // Registrar la última actualización,
+    // incluso cuando todavía no existen conversaciones.
+    lastConversationRefresh = Date.now();
+
+    container.replaceChildren();
 
         if (conversaciones.length === 0) {
 
@@ -182,7 +198,7 @@ async function cargarConversaciones() {
 
             container.appendChild(empty);
 
-            return;
+return conversaciones;
 
         }
 
@@ -249,18 +265,24 @@ async function cargarConversaciones() {
 
         });
 
-        lastConversationRefresh = Date.now();
         return conversaciones;
 
     } catch (error) {
 
-        console.error('Error cargando conversaciones:', error);
+    console.error('Error cargando conversaciones:', error);
 
-        container.textContent =
-            'No se pudieron cargar las conversaciones.';
-            return [];
+    const countElement = document.getElementById('conversationCount');
 
+    if (countElement) {
+        countElement.textContent = 'No disponible';
     }
+
+    container.textContent =
+        'No se pudieron cargar las conversaciones.';
+
+    return [];
+
+}
 
 }
 

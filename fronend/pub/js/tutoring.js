@@ -35,7 +35,6 @@ function fillCareers(area, selected = '') {
 
     if (selected) select.value = selected;
 }
-const editingId = tutorEditingId;
 async function loadTutors() {
     try {
         await sessionReady;
@@ -194,8 +193,11 @@ document.addEventListener('modalclosed', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    fillCareers(document.getElementById('tutorFaculty').value);
+    const facultySelect = document.getElementById('tutorFaculty');
+
+    if (facultySelect) {
+        fillCareers(facultySelect.value);
+    }
+
     loadTutors();
 });
-
-document.addEventListener('DOMContentLoaded', loadTutors);
