@@ -15,7 +15,7 @@ if (!process.env.SESSION_SECRET) {
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '3mb' }));
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,

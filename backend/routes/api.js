@@ -3,7 +3,7 @@
 const express = require('express');
 const { supabase } = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-
+const crypto = require('crypto');
 const router = express.Router();
 
 // ---------- helpers ----------
@@ -38,6 +38,45 @@ const h = fn => (req, res) => fn(req, res).catch(e => {
     res.status(500).json({ error: 'Error del servidor.' });
 });
 
+async function rolDe(userId) {
+    const { data } = await supabase.from('perfiles').select('rol').eq('id', userId).maybeSingle();
+    return (data && data.rol) || 'estudiante';
+}
+
+// Admin y delegado pueden publicar anuncios
+async function requirePublicador(req, res, next) {
+    try {
+        if (!req.session || !req.session.userId) {
+            return res.status(401).json({ error: 'Inicia sesión para continuar.' });
+        }
+        const rol = await rolDe(req.session.userId);
+        if (!['admin', 'delegado'].includes(rol)) {
+            return res.status(403).json({ error: 'No tienes permiso para publicar anuncios.' });
+        }
+        req.rol = rol;
+        next();
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error del servidor.' });
+    }
+}
+
+// Recibe una imagen en base64, la sube a Storage y devuelve su URL pública
+async function subirImagenAnuncio(dataUrl) {
+    if (!dataUrl) return null;
+    const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+    if (!m) throw new Error('IMG_FORMATO');
+    const buf = Buffer.from(m[2], 'base64');
+    if (buf.length > 2 * 1024 * 1024) throw new Error('IMG_GRANDE');
+
+    const ext = m[1] === 'jpeg' ? 'jpg' : m[1];
+    const nombre = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`;
+    const { error } = await supabase.storage.from('anuncios')
+        .upload(nombre, buf, { contentType: `image/${m[1]}` });
+    if (error) throw error;
+    return supabase.storage.from('anuncios').getPublicUrl(nombre).data.publicUrl;
+}
+
 // ---------- mappers: fila de BD -> objeto que espera el frontend ----------
 const mapLostFound = (r, uid) => ({
     id: r.id, title: r.titulo, category: r.categoria || '', campus: r.campus || '',
@@ -58,10 +97,224 @@ const mapHueco = (r, uid, joinedByMe = false) => ({
     mine: !!uid && r.usuario_id === uid,
     joinedByMe
 });
+<<<<<<< Updated upstream
 const mapAnn = r => ({
     id: r.id, title: r.titulo, category: r.categoria || '', urgency: r.urgencia || 'INFO',
     campus: r.campus_afectado || '', content: r.contenido || '', date: (r.creado_en || '').slice(0, 10)
 });
+=======
+
+const mapAnn = (r, nombres = new Map(), uid = null) => ({
+    id: r.id,
+    title: r.titulo,
+    category: r.categoria || '',
+    urgency: r.urgencia || 'INFO',
+    campus: r.campus_afectado || '',
+    content: r.contenido || '',
+    date: (r.creado_en || '').slice(0, 10),
+    image: r.imagen_url || '',
+    eventAt: r.fecha_evento || null,
+    authorName: nombres.get(r.admin_id) || '',
+    mine: !!uid && r.admin_id === uid
+});
+/* =====================================================
+   BUSCADOR DE ESTUDIANTES
+===================================================== */
+
+router.get('/usuarios/buscar', requireAuth, h(async (req, res) => {
+
+    // Limpiar y validar el término de búsqueda
+    const termino = txt(req.query.q, 60)
+        .replace(/[\\%_*]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // Exigir al menos dos caracteres
+    if (termino.length < 2) {
+        return res.json({ usuarios: [] });
+    }
+
+    // Buscar usuarios registrados por nombre
+    const { data, error } = await supabase
+        .from('perfiles')
+        .select('id, nombre, rol')
+        .ilike('nombre', `%${termino}%`)
+        .neq('id', req.session.userId)
+        .neq('rol', 'admin')
+        .order('nombre', { ascending: true })
+        .limit(10);
+
+    if (error) throw error;
+
+    // Devolver únicamente información necesaria
+    const usuarios = (data || []).map(usuario => ({
+        id: usuario.id,
+        nombre: usuario.nombre || 'Usuario UNSA',
+        rol: usuario.rol || 'estudiante'
+    }));
+
+    res.json({ usuarios });
+
+}));
+
+/* =====================================================
+   PERFIL: HISTORIAL DE ACTIVIDAD DEL USUARIO
+===================================================== */
+
+router.get('/perfil/actividad', requireAuth, h(async (req, res) => {
+
+    const usuarioId = req.session.userId;
+
+    // Consultar las publicaciones realizadas por el usuario
+    const resultados = await Promise.all([
+
+        supabase.from('objetos_perdidos')
+            .select('id, titulo, tipo, categoria, lugar_exacto, creado_en, estado')
+            .eq('usuario_id', usuarioId)
+            .order('creado_en', { ascending: false }),
+
+        supabase.from('tutores')
+            .select('id, nombre_completo, carrera, cursos, creado_en, estado')
+            .eq('usuario_id', usuarioId)
+            .order('creado_en', { ascending: false }),
+
+        supabase.from('punto_hueco')
+            .select('id, titulo, categoria, lugar_exacto, horario, creado_en, estado')
+            .eq('usuario_id', usuarioId)
+            .order('creado_en', { ascending: false }),
+
+        supabase.from('asesorias')
+            .select('*')
+            .eq('usuario_id', usuarioId),
+
+        supabase.from('hueco_participantes')
+            .select('hueco_id')
+            .eq('usuario_id', usuarioId)
+
+    ]);
+
+    // Comprobar errores de las consultas
+    for (const resultado of resultados) {
+        if (resultado.error) throw resultado.error;
+    }
+
+    const [objetos, tutores, huecos, asesorias, participaciones] = resultados;
+
+    // Consultar información de los grupos a los que se unió
+    const idsHuecos = [
+        ...new Set((participaciones.data || []).map(p => p.hueco_id))
+    ];
+
+    let huecosUnidos = [];
+
+    if (idsHuecos.length > 0) {
+
+        const { data, error } = await supabase
+            .from('punto_hueco')
+            .select('id, titulo, categoria, horario, lugar_exacto')
+            .in('id', idsHuecos);
+
+        if (error) throw error;
+
+        huecosUnidos = data || [];
+    }
+
+    // Construir el historial sin exponer teléfonos ni datos privados
+    const actividades = [];
+
+    (objetos.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'objeto',
+            titulo: r.tipo === 'PERDIDO'
+                ? 'Publicaste un objeto perdido'
+                : 'Publicaste un objeto encontrado',
+            descripcion: `${r.titulo} · ${r.categoria || 'Sin categoría'} · ${r.lugar_exacto || ''}`,
+            fecha: r.creado_en,
+            estado: r.estado
+        });
+
+    });
+
+    (tutores.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'tutoria',
+            titulo: 'Publicaste un perfil de tutoría',
+            descripcion: `${r.nombre_completo} · ${r.carrera || ''} · ${r.cursos || ''}`,
+            fecha: r.creado_en,
+            estado: r.estado
+        });
+
+    });
+
+    (huecos.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'hueco',
+            titulo: 'Creaste un Punto Hueco',
+            descripcion: `${r.titulo} · ${r.categoria || ''} · ${r.horario || ''}`,
+            fecha: r.creado_en,
+            estado: r.estado
+        });
+
+    });
+
+    (asesorias.data || []).forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'asesoria',
+            titulo: 'Solicitaste una asesoría',
+            descripcion: r.curso_tema || 'Solicitud de asesoría académica',
+            fecha: r.creado_en || null,
+            estado: r.estado
+        });
+
+    });
+
+    // Mostrar también los grupos a los que pertenece.
+    // La tabla actual no proporciona un campo de fecha de unión.
+    huecosUnidos.forEach(r => {
+
+        actividades.push({
+            id: r.id,
+            tipo: 'participacion',
+            titulo: 'Participas en un Punto Hueco',
+            descripcion: `${r.titulo} · ${r.categoria || ''} · ${r.horario || ''}`,
+            fecha: null,
+            estado: 'participando'
+        });
+
+    });
+
+    // Ordenar por fecha cuando existe una fecha registrada.
+    actividades.sort((a, b) => {
+        return new Date(b.fecha || 0) - new Date(a.fecha || 0);
+    });
+
+    // Resumen estadístico
+    res.json({
+
+        resumen: {
+            publicaciones: (objetos.data || []).length +
+                (tutores.data || []).length,
+
+            huecosCreados: (huecos.data || []).length,
+
+            huecosUnidos: (participaciones.data || []).length
+        },
+
+        actividades
+
+    });
+
+}));
+
+>>>>>>> Stashed changes
 
 // =====================================================
 // OBJETOS PERDIDOS
@@ -182,16 +435,16 @@ router.put('/tutors/:id', requireAuth, h(async (req, res) => {
 router.delete('/tutors/:id', requireAuth, borrarPublicacion('tutores'));
 
 
-// Anuncios: solo admin (la tabla usa admin_id, no usuario_id)
-router.delete('/announcements/:id', requireAdmin, h(async (req, res) => {
+// Anuncios: el admin borra cualquiera; el delegado solo los suyos
+router.delete('/announcements/:id', requirePublicador, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
-    const { data, error } = await supabase.from('notificaciones').delete()
-        .eq('id', req.params.id).select('id').maybeSingle();
+    let q = supabase.from('notificaciones').delete().eq('id', req.params.id);
+    if (req.rol !== 'admin') q = q.eq('admin_id', req.session.userId);
+    const { data, error } = await q.select('id').maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Anuncio no encontrado.' });
     res.json({ ok: true });
 }));
-
 
 // =====================================================
 // ASESORÍAS (solicitudes de alumnos que buscan tutor)
@@ -309,12 +562,23 @@ router.post('/huecos/:id/join', requireAuth, h(async (req, res) => {
 // NOTIFICACIONES / AVISOS
 // =====================================================
 router.get('/announcements', h(async (req, res) => {
-    const { data, error } = await supabase.from('notificaciones').select('*').order('creado_en', { ascending: false });
+    const { data, error } = await supabase.from('notificaciones').select('*')
+        .order('creado_en', { ascending: false });
     if (error) throw error;
-    res.json(data.map(mapAnn));
+
+    // Nombres de quienes publicaron
+    const ids = [...new Set(data.map(r => r.admin_id).filter(Boolean))];
+    let nombres = new Map();
+    if (ids.length) {
+        const { data: perfiles, error: e2 } = await supabase.from('perfiles')
+            .select('id, nombre').in('id', ids);
+        if (e2) throw e2;
+        nombres = new Map(perfiles.map(p => [p.id, p.nombre]));
+    }
+    res.json(data.map(r => mapAnn(r, nombres, req.session.userId)));
 }));
 
-router.post('/announcements', requireAdmin, h(async (req, res) => {
+router.post('/announcements', requirePublicador, h(async (req, res) => {
     const b = req.body || {};
     const row = {
         admin_id: req.session.userId,
@@ -322,14 +586,34 @@ router.post('/announcements', requireAdmin, h(async (req, res) => {
         categoria: txt(b.category, 50),
         urgencia: txt(b.urgency, 20),
         campus_afectado: txt(b.campus, 80),
-        contenido: txt(b.content, 2000)
+        contenido: txt(b.content, 2000),
+        fecha_evento: null,
+        imagen_url: null
     };
     if (!row.titulo || !row.contenido) return bad(res, 'Faltan campos obligatorios.');
     if (!['URGENTE', 'INFO', 'EVENTO'].includes(row.urgencia)) return bad(res, 'Urgencia no válida.');
+    if (!['Huelgas', 'Feriados', 'Biblioteca', 'Tramites'].includes(row.categoria)) return bad(res, 'Categoría no válida.');
+
+    if (b.eventAt) {
+        if (isNaN(Date.parse(b.eventAt))) return bad(res, 'Fecha del evento no válida.');
+        row.fecha_evento = new Date(b.eventAt).toISOString();
+    }
+
+    try {
+        row.imagen_url = await subirImagenAnuncio(b.image);
+    } catch (e) {
+        if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
+        if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
+        throw e;
+    }
 
     const { data, error } = await supabase.from('notificaciones').insert(row).select().single();
     if (error) throw error;
-    res.status(201).json(mapAnn(data));
+
+    const { data: perfil } = await supabase.from('perfiles').select('nombre')
+        .eq('id', req.session.userId).maybeSingle();
+    const nombres = new Map([[req.session.userId, perfil && perfil.nombre]]);
+    res.status(201).json(mapAnn(data, nombres, req.session.userId));
 }));
 
 // =====================================================
