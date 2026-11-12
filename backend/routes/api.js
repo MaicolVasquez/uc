@@ -97,9 +97,14 @@ const mapHueco = (r, uid, joinedByMe = false) => ({
     mine: !!uid && r.usuario_id === uid,
     joinedByMe
 });
-0000000const mapAnn = r => ({
+const mapAnn = (r, nombres, uid) => ({
     id: r.id, title: r.titulo, category: r.categoria || '', urgency: r.urgencia || 'INFO',
-    campus: r.campus_afectado || '', content: r.contenido || '', date: (r.creado_en || '').slice(0, 10)
+    campus: r.campus_afectado || '', content: r.contenido || '',
+    date: (r.creado_en || '').slice(0, 10),
+    image: r.imagen_url || '',
+    eventAt: r.fecha_evento || null,
+    authorName: (nombres && nombres.get(r.admin_id)) || '',
+    mine: !!uid && r.admin_id === uid
 });
 /* =====================================================
    BUSCADOR DE ESTUDIANTES
