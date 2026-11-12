@@ -6,8 +6,7 @@ let annImageData = null;   // imagen ya reducida, lista para enviar
 // Admin o delegado pueden publicar.
 // OJO: ajusta "currentUser" al nombre real que use layout.js para el usuario de la sesión.
 function canPublish() {
-    const role = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.role : null;
-    return isAdmin() || role === 'delegado';
+    return isAdmin() || (window.currentUser && window.currentUser.rol === 'delegado');
 }
 
 async function loadAnnouncements() {
@@ -61,7 +60,7 @@ function renderAnnouncements(items = announcementsData) {
                             ${urgencyBadge}
                             <span class="bg-slate-100 text-slate-700 text-[11px] font-bold px-2 py-0.5 rounded-md">${escapeHtml(ann.category)}</span>
                         </div>
-                        ${adminDeleteBtn('announcements', ann.id, 'loadAnnouncements')}
+                        ${deleteBtn('announcements', ann, 'loadAnnouncements')}
                     </div>
 
                     <h3 class="text-lg font-extrabold text-slate-900 mt-1">${escapeHtml(ann.title)}</h3>
