@@ -22,7 +22,7 @@ function renderLostFound(items = lostFoundData) {
             </div>`;
         return;
     }
-
+    const esAdminUser = !!(window.currentUser && window.currentUser.rol === 'admin');
     grid.innerHTML = items.map(item => {
         const isLost = item.status === 'PERDIDO';
         const statusBadge = isLost
@@ -65,6 +65,11 @@ function renderLostFound(items = lostFoundData) {
                 </div>
  
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2">
+                    ${esAdminUser && isLost ? `
+                    <button onclick="marcarEncontrado('${escapeHtml(item.id)}')"
+                        class="w-full mt-3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
+                        <i class="fa-solid fa-circle-check"></i> Marcar como encontrado
+                    </button>` : ''}
                     <a href="https://wa.me/51${phone}?text=Hola,%20te%20contacto%20desde%20UNSA%20Conecta%20por%20el%20objeto:%20${encodeURIComponent(item.title)}"
                        target="_blank" rel="noopener"
                        class="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
@@ -149,3 +154,13 @@ document.addEventListener('modalclosed', e => {
 });
 
 document.addEventListener('DOMContentLoaded', loadLostFound);
+async function marcarEncontrado(id) {
+    if (!confirm('¿Marcar este objeto como encontrado? Se avisará a su dueño.')) return;
+    try {
+        await apiFetch(`/api/lost-found/${encodeURIComponent(id)}/encontrado`, { method: 'PATCH' });
+        await loadLostFound();
+        openNotificationToast('Objeto marcado como encontrado. Se avisó al dueño.');
+    } catch (err) {
+        handleApiError(err);
+    }
+}
