@@ -141,7 +141,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Categoría *</label>
-                        <select id="lfCategoryInput" required
+                        <select id="lfCategoryInput" required onchange="onLfCategoryChange(this.value)"
                             class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                             <option value="Documentos">Carné / DNI / Cuadernos</option>
                             <option value="Electrónicos">Laptops / Celulares / Audífonos</option>
@@ -218,7 +218,20 @@
                     <p class="text-[10px] text-slate-400 mt-1">Si no subes ninguna foto, se mostrará una imagen
                         ilustrativa por defecto.</p>
                 </div>
-
+                <label
+                    class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/80 border border-amber-200 cursor-pointer">
+                    <input type="checkbox" id="lfSensitiveDocInput" checked onchange="updateLfPreviewBlur()"
+                        class="mt-0.5 accent-unsa-maroon rounded">
+                    <div class="text-xs">
+                        <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved text-unsa-maroon"></i>
+                            Proteger datos personales (difuminar foto)
+                        </span>
+                        <p class="text-[11px] text-slate-600 mt-0.5">
+                            Recomendado para carné universitario, DNI o tarjetas con códigos visibles.
+                        </p>
+                    </div>
+                </label>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Descripción o detalles del objeto</label>
                     <textarea id="lfDescInput" rows="3"

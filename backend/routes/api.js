@@ -106,7 +106,8 @@ router.post('/lost-found', requireAuth, h(async (req, res) => {
         telefono: digits(b.phone),
         url_foto: httpUrl(b.img),
         descripcion: txt(b.desc, 1000),
-        estado: estadoInicial()
+        estado: estadoInicial(),
+        contiene_documento: Boolean(b.hasSensitiveDoc),
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
@@ -161,7 +162,8 @@ router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
         fecha_hora: b.datetime,
         telefono: digits(b.phone),
         url_foto: nuevaFoto,
-        descripcion: txt(b.desc, 1000)
+        descripcion: txt(b.desc, 1000),
+        contiene_documento: Boolean(b.hasSensitiveDoc),
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
@@ -223,6 +225,7 @@ const mapLostFound = (r, uid) => ({
     status: r.tipo,
     resolutionStatus: r.estado_resolucion || 'ACTIVO',
     resolvedAt: r.resuelto_en || null,
+    hasSensitiveDoc: !!r.contiene_documento,
     phone: r.telefono || '',
     img: r.url_foto || '',
     desc: r.descripcion || '',

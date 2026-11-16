@@ -1,0 +1,2 @@
+ALTER TABLE public.objetos_perdidos
+ADD COLUMN IF NOT EXISTS contiene_documento BOOLEAN NOT NULL DEFAULT FALSE;
