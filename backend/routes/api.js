@@ -76,7 +76,22 @@ async function subirImagenAnuncio(dataUrl) {
     if (error) throw error;
     return supabase.storage.from('anuncios').getPublicUrl(nombre).data.publicUrl;
 }
-
+// ---------- notificaciones personales (campanita) ----------
+async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }) {
+    const ids = [...new Set(usuarioIds)].filter(Boolean);
+    if (!ids.length) return;
+    const filas = ids.map(id => ({
+        usuario_id: id,
+        tipo,
+        titulo: txt(titulo, 150),
+        detalle: txt(detalle, 300),
+        enlace: txt(enlace, 300)
+    }));
+    for (let i = 0; i < filas.length; i += 500) {
+        const { error } = await supabase.from('notificaciones_usuario').insert(filas.slice(i, i + 500));
+        if (error) console.error('No se pudo crear la notificación:', error.message);
+    }
+}
 // ---------- mappers: fila de BD -> objeto que espera el frontend ----------
 const mapLostFound = (r, uid) => ({
     id: r.id, title: r.titulo, category: r.categoria || '', campus: r.campus || '',
@@ -105,6 +120,10 @@ const mapAnn = (r, nombres, uid) => ({
     eventAt: r.fecha_evento || null,
     authorName: (nombres && nombres.get(r.admin_id)) || '',
     mine: !!uid && r.admin_id === uid
+});
+const mapNotif = r => ({
+    id: r.id, tipo: r.tipo, titulo: r.titulo, detalle: r.detalle || '',
+    enlace: r.enlace || '', leida: r.leida, creadoEn: r.creado_en
 });
 /* =====================================================
    BUSCADOR DE ESTUDIANTES
@@ -367,6 +386,26 @@ router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
 }));
 router.delete('/lost-found/:id', requireAuth, borrarPublicacion('objetos_perdidos'))
 
+// Solo admin: marca un reporte PERDIDO como ENCONTRADO y avisa a su dueño
+router.patch('/lost-found/:id/encontrado', requireAdmin, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    const { data, error } = await supabase.from('objetos_perdidos')
+        .update({ tipo: 'ENCONTRADO' })
+        .eq('id', req.params.id).eq('tipo', 'PERDIDO')
+        .select().maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Reporte no encontrado o ya marcado como encontrado.' });
+
+    if (data.usuario_id !== req.session.userId) {
+        await notificar([data.usuario_id], {
+            tipo: 'objeto_encontrado',
+            titulo: '¡Tu objeto fue encontrado!',
+            detalle: `${data.titulo} · ${data.lugar_exacto || ''}`,
+            enlace: 'index.html'
+        });
+    }
+    res.json(mapLostFound(data, req.session.userId));
+}));
 // =====================================================
 // TUTORES
 // =====================================================
@@ -711,13 +750,52 @@ router.post('/announcements', requirePublicador, h(async (req, res) => {
 
     const { data, error } = await supabase.from('notificaciones').insert(row).select().single();
     if (error) throw error;
-
+        // Anuncio urgente: avisar a todos los usuarios por la campanita
+    if (row.urgencia === 'URGENTE') {
+        const { data: todos } = await supabase.from('perfiles').select('id').neq('id', req.session.userId);
+        await notificar((todos || []).map(p => p.id), {
+            tipo: 'anuncio_urgente',
+            titulo: '🚨 ' + row.titulo,
+            detalle: row.contenido,
+            enlace: 'notificaciones.html'
+        });
+    }
     const { data: perfil } = await supabase.from('perfiles').select('nombre')
         .eq('id', req.session.userId).maybeSingle();
     const nombres = new Map([[req.session.userId, perfil && perfil.nombre]]);
     res.status(201).json(mapAnn(data, nombres, req.session.userId));
 }));
+// =====================================================
+// MIS NOTIFICACIONES (campanita)
+// =====================================================
+router.get('/mis-notificaciones', requireAuth, h(async (req, res) => {
+    const uid = req.session.userId;
+    const { data, error } = await supabase.from('notificaciones_usuario').select('*')
+        .eq('usuario_id', uid).order('creado_en', { ascending: false }).limit(40);
+    if (error) throw error;
 
+    const { count, error: e2 } = await supabase.from('notificaciones_usuario')
+        .select('id', { count: 'exact', head: true })
+        .eq('usuario_id', uid).eq('leida', false);
+    if (e2) throw e2;
+
+    res.json({ items: data.map(mapNotif), noLeidas: count || 0 });
+}));
+
+router.post('/mis-notificaciones/leer-todas', requireAuth, h(async (req, res) => {
+    const { error } = await supabase.from('notificaciones_usuario').update({ leida: true })
+        .eq('usuario_id', req.session.userId).eq('leida', false);
+    if (error) throw error;
+    res.json({ ok: true });
+}));
+
+router.post('/mis-notificaciones/:id/leer', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    const { error } = await supabase.from('notificaciones_usuario').update({ leida: true })
+        .eq('id', req.params.id).eq('usuario_id', req.session.userId);
+    if (error) throw error;
+    res.json({ ok: true });
+}));
 // =====================================================
 // MODERACIÓN (solo admin) — útil si AUTO_APROBAR=false
 // =====================================================
@@ -995,7 +1073,10 @@ router.get('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
         .eq('activo', true);
 
     if (e2) throw e2;
-
+        // Al abrir el chat, sus avisos de mensaje quedan leídos
+    await supabase.from('notificaciones_usuario').update({ leida: true })
+        .eq('usuario_id', usuarioId).eq('tipo', 'mensaje')
+        .eq('enlace', `cuenta.html?chat=${conversacionId}`);
     // Entregar mensajes en orden cronológico
     const mensajes = (data || [])
         .reverse()
@@ -1076,7 +1157,31 @@ router.post('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
         .single();
 
     if (error) throw error;
+        // Avisar a los demás participantes (una sola notificación por chat: la más reciente)
+    const { data: conv } = await supabase.from('conversaciones')
+        .select('tipo, titulo').eq('id', conversacionId).maybeSingle();
+    const { data: perfilRem } = await supabase.from('perfiles')
+        .select('nombre').eq('id', usuarioId).maybeSingle();
+    const { data: otros } = await supabase.from('conversacion_participantes')
+        .select('usuario_id').eq('conversacion_id', conversacionId)
+        .eq('activo', true).neq('usuario_id', usuarioId);
 
+    const idsDestino = (otros || []).map(o => o.usuario_id);
+    if (idsDestino.length) {
+        const enlaceChat = `cuenta.html?chat=${conversacionId}`;
+        await supabase.from('notificaciones_usuario').delete()
+            .eq('tipo', 'mensaje').eq('leida', false)
+            .eq('enlace', enlaceChat).in('usuario_id', idsDestino);
+
+        const remitente = (perfilRem && perfilRem.nombre) || 'Alguien';
+        const esGrupo = conv && conv.tipo === 'grupo';
+        await notificar(idsDestino, {
+            tipo: 'mensaje',
+            titulo: esGrupo ? `${remitente} en ${conv.titulo || 'tu grupo'}` : `${remitente} te envió un mensaje`,
+            detalle: contenido,
+            enlace: enlaceChat
+        });
+    }    
     res.status(201).json({
 
         ok: true,
