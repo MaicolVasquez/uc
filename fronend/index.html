@@ -120,14 +120,59 @@
                     <div class="grid grid-cols-2 gap-2">
                         <label
                             class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer text-xs font-bold hover:bg-slate-50">
-                            <input type="radio" name="status" value="PERDIDO" checked class="accent-unsa-maroon">
+                            <input type="radio" name="status" value="PERDIDO" checked
+                                onchange="onLfStatusChange(this.value)" class="accent-unsa-maroon">
                             <span class="text-red-600">🔴 Lo he Perdido</span>
                         </label>
                         <label
                             class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer text-xs font-bold hover:bg-slate-50">
-                            <input type="radio" name="status" value="ENCONTRADO" class="accent-unsa-maroon">
+                            <input type="radio" name="status" value="ENCONTRADO" onchange="onLfStatusChange(this.value)"
+                                class="accent-unsa-maroon">
                             <span class="text-green-600">🟢 Lo he Encontrado</span>
                         </label>
+                    </div>
+                </div>
+                <!-- Sección de custodia (visible solo cuando se marca "Lo he Encontrado") -->
+                <div id="lfCustodySection"
+                    class="hidden p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                    <label class="block text-xs font-bold text-slate-700">¿Dónde se encuentra el objeto ahora? *</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label
+                            class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 cursor-pointer text-xs font-semibold hover:border-unsa-maroon">
+                            <input type="radio" name="custodyType" value="CONMIGO" checked
+                                onchange="onLfCustodyChange(this.value)" class="accent-unsa-maroon">
+                            <span>🎒 Lo tengo conmigo</span>
+                        </label>
+                        <label
+                            class="flex items-center gap-2 p-2.5 rounded-lg bg-white border border-slate-200 cursor-pointer text-xs font-semibold hover:border-unsa-maroon">
+                            <input type="radio" name="custodyType" value="PUNTO_SEGURO"
+                                onchange="onLfCustodyChange(this.value)" class="accent-unsa-maroon">
+                            <span>🏛️ Punto seguro</span>
+                        </label>
+                    </div>
+
+                    <div id="lfCustodyPointBox" class="hidden space-y-2">
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" onclick="setCustodyPoint('Garita Puerta Principal')"
+                                class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-unsa-maroon text-slate-700">
+                                Garita Puerta Principal
+                            </button>
+                            <button type="button" onclick="setCustodyPoint('Biblioteca de Área')"
+                                class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-unsa-maroon text-slate-700">
+                                Biblioteca de Área
+                            </button>
+                            <button type="button" onclick="setCustodyPoint('Dirección de Escuela')"
+                                class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-unsa-maroon text-slate-700">
+                                Dirección de Escuela
+                            </button>
+                            <button type="button" onclick="setCustodyPoint('Vigilancia / Seguridad')"
+                                class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-unsa-maroon text-slate-700">
+                                Vigilancia / Seguridad
+                            </button>
+                        </div>
+                        <input type="text" id="lfCustodyPointInput" maxlength="150"
+                            placeholder="Especifica oficina, garita o encargado..."
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
                     </div>
                 </div>
 

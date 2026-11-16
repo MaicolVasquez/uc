@@ -124,6 +124,11 @@ router.post('/lost-found', requireAuth, h(async (req, res) => {
         }
     }
 
+    const custodia = parseCustody(row.tipo, b);
+    if (custodia.error) return bad(res, custodia.error);
+    row.tipo_custodia = custodia.tipo_custodia;
+    row.punto_entrega = custodia.punto_entrega;
+
     const { data, error } = await supabase.from('objetos_perdidos').insert(row).select().single();
     if (error) throw error;
     res.status(201).json(mapLostFound(data, req.session.userId));
@@ -169,6 +174,11 @@ router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
     if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
     if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
+
+    const custodia = parseCustody(row.tipo, b);
+    if (custodia.error) return bad(res, custodia.error);
+    row.tipo_custodia = custodia.tipo_custodia;
+    row.punto_entrega = custodia.punto_entrega;
 
     const { data, error } = await supabase.from('objetos_perdidos').update(row)
         .eq('id', req.params.id).eq('usuario_id', req.session.userId)
@@ -226,6 +236,8 @@ const mapLostFound = (r, uid) => ({
     resolutionStatus: r.estado_resolucion || 'ACTIVO',
     resolvedAt: r.resuelto_en || null,
     hasSensitiveDoc: !!r.contiene_documento,
+    custodyType: r.tipo_custodia || 'NO_APLICA',
+    custodyPoint: r.punto_entrega || '',
     phone: r.telefono || '',
     img: r.url_foto || '',
     desc: r.descripcion || '',
@@ -454,7 +466,22 @@ router.get('/perfil/actividad', requireAuth, h(async (req, res) => {
 
 }));
 
+function parseCustody(tipo, b) {
+    if (tipo === 'PERDIDO') {
+        return { tipo_custodia: 'NO_APLICA', punto_entrega: null };
+    }
+    const custodyType = ['CONMIGO', 'PUNTO_SEGURO'].includes(b.custodyType)
+        ? b.custodyType
+        : 'CONMIGO';
+    const custodyPoint = custodyType === 'PUNTO_SEGURO'
+        ? txt(b.custodyPoint, 150)
+        : null;
 
+    if (custodyType === 'PUNTO_SEGURO' && !custodyPoint) {
+        return { error: 'Indica en qué punto seguro dejaste el objeto.' };
+    }
+    return { tipo_custodia: custodyType, punto_entrega: custodyPoint };
+}
 
 // =====================================================
 // OBJETOS PERDIDOS

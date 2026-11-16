@@ -41,7 +41,23 @@ function renderLostFound(items = lostFoundData) {
         const formattedDate = item.datetime
             ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
             : '';
-
+        // Generar el bloque informativo de custodia para objetos ENCONTRADO:
+        let custodyBadge = '';
+        if (!isLost) {
+            if (item.custodyType === 'PUNTO_SEGURO' && item.custodyPoint) {
+                custodyBadge = `
+                    <div class="mt-2.5 flex items-center gap-1.5 text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg">
+                        <i class="fa-solid fa-building-shield text-blue-600"></i>
+                        <span class="truncate">Dejado en: ${escapeHtml(item.custodyPoint)}</span>
+                    </div>`;
+            } else {
+                custodyBadge = `
+                    <div class="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                        <i class="fa-solid fa-hand-holding text-unsa-maroon"></i>
+                        <span>En custodia del reportante</span>
+                    </div>`;
+            }
+        }
         // 1. Aquí defines las variables de la imagen y el bloque difuminado:
         const hasRealImg = !!safeUrl(item.img);
         const img = escapeHtml(safeUrl(item.img) || LF_DEFAULT_IMG);
@@ -236,6 +252,8 @@ async function handleSaveLostFound(e) {
         imageData: lfImageData,
         desc: document.getElementById('lfDescInput').value,
         hasSensitiveDoc: document.getElementById('lfSensitiveDocInput').checked,
+        custodyType: document.querySelector('input[name="custodyType"]:checked')?.value || 'CONMIGO',
+        custodyPoint: document.getElementById('lfCustodyPointInput').value,
     };
 
     try {
@@ -264,6 +282,16 @@ function editLostFound(id) {
 
     const radio = document.querySelector(`input[name="status"][value="${it.status}"]`);
     if (radio) radio.checked = true;
+
+    onLfStatusChange(it.status);
+    if (it.status === 'ENCONTRADO') {
+        const cType = it.custodyType === 'PUNTO_SEGURO' ? 'PUNTO_SEGURO' : 'CONMIGO';
+        const cRadio = document.querySelector(`input[name="custodyType"][value="${cType}"]`);
+        if (cRadio) cRadio.checked = true;
+        onLfCustodyChange(cType);
+        document.getElementById('lfCustodyPointInput').value = it.custodyPoint || '';
+    }
+
     document.getElementById('lfTitleInput').value = it.title;
     document.getElementById('lfCategoryInput').value = it.category;
     document.getElementById('lfCampusInput').value = it.campus;
@@ -285,6 +313,8 @@ document.addEventListener('modalclosed', e => {
         lfEditingId = null;
         document.getElementById('lostFoundForm').reset();
         document.getElementById('lfSensitiveDocInput').checked = true;
+        onLfStatusChange('PERDIDO');
+        onLfCustodyChange('CONMIGO');
         clearLfImage();
         document.getElementById('lfUrlBox').classList.add('hidden');
     }
@@ -346,4 +376,38 @@ function showLfPreview(src) {
         preview.src = '';
         wrap.classList.add('hidden');
     }
+}
+
+function onLfStatusChange(status) {
+    const section = document.getElementById('lfCustodySection');
+    const pointInput = document.getElementById('lfCustodyPointInput');
+    if (!section) return;
+
+    const isFound = status === 'ENCONTRADO';
+    section.classList.toggle('hidden', !isFound);
+
+    if (!isFound && pointInput) {
+        pointInput.required = false;
+    } else if (isFound) {
+        const selected = document.querySelector('input[name="custodyType"]:checked')?.value || 'CONMIGO';
+        onLfCustodyChange(selected);
+    }
+}
+
+function onLfCustodyChange(custodyType) {
+    const box = document.getElementById('lfCustodyPointBox');
+    const input = document.getElementById('lfCustodyPointInput');
+    if (!box || !input) return;
+
+    const isSafePoint = custodyType === 'PUNTO_SEGURO';
+    box.classList.toggle('hidden', !isSafePoint);
+    input.required = isSafePoint;
+    if (!isSafePoint) input.value = '';
+}
+
+function setCustodyPoint(label) {
+    const input = document.getElementById('lfCustodyPointInput');
+    if (!input) return;
+    input.value = label;
+    input.focus();
 }
