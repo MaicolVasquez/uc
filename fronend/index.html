@@ -183,11 +183,40 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Foto u Objeto (Opcional)</label>
-                    <input type="url" id="lfImgInput" placeholder="https://..."
-                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
-                    <p class="text-[10px] text-slate-400 mt-0.5">Si se deja vacío, se asignará una imagen ilustrativa
-                        por defecto.</p>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-bold text-slate-700">Fotografía del Objeto (Opcional)</label>
+                        <button type="button" onclick="toggleLfUrlOption()"
+                            class="text-[11px] font-semibold text-unsa-maroon hover:underline">
+                            <i class="fa-solid fa-link"></i> Usar enlace URL
+                        </button>
+                    </div>
+
+                    <label for="lfImgFileInput"
+                        class="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-slate-300 hover:border-unsa-maroon rounded-xl bg-slate-50 hover:bg-slate-100/70 cursor-pointer transition-colors">
+                        <i class="fa-solid fa-camera text-2xl text-unsa-maroon mb-1"></i>
+                        <span class="text-xs font-bold text-slate-700">Tomar foto o subir desde galería</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">JPG, PNG o WebP · Se optimiza
+                            automáticamente</span>
+                        <input type="file" id="lfImgFileInput" accept="image/jpeg,image/png,image/webp"
+                            onchange="previewLfImage(this)" class="hidden">
+                    </label>
+
+                    <div id="lfUrlBox" class="hidden mt-2">
+                        <input type="url" id="lfImgInput" oninput="previewLfUrl(this.value)" placeholder="https://..."
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                    </div>
+
+                    <div id="lfImgPreviewWrap"
+                        class="hidden relative mt-3 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                        <img id="lfImgPreview" src="" alt="Vista previa" class="w-full max-h-48 object-cover">
+                        <button type="button" onclick="clearLfImage()"
+                            class="absolute top-2 right-2 bg-slate-900/80 hover:bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow transition-colors flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Quitar foto
+                        </button>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 mt-1">Si no subes ninguna foto, se mostrará una imagen
+                        ilustrativa por defecto.</p>
                 </div>
 
                 <div>

@@ -62,7 +62,7 @@ async function requirePublicador(req, res, next) {
 }
 
 // Recibe una imagen en base64, la sube a Storage y devuelve su URL pública
-async function subirImagenAnuncio(dataUrl) {
+async function subirImagenStorage(dataUrl, bucket) {
     if (!dataUrl) return null;
     const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
     if (!m) throw new Error('IMG_FORMATO');
@@ -71,11 +71,131 @@ async function subirImagenAnuncio(dataUrl) {
 
     const ext = m[1] === 'jpeg' ? 'jpg' : m[1];
     const nombre = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`;
-    const { error } = await supabase.storage.from('anuncios')
+    const { error } = await supabase.storage.from(bucket)
         .upload(nombre, buf, { contentType: `image/${m[1]}` });
     if (error) throw error;
-    return supabase.storage.from('anuncios').getPublicUrl(nombre).data.publicUrl;
+    return supabase.storage.from(bucket).getPublicUrl(nombre).data.publicUrl;
 }
+
+const subirImagenAnuncio = dataUrl => subirImagenStorage(dataUrl, 'anuncios');
+const subirImagenObjeto = dataUrl => subirImagenStorage(dataUrl, 'objetos-perdidos');
+
+// Elimina del bucket la imagen si pertenece a Supabase Storage
+async function eliminarImagenBucket(publicUrl, bucket) {
+    if (!publicUrl) return;
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = publicUrl.indexOf(marker);
+    if (idx === -1) return;
+    const filePath = decodeURIComponent(publicUrl.slice(idx + marker.length));
+    if (filePath) {
+        await supabase.storage.from(bucket).remove([filePath]).catch(() => { });
+    }
+}
+
+// 2. Actualizar POST /lost-found:
+router.post('/lost-found', requireAuth, h(async (req, res) => {
+    const b = req.body || {};
+    const row = {
+        usuario_id: req.session.userId,
+        tipo: b.status,
+        titulo: txt(b.title, 150),
+        categoria: txt(b.category, 50),
+        campus: txt(b.campus, 50),
+        lugar_exacto: txt(b.location, 200),
+        fecha_hora: b.datetime,
+        telefono: digits(b.phone),
+        url_foto: httpUrl(b.img),
+        descripcion: txt(b.desc, 1000),
+        estado: estadoInicial()
+    };
+    if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
+    if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
+    if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
+    if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
+
+    if (b.imageData) {
+        try {
+            row.url_foto = await subirImagenObjeto(b.imageData);
+        } catch (e) {
+            if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
+            if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
+            throw e;
+        }
+    }
+
+    const { data, error } = await supabase.from('objetos_perdidos').insert(row).select().single();
+    if (error) throw error;
+    res.status(201).json(mapLostFound(data, req.session.userId));
+}));
+
+// 3. Actualizar PUT /lost-found/:id:
+router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    const b = req.body || {};
+
+    const { data: actual, error: e0 } = await supabase.from('objetos_perdidos')
+        .select('id, url_foto')
+        .eq('id', req.params.id)
+        .eq('usuario_id', req.session.userId)
+        .maybeSingle();
+    if (e0) throw e0;
+    if (!actual) return res.status(404).json({ error: 'Publicación no encontrada.' });
+
+    let nuevaFoto = httpUrl(b.img);
+    if (b.imageData) {
+        try {
+            nuevaFoto = await subirImagenObjeto(b.imageData);
+        } catch (e) {
+            if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
+            if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
+            throw e;
+        }
+    }
+
+    const row = {
+        tipo: b.status,
+        titulo: txt(b.title, 150),
+        categoria: txt(b.category, 50),
+        campus: txt(b.campus, 50),
+        lugar_exacto: txt(b.location, 200),
+        fecha_hora: b.datetime,
+        telefono: digits(b.phone),
+        url_foto: nuevaFoto,
+        descripcion: txt(b.desc, 1000)
+    };
+    if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
+    if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
+    if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
+    if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
+
+    const { data, error } = await supabase.from('objetos_perdidos').update(row)
+        .eq('id', req.params.id).eq('usuario_id', req.session.userId)
+        .select().maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
+
+    // Si cambió o se eliminó la foto anterior almacenada en Storage, limpiarla
+    if (actual.url_foto && actual.url_foto !== nuevaFoto) {
+        await eliminarImagenBucket(actual.url_foto, 'objetos-perdidos');
+    }
+
+    res.json(mapLostFound(data, req.session.userId));
+}));
+
+// 4. Actualizar DELETE /lost-found/:id para borrar también la foto del bucket:
+router.delete('/lost-found/:id', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    let q = supabase.from('objetos_perdidos').delete().eq('id', req.params.id);
+    if (!(await esAdmin(req.session.userId))) q = q.eq('usuario_id', req.session.userId);
+    const { data, error } = await q.select('id, url_foto').maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'No encontrado.' });
+
+    if (data.url_foto) {
+        await eliminarImagenBucket(data.url_foto, 'objetos-perdidos');
+    }
+    res.json({ ok: true });
+}));
 // ---------- notificaciones personales (campanita) ----------
 async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }) {
     const ids = [...new Set(usuarioIds)].filter(Boolean);
