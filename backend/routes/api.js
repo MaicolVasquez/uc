@@ -94,9 +94,18 @@ async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }
 }
 // ---------- mappers: fila de BD -> objeto que espera el frontend ----------
 const mapLostFound = (r, uid) => ({
-    id: r.id, title: r.titulo, category: r.categoria || '', campus: r.campus || '',
-    location: r.lugar_exacto || '', datetime: r.fecha_hora, status: r.tipo,
-    phone: r.telefono || '', img: r.url_foto || '', desc: r.descripcion || '',
+    id: r.id,
+    title: r.titulo,
+    category: r.categoria || '',
+    campus: r.campus || '',
+    location: r.lugar_exacto || '',
+    datetime: r.fecha_hora,
+    status: r.tipo,
+    resolutionStatus: r.estado_resolucion || 'ACTIVO',
+    resolvedAt: r.resuelto_en || null,
+    phone: r.telefono || '',
+    img: r.url_foto || '',
+    desc: r.descripcion || '',
     mine: !!uid && r.usuario_id === uid
 });
 const mapTutor = (r, uid) => ({
@@ -387,23 +396,81 @@ router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
 router.delete('/lost-found/:id', requireAuth, borrarPublicacion('objetos_perdidos'))
 
 // Solo admin: marca un reporte PERDIDO como ENCONTRADO y avisa a su dueño
-router.patch('/lost-found/:id/encontrado', requireAdmin, h(async (req, res) => {
+router.patch('/lost-found/:id/resolver', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
-    const { data, error } = await supabase.from('objetos_perdidos')
-        .update({ tipo: 'ENCONTRADO' })
-        .eq('id', req.params.id).eq('tipo', 'PERDIDO')
-        .select().maybeSingle();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Reporte no encontrado o ya marcado como encontrado.' });
 
-    if (data.usuario_id !== req.session.userId) {
-        await notificar([data.usuario_id], {
+    const { data: actual, error: e1 } = await supabase
+        .from('objetos_perdidos')
+        .select('id, usuario_id, tipo, titulo, lugar_exacto, estado_resolucion')
+        .eq('id', req.params.id)
+        .maybeSingle();
+
+    if (e1) throw e1;
+    if (!actual) return res.status(404).json({ error: 'Reporte no encontrado.' });
+
+    const admin = await esAdmin(req.session.userId);
+    if (actual.usuario_id !== req.session.userId && !admin) {
+        return res.status(403).json({ error: 'Solo el autor o un administrador puede cerrar este caso.' });
+    }
+    if (actual.estado_resolucion === 'RESUELTO') {
+        return bad(res, 'Este reporte ya figura como resuelto.');
+    }
+
+    const { data, error } = await supabase
+        .from('objetos_perdidos')
+        .update({
+            estado_resolucion: 'RESUELTO',
+            resuelto_en: new Date().toISOString()
+        })
+        .eq('id', req.params.id)
+        .select()
+        .single();
+
+    if (error) throw error;
+
+    // Si un administrador cierra el reporte de un estudiante, notificar al dueño
+    if (actual.usuario_id !== req.session.userId) {
+        await notificar([actual.usuario_id], {
             tipo: 'objeto_encontrado',
-            titulo: '¡Tu objeto fue encontrado!',
-            detalle: `${data.titulo} · ${data.lugar_exacto || ''}`,
+            titulo: actual.tipo === 'PERDIDO'
+                ? '¡Tu objeto fue marcado como recuperado!'
+                : '¡Tu reporte fue marcado como devuelto!',
+            detalle: `${actual.titulo} · ${actual.lugar_exacto || ''}`,
             enlace: 'index.html'
         });
     }
+
+    res.json(mapLostFound(data, req.session.userId));
+}));
+
+router.patch('/lost-found/:id/reabrir', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+
+    const { data: actual, error: e1 } = await supabase
+        .from('objetos_perdidos')
+        .select('id, usuario_id')
+        .eq('id', req.params.id)
+        .maybeSingle();
+
+    if (e1) throw e1;
+    if (!actual) return res.status(404).json({ error: 'Reporte no encontrado.' });
+
+    const admin = await esAdmin(req.session.userId);
+    if (actual.usuario_id !== req.session.userId && !admin) {
+        return res.status(403).json({ error: 'No tienes permiso para reabrir este caso.' });
+    }
+
+    const { data, error } = await supabase
+        .from('objetos_perdidos')
+        .update({
+            estado_resolucion: 'ACTIVO',
+            resuelto_en: null
+        })
+        .eq('id', req.params.id)
+        .select()
+        .single();
+
+    if (error) throw error;
     res.json(mapLostFound(data, req.session.userId));
 }));
 // =====================================================
@@ -750,7 +817,7 @@ router.post('/announcements', requirePublicador, h(async (req, res) => {
 
     const { data, error } = await supabase.from('notificaciones').insert(row).select().single();
     if (error) throw error;
-        // Anuncio urgente: avisar a todos los usuarios por la campanita
+    // Anuncio urgente: avisar a todos los usuarios por la campanita
     if (row.urgencia === 'URGENTE') {
         const { data: todos } = await supabase.from('perfiles').select('id').neq('id', req.session.userId);
         await notificar((todos || []).map(p => p.id), {
@@ -1073,7 +1140,7 @@ router.get('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
         .eq('activo', true);
 
     if (e2) throw e2;
-        // Al abrir el chat, sus avisos de mensaje quedan leídos
+    // Al abrir el chat, sus avisos de mensaje quedan leídos
     await supabase.from('notificaciones_usuario').update({ leida: true })
         .eq('usuario_id', usuarioId).eq('tipo', 'mensaje')
         .eq('enlace', `cuenta.html?chat=${conversacionId}`);
@@ -1157,7 +1224,7 @@ router.post('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
         .single();
 
     if (error) throw error;
-        // Avisar a los demás participantes (una sola notificación por chat: la más reciente)
+    // Avisar a los demás participantes (una sola notificación por chat: la más reciente)
     const { data: conv } = await supabase.from('conversaciones')
         .select('tipo, titulo').eq('id', conversacionId).maybeSingle();
     const { data: perfilRem } = await supabase.from('perfiles')
@@ -1181,7 +1248,7 @@ router.post('/conversaciones/:id/mensajes', requireAuth, h(async (req, res) => {
             detalle: contenido,
             enlace: enlaceChat
         });
-    }    
+    }
     res.status(201).json({
 
         ok: true,
