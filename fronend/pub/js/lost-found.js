@@ -41,30 +41,46 @@ function renderLostFound(items = lostFoundData) {
         const formattedDate = item.datetime
             ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
             : '';
-        const img = escapeHtml(safeUrl(item.img) || LF_DEFAULT_IMG);
-        const phone = onlyDigits(item.phone);
 
+        // 1. Aquí defines las variables de la imagen y el bloque difuminado:
+        const hasRealImg = !!safeUrl(item.img);
+        const img = escapeHtml(safeUrl(item.img) || LF_DEFAULT_IMG);
+        const shouldBlur = !!(item.hasSensitiveDoc && hasRealImg);
+
+        const imageBlock = `
+            <div class="relative h-44 overflow-hidden bg-slate-100">
+                <img src="${img}" alt="${escapeHtml(item.title)}"
+                     class="w-full h-full object-cover transition-transform duration-300 ${shouldBlur ? 'blur-md scale-110' : 'hover:scale-105'} ${isResolved ? 'grayscale-[40%]' : ''}"
+                     onerror="this.src='${LF_DEFAULT_IMG}'">
+                ${shouldBlur ? `
+                <div class="absolute inset-0 bg-slate-900/35 flex flex-col items-center justify-center text-white text-center px-4 pointer-events-none">
+                    <span class="w-9 h-9 rounded-full bg-slate-900/80 border border-white/20 flex items-center justify-center mb-1.5">
+                        <i class="fa-solid fa-eye-slash text-unsa-gold text-sm"></i>
+                    </span>
+                    <span class="text-[11px] font-extrabold tracking-wide uppercase">Documento Protegido</span>
+                    <span class="text-[10px] text-slate-200">Imagen difuminada por privacidad</span>
+                </div>` : ''}
+                <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                    ${statusBadge}
+                    ${resolvedBadge}
+                </div>
+                <div class="absolute top-3 right-3 flex gap-1">
+                    ${!isResolved ? editBtn('editLostFound', item) : ''}
+                    ${deleteBtn('lost-found', item, 'loadLostFound')}
+                </div>
+                <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                    ${escapeHtml(item.campus)}
+                </div>
+            </div>`;
+
+        const phone = onlyDigits(item.phone);
         const resolveBtnLabel = isLost ? 'Marcar como recuperado' : 'Marcar como devuelto';
 
         return `
             <div class="bg-white rounded-2xl border ${isResolved ? 'border-slate-300 opacity-85' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
                 <div>
-                    <div class="relative h-44 overflow-hidden bg-slate-100">
-                        <img src="${img}" alt="${escapeHtml(item.title)}"
-                             class="w-full h-full object-cover transition-transform hover:scale-105 duration-300 ${isResolved ? 'grayscale-[40%]' : ''}"
-                             onerror="this.src='${LF_DEFAULT_IMG}'">
-                        <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                            ${statusBadge}
-                            ${resolvedBadge}
-                        </div>
-                        <div class="absolute top-3 right-3 flex gap-1">
-                            ${!isResolved ? editBtn('editLostFound', item) : ''}
-                            ${deleteBtn('lost-found', item, 'loadLostFound')}
-                        </div>
-                        <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-                            ${escapeHtml(item.campus)}
-                        </div>
-                    </div>
+                    <!-- 2. Y aquí insertas ${imageBlock} en lugar del div de imagen anterior -->
+                    ${imageBlock}
 
                     <div class="p-4">
                         <span class="text-[10px] font-bold uppercase text-unsa-maroon tracking-wider">${escapeHtml(item.category)}</span>
@@ -218,7 +234,8 @@ async function handleSaveLostFound(e) {
         phone: document.getElementById('lfPhoneInput').value,
         img: document.getElementById('lfImgInput').value,
         imageData: lfImageData,
-        desc: document.getElementById('lfDescInput').value
+        desc: document.getElementById('lfDescInput').value,
+        hasSensitiveDoc: document.getElementById('lfSensitiveDocInput').checked,
     };
 
     try {
@@ -255,6 +272,7 @@ function editLostFound(id) {
     document.getElementById('lfPhoneInput').value = it.phone;
     document.getElementById('lfImgInput').value = it.img || '';
     document.getElementById('lfDescInput').value = it.desc;
+    document.getElementById('lfSensitiveDocInput').checked = !!it.hasSensitiveDoc;
 
     showLfPreview(safeUrl(it.img));
     setModalMode('lfModalTitle', 'lfSubmitBtn', true, 'Reportar Objeto', 'Publicar Reporte');
@@ -266,6 +284,7 @@ document.addEventListener('modalclosed', e => {
     if (e.detail === 'lostFoundModal') {
         lfEditingId = null;
         document.getElementById('lostFoundForm').reset();
+        document.getElementById('lfSensitiveDocInput').checked = true;
         clearLfImage();
         document.getElementById('lfUrlBox').classList.add('hidden');
     }
@@ -295,5 +314,36 @@ async function reabrirCaso(id) {
         openNotificationToast('El caso vuelve a estar activo.');
     } catch (err) {
         handleApiError(err);
+    }
+}
+
+// Activa o desactiva automáticamente la protección según la categoría elegida
+function onLfCategoryChange(category) {
+    const checkbox = document.getElementById('lfSensitiveDocInput');
+    if (!checkbox) return;
+    checkbox.checked = (category === 'Documentos');
+    updateLfPreviewBlur();
+}
+
+// Aplica o quita el difuminado en la vista previa del modal
+function updateLfPreviewBlur() {
+    const preview = document.getElementById('lfImgPreview');
+    const checkbox = document.getElementById('lfSensitiveDocInput');
+    if (!preview || !checkbox) return;
+    preview.classList.toggle('blur-md', checkbox.checked);
+    preview.classList.toggle('scale-105', checkbox.checked);
+}
+
+// Actualizar showLfPreview para respetar el estado de difuminado
+function showLfPreview(src) {
+    const wrap = document.getElementById('lfImgPreviewWrap');
+    const preview = document.getElementById('lfImgPreview');
+    if (src) {
+        preview.src = src;
+        wrap.classList.remove('hidden');
+        updateLfPreviewBlur();
+    } else {
+        preview.src = '';
+        wrap.classList.add('hidden');
     }
 }
