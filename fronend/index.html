@@ -64,6 +64,13 @@
                         <option value="PERDIDO">🔴 Solo Perdidos</option>
                         <option value="ENCONTRADO">🟢 Solo Encontrados</option>
                     </select>
+                    <!-- Resolution Filter -->
+                    <select id="lfResolutionFilter" onchange="filterLostFound()"
+                        class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-unsa-maroon font-medium text-slate-700">
+                        <option value="ACTIVO" selected>⏳ Solo Activos</option>
+                        <option value="ALL">📋 Activos y Resueltos</option>
+                        <option value="RESUELTO">✅ Casos Resueltos</option>
+                    </select>
 
                     <!-- Campus Filter -->
                     <select id="lfCampusFilter" onchange="filterLostFound()"
