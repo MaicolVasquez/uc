@@ -129,8 +129,85 @@ function filterLostFound() {
     renderLostFound(filtered);
 }
 
+let lfImageData = null;
+
+function resizeLfImage(file, maxW = 1000) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            const scale = Math.min(1, maxW / img.width);
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('No se pudo leer la imagen'));
+        };
+        img.src = url;
+    });
+}
+
+function showLfPreview(src) {
+    const wrap = document.getElementById('lfImgPreviewWrap');
+    const preview = document.getElementById('lfImgPreview');
+    if (src) {
+        preview.src = src;
+        wrap.classList.remove('hidden');
+    } else {
+        preview.src = '';
+        wrap.classList.add('hidden');
+    }
+}
+
+async function previewLfImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+        lfImageData = await resizeLfImage(file);
+        document.getElementById('lfImgInput').value = '';
+        showLfPreview(lfImageData);
+    } catch (err) {
+        lfImageData = null;
+        input.value = '';
+        showLfPreview('');
+        openNotificationToast('No se pudo procesar la imagen seleccionada.');
+    }
+}
+
+function previewLfUrl(url) {
+    const clean = safeUrl(url.trim());
+    if (clean) {
+        lfImageData = null;
+        document.getElementById('lfImgFileInput').value = '';
+        showLfPreview(clean);
+    } else if (!lfImageData) {
+        showLfPreview('');
+    }
+}
+
+function clearLfImage() {
+    lfImageData = null;
+    document.getElementById('lfImgFileInput').value = '';
+    document.getElementById('lfImgInput').value = '';
+    showLfPreview('');
+}
+
+function toggleLfUrlOption() {
+    document.getElementById('lfUrlBox').classList.toggle('hidden');
+}
+
 async function handleSaveLostFound(e) {
     e.preventDefault();
+    const submitBtn = document.getElementById('lfSubmitBtn');
+    const prevText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Guardando...';
+
     const payload = {
         status: document.querySelector('input[name="status"]:checked').value,
         title: document.getElementById('lfTitleInput').value,
@@ -140,6 +217,7 @@ async function handleSaveLostFound(e) {
         datetime: document.getElementById('lfDateInput').value,
         phone: document.getElementById('lfPhoneInput').value,
         img: document.getElementById('lfImgInput').value,
+        imageData: lfImageData,
         desc: document.getElementById('lfDescInput').value
     };
 
@@ -151,26 +229,34 @@ async function handleSaveLostFound(e) {
         }
         const fueEdicion = !!lfEditingId;
         await loadLostFound();
-        closeModal('lostFoundModal');   // también limpia el formulario y lfEditingId
+        closeModal('lostFoundModal');
         openNotificationToast(fueEdicion ? 'Publicación actualizada.' : 'Objeto publicado correctamente en la red de la UNSA.');
     } catch (err) {
         handleApiError(err);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = prevText;
     }
 }
+
 function editLostFound(id) {
     const it = lostFoundData.find(x => x.id === id);
     if (!it) return;
     lfEditingId = id;
+    lfImageData = null;
+
     const radio = document.querySelector(`input[name="status"][value="${it.status}"]`);
     if (radio) radio.checked = true;
     document.getElementById('lfTitleInput').value = it.title;
     document.getElementById('lfCategoryInput').value = it.category;
     document.getElementById('lfCampusInput').value = it.campus;
     document.getElementById('lfLocationInput').value = it.location;
-    document.getElementById('lfDateInput').value = (it.datetime || '').slice(0, 16);   // formato datetime-local
+    document.getElementById('lfDateInput').value = (it.datetime || '').slice(0, 16);
     document.getElementById('lfPhoneInput').value = it.phone;
-    document.getElementById('lfImgInput').value = it.img;
+    document.getElementById('lfImgInput').value = it.img || '';
     document.getElementById('lfDescInput').value = it.desc;
+
+    showLfPreview(safeUrl(it.img));
     setModalMode('lfModalTitle', 'lfSubmitBtn', true, 'Reportar Objeto', 'Publicar Reporte');
     openModal('lostFoundModal');
 }
@@ -180,6 +266,8 @@ document.addEventListener('modalclosed', e => {
     if (e.detail === 'lostFoundModal') {
         lfEditingId = null;
         document.getElementById('lostFoundForm').reset();
+        clearLfImage();
+        document.getElementById('lfUrlBox').classList.add('hidden');
     }
 });
 
