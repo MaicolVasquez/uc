@@ -6,8 +6,8 @@ let currentMarkers = [];
 // Coordinates for UNSA Campuses in Arequipa
 const CAMPUS_COORDS = {
     ingenierias: { lat: -16.404847519276583, lng: -71.52654518189568, zoom: 17, name: "Área de Ingenierías" },
-    sociales:    { lat: -16.40587738269871,  lng: -71.52057711573453, zoom: 17, name: "Área de Sociales" },
-    biomedicas:  { lat: -16.413179842280762, lng: -71.53404182627942, zoom: 17, name: "Área de Biomédicas" }
+    sociales: { lat: -16.40587738269871, lng: -71.52057711573453, zoom: 17, name: "Área de Sociales" },
+    biomedicas: { lat: -16.413179842280762, lng: -71.53404182627942, zoom: 17, name: "Área de Biomédicas" }
 };
 
 const UNSA_LOCATIONS = [
@@ -195,6 +195,24 @@ function getDirectionsToCurrent() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
-    // Ajuste de tamaño una vez calculado el layout
+
+    const params = new URLSearchParams(window.location.search);
+    const locId = params.get('loc');
+    const campusKey = params.get('campus');
+
+    if (locId) {
+        const loc = UNSA_LOCATIONS.find(l => l.id === locId);
+        if (loc) {
+            selectLocationById(loc.id);
+            setActiveCampusButton(loc.campusKey);
+            const idx = UNSA_LOCATIONS.findIndex(l => l.id === loc.id);
+            if (idx !== -1 && currentMarkers[idx]) {
+                currentMarkers[idx].openPopup();
+            }
+        }
+    } else if (campusKey && CAMPUS_COORDS[campusKey]) {
+        zoomToCampus(campusKey);
+    }
+
     setTimeout(() => { if (map) map.invalidateSize(); }, 200);
 });
