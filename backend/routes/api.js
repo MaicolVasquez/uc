@@ -17,6 +17,12 @@ const telOk = t => /^\d{9}$/.test(t);
 const bad = (res, msg) => res.status(400).json({ error: msg });
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const MAP_LOCATION_IDS = new Set(['loc-1', 'loc-2', 'loc-3', 'loc-4', 'loc-5', 'loc-6', 'loc-7']);
+const parseMapLocation = v => {
+    const id = txt(v, 30);
+    return MAP_LOCATION_IDS.has(id) ? id : null;
+};
+
 async function esAdmin(userId) {
     const { data } = await supabase.from('perfiles').select('rol').eq('id', userId).single();
     return !!data && data.rol === 'admin';
@@ -108,6 +114,7 @@ router.post('/lost-found', requireAuth, h(async (req, res) => {
         descripcion: txt(b.desc, 1000),
         estado: estadoInicial(),
         contiene_documento: Boolean(b.hasSensitiveDoc),
+        mapa_ubicacion_id: parseMapLocation(b.mapLocationId),
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
@@ -169,6 +176,7 @@ router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
         url_foto: nuevaFoto,
         descripcion: txt(b.desc, 1000),
         contiene_documento: Boolean(b.hasSensitiveDoc),
+        mapa_ubicacion_id: parseMapLocation(b.mapLocationId),
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
@@ -231,6 +239,7 @@ const mapLostFound = (r, uid) => ({
     category: r.categoria || '',
     campus: r.campus || '',
     location: r.lugar_exacto || '',
+    mapLocationId: r.mapa_ubicacion_id || '',
     datetime: r.fecha_hora,
     status: r.tipo,
     resolutionStatus: r.estado_resolucion || 'ACTIVO',

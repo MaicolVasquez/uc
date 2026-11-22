@@ -1,6 +1,36 @@
 // Módulo: Objetos Perdidos
 let lfEditingId = null;
+let lfImageData = null;
 const LF_DEFAULT_IMG = 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400&auto=format&fit=crop&q=80';
+
+const UNSA_MAP_SPOTS = [
+    { id: 'loc-1', campus: 'Ingenierías', campusKey: 'ingenierias', title: 'Pabellón Cs. de la Computación' },
+    { id: 'loc-2', campus: 'Ingenierías', campusKey: 'ingenierias', title: 'Biblioteca de Área de Ingenierías' },
+    { id: 'loc-3', campus: 'Ingenierías', campusKey: 'ingenierias', title: 'Pabellón de Ing. Civil y Estructuras' },
+    { id: 'loc-4', campus: 'Sociales', campusKey: 'sociales', title: 'Facultad de Derecho y Cs. Políticas' },
+    { id: 'loc-5', campus: 'Sociales', campusKey: 'sociales', title: 'Escuela Profesional de FIPS / Psicología' },
+    { id: 'loc-6', campus: 'Biomédicas', campusKey: 'biomedicas', title: 'Facultad de Medicina Humana' },
+    { id: 'loc-7', campus: 'Biomédicas', campusKey: 'biomedicas', title: 'Comedor Universitario Biomédicas' }
+];
+
+const CAMPUS_NAME_TO_KEY = {
+    'Ingenierías': 'ingenierias',
+    'Sociales': 'sociales',
+    'Biomédicas': 'biomedicas'
+};
+
+function onLfCampusChange(campus, selectedLocId = '') {
+    const select = document.getElementById('lfMapLocationInput');
+    if (!select) return;
+
+    const spots = UNSA_MAP_SPOTS.filter(s => s.campus === campus);
+    select.innerHTML = '<option value="">— Seleccionar pabellón o punto cercano —</option>' +
+        spots.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.title)}</option>`).join('');
+
+    if (selectedLocId && spots.some(s => s.id === selectedLocId)) {
+        select.value = selectedLocId;
+    }
+}
 
 async function loadLostFound() {
     try {
@@ -41,7 +71,7 @@ function renderLostFound(items = lostFoundData) {
         const formattedDate = item.datetime
             ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
             : '';
-        // Generar el bloque informativo de custodia para objetos ENCONTRADO:
+
         let custodyBadge = '';
         if (!isLost) {
             if (item.custodyType === 'PUNTO_SEGURO' && item.custodyPoint) {
@@ -58,7 +88,23 @@ function renderLostFound(items = lostFoundData) {
                     </div>`;
             }
         }
-        // 1. Aquí defines las variables de la imagen y el bloque difuminado:
+
+        const mapSpot = UNSA_MAP_SPOTS.find(s => s.id === item.mapLocationId);
+        const campusKey = CAMPUS_NAME_TO_KEY[item.campus] || 'ingenierias';
+        const mapHref = mapSpot
+            ? `mapa.html?loc=${encodeURIComponent(mapSpot.id)}`
+            : `mapa.html?campus=${encodeURIComponent(campusKey)}`;
+        const mapLabel = mapSpot
+            ? `Ver en UNSA Maps: ${escapeHtml(mapSpot.title)}`
+            : `Ver Área de ${escapeHtml(item.campus)} en UNSA Maps`;
+
+        const mapLinkBlock = `
+            <a href="${mapHref}"
+               class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-unsa-maroon hover:text-unsa-dark hover:underline">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span class="truncate">${mapLabel}</span>
+            </a>`;
+
         const hasRealImg = !!safeUrl(item.img);
         const img = escapeHtml(safeUrl(item.img) || LF_DEFAULT_IMG);
         const shouldBlur = !!(item.hasSensitiveDoc && hasRealImg);
@@ -95,7 +141,6 @@ function renderLostFound(items = lostFoundData) {
         return `
             <div class="bg-white rounded-2xl border ${isResolved ? 'border-slate-300 opacity-85' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
                 <div>
-                    <!-- 2. Y aquí insertas ${imageBlock} en lugar del div de imagen anterior -->
                     ${imageBlock}
 
                     <div class="p-4">
@@ -104,9 +149,11 @@ function renderLostFound(items = lostFoundData) {
                         <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
                             <i class="fa-solid fa-location-dot text-red-500 w-4"></i> ${escapeHtml(item.location)}
                         </p>
-                        <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                        ${mapLinkBlock}
+                        <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
                             <i class="fa-regular fa-clock text-unsa-gold w-4"></i> ${escapeHtml(formattedDate)}
                         </p>
+                        ${custodyBadge}
                         <p class="text-xs text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
                             "${escapeHtml(item.desc || 'Sin descripción adicional.')}"
                         </p>
@@ -161,8 +208,6 @@ function filterLostFound() {
     renderLostFound(filtered);
 }
 
-let lfImageData = null;
-
 function resizeLfImage(file, maxW = 1000) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -190,6 +235,7 @@ function showLfPreview(src) {
     if (src) {
         preview.src = src;
         wrap.classList.remove('hidden');
+        updateLfPreviewBlur();
     } else {
         preview.src = '';
         wrap.classList.add('hidden');
@@ -254,6 +300,7 @@ async function handleSaveLostFound(e) {
         hasSensitiveDoc: document.getElementById('lfSensitiveDocInput').checked,
         custodyType: document.querySelector('input[name="custodyType"]:checked')?.value || 'CONMIGO',
         custodyPoint: document.getElementById('lfCustodyPointInput').value,
+        mapLocationId: document.getElementById('lfMapLocationInput').value
     };
 
     try {
@@ -295,6 +342,7 @@ function editLostFound(id) {
     document.getElementById('lfTitleInput').value = it.title;
     document.getElementById('lfCategoryInput').value = it.category;
     document.getElementById('lfCampusInput').value = it.campus;
+    onLfCampusChange(it.campus, it.mapLocationId || '');
     document.getElementById('lfLocationInput').value = it.location;
     document.getElementById('lfDateInput').value = (it.datetime || '').slice(0, 16);
     document.getElementById('lfPhoneInput').value = it.phone;
@@ -313,6 +361,7 @@ document.addEventListener('modalclosed', e => {
         lfEditingId = null;
         document.getElementById('lostFoundForm').reset();
         document.getElementById('lfSensitiveDocInput').checked = true;
+        onLfCampusChange(document.getElementById('lfCampusInput').value);
         onLfStatusChange('PERDIDO');
         onLfCustodyChange('CONMIGO');
         clearLfImage();
@@ -320,7 +369,12 @@ document.addEventListener('modalclosed', e => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', loadLostFound);
+document.addEventListener('DOMContentLoaded', () => {
+    const campusSelect = document.getElementById('lfCampusInput');
+    if (campusSelect) onLfCampusChange(campusSelect.value);
+    loadLostFound();
+});
+
 async function resolverCaso(id, isLost) {
     const msg = isLost
         ? '¿Confirmas que ya recuperaste este objeto? El caso pasará a resuelto.'
@@ -347,7 +401,6 @@ async function reabrirCaso(id) {
     }
 }
 
-// Activa o desactiva automáticamente la protección según la categoría elegida
 function onLfCategoryChange(category) {
     const checkbox = document.getElementById('lfSensitiveDocInput');
     if (!checkbox) return;
@@ -355,27 +408,12 @@ function onLfCategoryChange(category) {
     updateLfPreviewBlur();
 }
 
-// Aplica o quita el difuminado en la vista previa del modal
 function updateLfPreviewBlur() {
     const preview = document.getElementById('lfImgPreview');
     const checkbox = document.getElementById('lfSensitiveDocInput');
     if (!preview || !checkbox) return;
     preview.classList.toggle('blur-md', checkbox.checked);
     preview.classList.toggle('scale-105', checkbox.checked);
-}
-
-// Actualizar showLfPreview para respetar el estado de difuminado
-function showLfPreview(src) {
-    const wrap = document.getElementById('lfImgPreviewWrap');
-    const preview = document.getElementById('lfImgPreview');
-    if (src) {
-        preview.src = src;
-        wrap.classList.remove('hidden');
-        updateLfPreviewBlur();
-    } else {
-        preview.src = '';
-        wrap.classList.add('hidden');
-    }
 }
 
 function onLfStatusChange(status) {
