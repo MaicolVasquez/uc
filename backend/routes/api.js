@@ -235,7 +235,7 @@ async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }
 }
 
 // ---------- mappers: fila de BD -> objeto que espera el frontend ----------
-const mapLostFound = (r, uid) => {
+const mapLostFound = (r, uid, nombres = null) => {
     const isMine = !!uid && r.usuario_id === uid;
     const showWhatsapp = !!r.mostrar_whatsapp;
     return {
@@ -246,6 +246,7 @@ const mapLostFound = (r, uid) => {
         location: r.lugar_exacto || '',
         mapLocationId: r.mapa_ubicacion_id || '',
         datetime: r.fecha_hora,
+        createdAt: r.creado_en || null,
         status: r.tipo,
         resolutionStatus: r.estado_resolucion || 'ACTIVO',
         resolvedAt: r.resuelto_en || null,
@@ -258,6 +259,7 @@ const mapLostFound = (r, uid) => {
         phone: (showWhatsapp || isMine) ? (r.telefono || '') : '',
         img: r.url_foto || '',
         desc: r.descripcion || '',
+        authorName: (nombres && nombres.get(r.usuario_id)) || 'Estudiante UNSA',
         mine: isMine
     };
 };
@@ -496,7 +498,37 @@ router.get('/lost-found', h(async (req, res) => {
     const { data, error } = await supabase.from('objetos_perdidos').select('*')
         .eq('estado', 'aprobado').order('creado_en', { ascending: false });
     if (error) throw error;
-    res.json(data.map(r => mapLostFound(r, req.session.userId)));
+
+    const ids = [...new Set((data || []).map(r => r.usuario_id).filter(Boolean))];
+    let nombres = new Map();
+    if (ids.length) {
+        const { data: perfiles, error: e2 } = await supabase.from('perfiles')
+            .select('id, nombre').in('id', ids);
+        if (e2) throw e2;
+        nombres = new Map((perfiles || []).map(p => [p.id, p.nombre]));
+    }
+
+    res.json((data || []).map(r => mapLostFound(r, req.session.userId, nombres)));
+}));
+
+router.get('/lost-found/:id', h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+
+    const { data, error } = await supabase.from('objetos_perdidos').select('*')
+        .eq('id', req.params.id)
+        .eq('estado', 'aprobado')
+        .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
+
+    let nombres = new Map();
+    if (data.usuario_id) {
+        const { data: perfil } = await supabase.from('perfiles')
+            .select('id, nombre').eq('id', data.usuario_id).maybeSingle();
+        if (perfil) nombres.set(perfil.id, perfil.nombre);
+    }
+
+    res.json(mapLostFound(data, req.session.userId, nombres));
 }));
 
 router.post('/lost-found', requireAuth, h(async (req, res) => {
