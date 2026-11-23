@@ -15,6 +15,13 @@ const digits = v => txt(v, 20).replace(/\D/g, '');
 const httpUrl = v => { const s = txt(v, 1000); return /^https?:\/\//i.test(s) ? s : null; };
 const telOk = t => /^\d{9}$/.test(t);
 const bad = (res, msg) => res.status(400).json({ error: msg });
+const DIAS_REPORTE = 60;
+const MS_DIA = 24 * 60 * 60 * 1000;
+
+const reporteArchivado = r =>
+    r.estado_resolucion === 'ACTIVO' &&
+    !!r.expira_en &&
+    new Date(r.expira_en).getTime() <= Date.now();
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const MAP_LOCATION_IDS = new Set(['loc-1', 'loc-2', 'loc-3', 'loc-4', 'loc-5', 'loc-6', 'loc-7']);
@@ -69,6 +76,7 @@ async function buscarYNotificarCoincidencias(nuevo) {
         .eq('tipo', tipoOpuesto)
         .eq('estado', 'aprobado')
         .eq('estado_resolucion', 'ACTIVO')
+        .gt('expira_en', new Date().toISOString())
         .eq('campus', nuevo.campus)
         .eq('categoria', nuevo.categoria)
         .neq('usuario_id', nuevo.usuario_id)
@@ -238,6 +246,7 @@ async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }
 const mapLostFound = (r, uid, nombres = null) => {
     const isMine = !!uid && r.usuario_id === uid;
     const showWhatsapp = !!r.mostrar_whatsapp;
+    const archivado = reporteArchivado(r);
     return {
         id: r.id,
         title: r.titulo,
@@ -248,7 +257,8 @@ const mapLostFound = (r, uid, nombres = null) => {
         datetime: r.fecha_hora,
         createdAt: r.creado_en || null,
         status: r.tipo,
-        resolutionStatus: r.estado_resolucion || 'ACTIVO',
+        resolutionStatus: archivado ? 'ARCHIVADO' : (r.estado_resolucion || 'ACTIVO'),
+expiresAt: r.expira_en || null,
         resolvedAt: r.resuelto_en || null,
         hasSensitiveDoc: !!r.contiene_documento,
         custodyType: r.tipo_custodia || 'NO_APLICA',
@@ -495,8 +505,24 @@ router.get('/perfil/actividad', requireAuth, h(async (req, res) => {
 // OBJETOS PERDIDOS
 // =====================================================
 router.get('/lost-found', h(async (req, res) => {
-    const { data, error } = await supabase.from('objetos_perdidos').select('*')
-        .eq('estado', 'aprobado').order('creado_en', { ascending: false });
+    const ahora = new Date().toISOString();
+
+    const visibilidad = [
+        `expira_en.gt.${ahora}`,
+        'estado_resolucion.eq.RESUELTO'
+    ];
+
+    // El propietario también puede ver sus publicaciones vencidas.
+    if (req.session?.userId) {
+        visibilidad.push(`usuario_id.eq.${req.session.userId}`);
+    }
+
+    const { data, error } = await supabase
+        .from('objetos_perdidos')
+        .select('*')
+        .eq('estado', 'aprobado')
+        .or(visibilidad.join(','))
+        .order('creado_en', { ascending: false });
     if (error) throw error;
 
     const ids = [...new Set((data || []).map(r => r.usuario_id).filter(Boolean))];
@@ -512,6 +538,7 @@ router.get('/lost-found', h(async (req, res) => {
 }));
 
 router.get('/lost-found/:id', h(async (req, res) => {
+    
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
 
     const { data, error } = await supabase.from('objetos_perdidos').select('*')
@@ -520,7 +547,14 @@ router.get('/lost-found/:id', h(async (req, res) => {
         .maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
-
+    if (
+    reporteArchivado(data) &&
+    data.usuario_id !== req.session?.userId
+) {
+    return res.status(404).json({
+        error: 'La publicación ya no está disponible.'
+    });
+}
     let nombres = new Map();
     if (data.usuario_id) {
         const { data: perfil } = await supabase.from('perfiles')
@@ -740,7 +774,8 @@ router.patch('/lost-found/:id/reabrir', requireAuth, h(async (req, res) => {
         .from('objetos_perdidos')
         .update({
             estado_resolucion: 'ACTIVO',
-            resuelto_en: null
+resuelto_en: null,
+expira_en: new Date(Date.now() + DIAS_REPORTE * MS_DIA).toISOString()
         })
         .eq('id', req.params.id)
         .select()
@@ -749,7 +784,37 @@ router.patch('/lost-found/:id/reabrir', requireAuth, h(async (req, res) => {
     if (error) throw error;
     res.json(mapLostFound(data, req.session.userId));
 }));
+// Renovar un reporte vencido por otros 60 días.
+router.patch('/lost-found/:id/renovar', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) {
+        return bad(res, 'ID no válido.');
+    }
 
+    const ahora = new Date();
+    const nuevoVencimiento = new Date(
+        ahora.getTime() + DIAS_REPORTE * MS_DIA
+    ).toISOString();
+
+    const { data, error } = await supabase
+        .from('objetos_perdidos')
+        .update({ expira_en: nuevoVencimiento })
+        .eq('id', req.params.id)
+        .eq('usuario_id', req.session.userId)
+        .eq('estado_resolucion', 'ACTIVO')
+        .lte('expira_en', ahora.toISOString())
+        .select()
+        .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+        return res.status(409).json({
+            error: 'Solo puedes renovar un reporte propio, activo y vencido.'
+        });
+    }
+
+    res.json(mapLostFound(data, req.session.userId));
+}));
 // Abrir o recuperar chat directo con el autor de la publicación
 router.post('/lost-found/:id/contactar', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
@@ -757,19 +822,23 @@ router.post('/lost-found/:id/contactar', requireAuth, h(async (req, res) => {
 
     const { data: objeto, error: e1 } = await supabase
         .from('objetos_perdidos')
-        .select('id, usuario_id, titulo, estado_resolucion')
+        .select('id, usuario_id, titulo, estado_resolucion, expira_en')
         .eq('id', req.params.id)
         .maybeSingle();
 
     if (e1) throw e1;
     if (!objeto) return res.status(404).json({ error: 'Publicación no encontrada.' });
     if (objeto.estado_resolucion === 'RESUELTO') {
+        
         return bad(res, 'Este caso ya fue cerrado.');
     }
+    if (reporteArchivado(objeto)) {
+    return bad(res, 'Este reporte venció y ya no admite nuevos contactos.');
+}
     if (objeto.usuario_id === solicitanteId) {
         return bad(res, 'Esta publicación te pertenece.');
     }
-
+    
     const { data: conversacionId, error: e2 } = await supabase.rpc(
         'obtener_o_crear_chat_directo',
         {
@@ -793,7 +862,7 @@ router.post('/lost-found/:id/reclamar', requireAuth, h(async (req, res) => {
 
     const { data: objeto, error: e1 } = await supabase
         .from('objetos_perdidos')
-        .select('id, usuario_id, tipo, titulo, estado_resolucion, pregunta_verificacion')
+        .select('id, usuario_id, tipo, titulo, estado_resolucion, pregunta_verificacion, expira_en')
         .eq('id', req.params.id)
         .maybeSingle();
 
@@ -805,6 +874,9 @@ router.post('/lost-found/:id/reclamar', requireAuth, h(async (req, res) => {
     if (objeto.estado_resolucion === 'RESUELTO') {
         return bad(res, 'Este objeto ya fue marcado como devuelto.');
     }
+    if (reporteArchivado(objeto)) {
+    return bad(res, 'Este objeto ya fue archivado.');
+}
     if (objeto.usuario_id === solicitanteId) {
         return bad(res, 'No puedes reclamar tu propia publicación.');
     }

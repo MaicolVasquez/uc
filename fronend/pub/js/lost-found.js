@@ -57,16 +57,30 @@ function renderLostFound(items = lostFoundData) {
 
     grid.innerHTML = items.map(item => {
         const isLost = item.status === 'PERDIDO';
-        const isResolved = item.resolutionStatus === 'RESUELTO';
-        const canManage = !!(item.mine || esAdminUser);
+const isResolved = item.resolutionStatus === 'RESUELTO';
+const isArchived = item.resolutionStatus === 'ARCHIVADO';
+const isClosed = isResolved || isArchived;
+const canManage = !!(item.mine || esAdminUser);
+
+const diasRestantes = item.expiresAt
+    ? Math.max(0, Math.ceil(
+        (new Date(item.expiresAt).getTime() - Date.now()) / 86400000
+    ))
+    : null;
 
         const statusBadge = isLost
             ? `<span class="bg-red-100 text-red-700 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-red-200 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> PERDIDO</span>`
             : `<span class="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> ENCONTRADO</span>`;
 
-        const resolvedBadge = isResolved
-            ? `<span class="bg-slate-900 text-unsa-gold text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-unsa-gold/40 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> ${isLost ? 'RECUPERADO' : 'DEVUELTO'}</span>`
-            : '';
+        const resolvedBadge = isArchived
+    ? `<span class="bg-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-full">
+           <i class="fa-solid fa-box-archive"></i> ARCHIVADO
+       </span>`
+    : isResolved
+        ? `<span class="bg-slate-900 text-unsa-gold text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-unsa-gold/40 flex items-center gap-1">
+               <i class="fa-solid fa-circle-check"></i> ${isLost ? 'RECUPERADO' : 'DEVUELTO'}
+           </span>`
+        : '';
 
         const formattedDate = item.datetime
             ? new Date(item.datetime).toLocaleString('es-PE', {
@@ -132,7 +146,7 @@ function renderLostFound(items = lostFoundData) {
                     ${resolvedBadge}
                 </div>
                 <div onclick="event.stopPropagation()" class="absolute top-3 right-3 flex gap-1">
-                    ${!isResolved ? editBtn('editLostFound', item) : ''}
+                    ${!isClosed ? editBtn('editLostFound', item) : ''}
                     ${deleteBtn('lost-found', item, 'loadLostFound')}
                 </div>
                 <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
@@ -157,9 +171,11 @@ function renderLostFound(items = lostFoundData) {
         const hasWhatsapp = !!(item.showWhatsapp && phone);
         const resolveBtnLabel = isLost ? 'Marcar como recuperado' : 'Marcar como devuelto';
 
-        const contactButtonsBlock = isResolved
+        const contactButtonsBlock = isClosed
             ? `<div class="w-full mt-3 bg-slate-100 text-slate-500 font-semibold py-2 px-3 rounded-xl text-xs text-center">
-                   Caso cerrado · Contacto deshabilitado
+                   ${isArchived
+    ? 'Reporte vencido · Contacto deshabilitado'
+    : 'Caso cerrado · Contacto deshabilitado'}
                </div>`
             : item.mine
                 ? `<div class="w-full mt-2 bg-amber-50 border border-amber-200 text-amber-900 font-semibold py-2 px-3 rounded-xl text-[11px] text-center">
@@ -205,6 +221,12 @@ function renderLostFound(items = lostFoundData) {
                         <p class="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
                             <i class="fa-regular fa-clock text-unsa-gold w-4"></i> ${escapeHtml(formattedDate)}
                         </p>
+                        ${!isClosed && diasRestantes !== null ? `
+    <p class="text-[11px] text-amber-700 font-semibold mt-1">
+        <i class="fa-solid fa-hourglass-half"></i>
+        ${diasRestantes} día(s) restantes
+    </p>
+` : ''}
                         ${custodyBadge}
                         <p class="text-xs text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
                             "${escapeHtml(item.desc || 'Sin descripción adicional.')}"
@@ -214,7 +236,7 @@ function renderLostFound(items = lostFoundData) {
                 </div>
 
                 <div class="p-4 pt-0 border-t border-slate-100 mt-2 space-y-2">
-                    ${canManage && !isResolved ? `
+                    ${canManage && !isClosed ? `
                     <button onclick="resolverCaso('${escapeHtml(item.id)}', ${isLost})"
                         class="w-full mt-3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
                         <i class="fa-solid fa-circle-check text-unsa-gold"></i> ${resolveBtnLabel}
@@ -225,7 +247,14 @@ function renderLostFound(items = lostFoundData) {
                         class="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
                         <i class="fa-solid fa-rotate-left"></i> Reabrir caso
                     </button>` : ''}
-
+                        ${item.mine && isArchived ? `
+    <button type="button"
+        onclick="renovarReporte('${escapeHtml(item.id)}')"
+        class="w-full mt-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 px-3 rounded-xl text-xs">
+        <i class="fa-solid fa-rotate"></i>
+        Renovar por 60 días
+    </button>
+` : ''}
                     ${contactButtonsBlock}
                 </div>
             </div>`;
@@ -501,6 +530,14 @@ async function openLfDetailModal(id) {
 
     const isLost = item.status === 'PERDIDO';
     const isResolved = item.resolutionStatus === 'RESUELTO';
+    const isArchived = item.resolutionStatus === 'ARCHIVADO';
+const isClosed = isResolved || isArchived;
+
+const diasRestantes = item.expiresAt
+    ? Math.max(0, Math.ceil(
+        (new Date(item.expiresAt).getTime() - Date.now()) / 86400000
+    ))
+    : null;
     const esAdminUser = !!(window.currentUser && window.currentUser.rol === 'admin');
     const canManage = !!(item.mine || esAdminUser);
     const hasRealImg = !!safeUrl(item.img);
@@ -548,8 +585,19 @@ async function openLfDetailModal(id) {
     }
 
     let actionFooter = '';
-    if (isResolved) {
-        actionFooter = `
+    if (isArchived) {
+    actionFooter = item.mine
+        ? `
+            <button type="button"
+                onclick="closeModal('lfDetailModal'); renovarReporte('${escapeHtml(item.id)}')"
+                class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 rounded-xl text-xs">
+                Renovar publicación por 60 días
+            </button>`
+        : `<p class="text-sm text-slate-600">
+               Esta publicación fue archivada.
+           </p>`;
+} else if (isResolved) {
+    actionFooter = `
             <div class="p-3 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold text-center">
                 Este caso ya fue cerrado y no admite nuevos contactos.
             </div>`;
@@ -692,7 +740,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         openLfDetailModal(itemId);
     }
 });
+async function renovarReporte(id) {
+    if (!confirm('¿Renovar esta publicación por otros 60 días?')) {
+        return;
+    }
 
+    try {
+        await apiFetch(
+            `/api/lost-found/${encodeURIComponent(id)}/renovar`,
+            { method: 'PATCH' }
+        );
+
+        await loadLostFound();
+
+        openNotificationToast(
+            'Tu publicación fue renovada por 60 días.'
+        );
+    } catch (err) {
+        handleApiError(err);
+    }
+}
 async function resolverCaso(id, isLost) {
     const msg = isLost
         ? '¿Confirmas que ya recuperaste este objeto? El caso pasará a resuelto.'
