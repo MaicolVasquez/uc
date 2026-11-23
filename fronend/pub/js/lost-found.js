@@ -69,7 +69,11 @@ function renderLostFound(items = lostFoundData) {
             : '';
 
         const formattedDate = item.datetime
-            ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
+            ? new Date(item.datetime).toLocaleString('es-PE', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone: 'America/Lima'
+})
             : '';
 
         let custodyBadge = '';
@@ -355,7 +359,9 @@ async function handleSaveLostFound(e) {
         campus: document.getElementById('lfCampusInput').value,
         location: document.getElementById('lfLocationInput').value,
         mapLocationId: document.getElementById('lfMapLocationInput').value,
-        datetime: document.getElementById('lfDateInput').value,
+        datetime: fechaInputPeruAUTC(
+    document.getElementById('lfDateInput').value
+),
         showWhatsapp: document.getElementById('lfShowWhatsappInput').checked,
         phone: document.getElementById('lfPhoneInput').value,
         img: document.getElementById('lfImgInput').value,
@@ -424,7 +430,8 @@ function editLostFound(id) {
     document.getElementById('lfCampusInput').value = it.campus;
     onLfCampusChange(it.campus, it.mapLocationId || '');
     document.getElementById('lfLocationInput').value = it.location;
-    document.getElementById('lfDateInput').value = (it.datetime || '').slice(0, 16);
+    document.getElementById('lfDateInput').value =
+    fechaUTCaInputPeru(it.datetime);
 
     const hasPhone = !!(it.showWhatsapp && it.phone);
     document.getElementById('lfShowWhatsappInput').checked = hasPhone;
@@ -503,7 +510,11 @@ async function openLfDetailModal(id) {
     const hasWhatsapp = !!(item.showWhatsapp && phone);
 
     const formattedDate = item.datetime
-        ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })
+        ? new Date(item.datetime).toLocaleString('es-PE', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'America/Lima'
+})
         : 'No especificada';
 
     const mapSpot = UNSA_MAP_SPOTS.find(s => s.id === item.mapLocationId);

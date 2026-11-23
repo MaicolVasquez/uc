@@ -25,8 +25,18 @@ function formatEventAt(value) {
     if (!value) return '';
     const d = new Date(value);
     if (isNaN(d)) return '';
-    const fecha = d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
-    const hora = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+    const fecha = d.toLocaleDateString('es-PE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'America/Lima'
+});
+
+const hora = d.toLocaleTimeString('es-PE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Lima'
+});
     return `${fecha} · ${hora}`;
 }
 
@@ -148,9 +158,9 @@ async function handleSaveAnnouncement(e) {
         category: document.getElementById('annCategory').value,
         urgency: document.getElementById('annUrgency').value,
         campus: document.getElementById('annCampus').value.trim() || 'Todos los campus',
-        eventAt: document.getElementById('annEventAt').value
-            ? new Date(document.getElementById('annEventAt').value).toISOString()
-            : null,
+        eventAt: fechaInputPeruAUTC(
+    document.getElementById('annEventAt').value
+),
         content: document.getElementById('annContent').value.trim(),
         image: annImageData   // data URL o null
     };

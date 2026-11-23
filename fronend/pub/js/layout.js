@@ -127,7 +127,39 @@ function buildLayout() {
 }
 
 buildLayout();
+// Convertir fecha de un formulario peruano a UTC.
+function fechaInputPeruAUTC(valor) {
+    if (!valor) return null;
 
+    const fecha = new Date(`${valor}-05:00`);
+
+    if (Number.isNaN(fecha.getTime())) return null;
+
+    return fecha.toISOString();
+}
+
+// Convertir una fecha UTC al formato datetime-local de Perú.
+function fechaUTCaInputPeru(valor) {
+    if (!valor) return '';
+
+    const fecha = new Date(valor);
+
+    if (Number.isNaN(fecha.getTime())) return '';
+
+    const partes = Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Lima',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23'
+        }).formatToParts(fecha).map(p => [p.type, p.value])
+    );
+
+    return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}`;
+}
 // ---------- Sesión (backend Express) ----------
 // Pregunta al servidor quién es el usuario autenticado y actualiza el botón del header.
 // Devuelve el usuario o null (sin sesión / backend apagado / abierto con file://).
