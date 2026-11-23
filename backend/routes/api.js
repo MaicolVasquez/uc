@@ -2,6 +2,7 @@
 // que usa el frontend (title, desc, location...) y las columnas de Supabase.
 const express = require('express');
 const { supabase } = require('../db');
+const { puntuar, limpiarNiveles, codigosValidos, nombresDe, catalogoPublico } = require('../services/recomendador');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const crypto = require('crypto');
 const router = express.Router();
@@ -258,7 +259,7 @@ const mapLostFound = (r, uid, nombres = null) => {
         createdAt: r.creado_en || null,
         status: r.tipo,
         resolutionStatus: archivado ? 'ARCHIVADO' : (r.estado_resolucion || 'ACTIVO'),
-expiresAt: r.expira_en || null,
+        expiresAt: r.expira_en || null,
         resolvedAt: r.resuelto_en || null,
         hasSensitiveDoc: !!r.contiene_documento,
         custodyType: r.tipo_custodia || 'NO_APLICA',
@@ -277,7 +278,7 @@ expiresAt: r.expira_en || null,
 const mapTutor = (r, uid) => ({
     id: r.id, name: r.nombre_completo, career: r.carrera || '', semester: r.semestre || '',
     faculty: r.campus || '', courses: (r.cursos || '').split(',').map(s => s.trim()).filter(Boolean),
-    modality: r.modalidad || '', price: r.precio || '', phone: r.telefono || '', bio: r.bio || '',
+    modality: r.modalidad || '', price: r.precio || '', phone: r.telefono || '', bio: r.bio || '', niveles: r.niveles || {},
     mine: !!uid && r.usuario_id === uid
 });
 
@@ -538,7 +539,7 @@ router.get('/lost-found', h(async (req, res) => {
 }));
 
 router.get('/lost-found/:id', h(async (req, res) => {
-    
+
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
 
     const { data, error } = await supabase.from('objetos_perdidos').select('*')
@@ -548,13 +549,13 @@ router.get('/lost-found/:id', h(async (req, res) => {
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
     if (
-    reporteArchivado(data) &&
-    data.usuario_id !== req.session?.userId
-) {
-    return res.status(404).json({
-        error: 'La publicación ya no está disponible.'
-    });
-}
+        reporteArchivado(data) &&
+        data.usuario_id !== req.session?.userId
+    ) {
+        return res.status(404).json({
+            error: 'La publicación ya no está disponible.'
+        });
+    }
     let nombres = new Map();
     if (data.usuario_id) {
         const { data: perfil } = await supabase.from('perfiles')
@@ -774,8 +775,8 @@ router.patch('/lost-found/:id/reabrir', requireAuth, h(async (req, res) => {
         .from('objetos_perdidos')
         .update({
             estado_resolucion: 'ACTIVO',
-resuelto_en: null,
-expira_en: new Date(Date.now() + DIAS_REPORTE * MS_DIA).toISOString()
+            resuelto_en: null,
+            expira_en: new Date(Date.now() + DIAS_REPORTE * MS_DIA).toISOString()
         })
         .eq('id', req.params.id)
         .select()
@@ -829,16 +830,16 @@ router.post('/lost-found/:id/contactar', requireAuth, h(async (req, res) => {
     if (e1) throw e1;
     if (!objeto) return res.status(404).json({ error: 'Publicación no encontrada.' });
     if (objeto.estado_resolucion === 'RESUELTO') {
-        
+
         return bad(res, 'Este caso ya fue cerrado.');
     }
     if (reporteArchivado(objeto)) {
-    return bad(res, 'Este reporte venció y ya no admite nuevos contactos.');
-}
+        return bad(res, 'Este reporte venció y ya no admite nuevos contactos.');
+    }
     if (objeto.usuario_id === solicitanteId) {
         return bad(res, 'Esta publicación te pertenece.');
     }
-    
+
     const { data: conversacionId, error: e2 } = await supabase.rpc(
         'obtener_o_crear_chat_directo',
         {
@@ -875,8 +876,8 @@ router.post('/lost-found/:id/reclamar', requireAuth, h(async (req, res) => {
         return bad(res, 'Este objeto ya fue marcado como devuelto.');
     }
     if (reporteArchivado(objeto)) {
-    return bad(res, 'Este objeto ya fue archivado.');
-}
+        return bad(res, 'Este objeto ya fue archivado.');
+    }
     if (objeto.usuario_id === solicitanteId) {
         return bad(res, 'No puedes reclamar tu propia publicación.');
     }
@@ -946,7 +947,8 @@ router.get('/tutors', h(async (req, res) => {
 
 router.post('/tutors', requireAuth, h(async (req, res) => {
     const b = req.body || {};
-    const cursos = Array.isArray(b.courses) ? b.courses.map(c => txt(c, 80)).filter(Boolean).join(', ') : txt(b.courses, 500);
+    const niveles = limpiarNiveles(b.niveles);
+    const cursos = nombresDe(niveles);
     const row = {
         usuario_id: req.session.userId,
         nombre_completo: txt(b.name, 120),
@@ -958,6 +960,7 @@ router.post('/tutors', requireAuth, h(async (req, res) => {
         precio: txt(b.price, 80),
         telefono: digits(b.phone),
         bio: txt(b.bio, 1000) || 'Estudiante tutor dispuesto a ayudar en cursos clave.',
+        niveles,
         estado: estadoInicial()
     };
     if (!row.nombre_completo || !row.carrera || !row.cursos) return bad(res, 'Faltan campos obligatorios.');
@@ -971,13 +974,16 @@ router.post('/tutors', requireAuth, h(async (req, res) => {
 router.put('/tutors/:id', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
     const b = req.body || {};
-    const cursos = Array.isArray(b.courses) ? b.courses.map(c => txt(c, 80)).filter(Boolean).join(', ') : txt(b.courses, 500);
+    const niveles = limpiarNiveles(b.niveles);
+    const cursos = nombresDe(niveles);
     const row = {
         nombre_completo: txt(b.name, 120), carrera: txt(b.career, 100),
         semestre: txt(b.semester, 50), campus: txt(b.faculty, 50), cursos,
         modalidad: txt(b.modality, 50), precio: txt(b.price, 80),
         telefono: digits(b.phone),
+        niveles,
         bio: txt(b.bio, 1000) || 'Estudiante tutor dispuesto a ayudar en cursos clave.'
+
     };
     if (!row.nombre_completo || !row.carrera || !row.cursos) return bad(res, 'Faltan campos obligatorios.');
     if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
@@ -988,6 +994,25 @@ router.put('/tutors/:id', requireAuth, h(async (req, res) => {
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
     res.json(mapTutor(data, req.session.userId));
+}));
+
+router.get('/catalogo', (req, res) => res.json(catalogoPublico));
+
+router.post('/tutors/recomendar', requireAuth, h(async (req, res) => {
+    const b = req.body || {};
+    const prio = codigosValidos(b.prioritarios, 3);
+    const sec = codigosValidos(b.secundarios, 5).filter(c => !prio.includes(c));
+    if (!prio.length) return bad(res, 'Elige al menos un tema prioritario.');
+
+    const { data, error } = await supabase.from('tutores').select('*').eq('estado', 'aprobado');
+    if (error) throw error;
+
+    const resultados = data
+        .map(t => { const r = puntuar(t.niveles || {}, prio, sec); return r && { tutor: mapTutor(t, req.session.userId), ...r }; })
+        .filter(Boolean)
+        .sort((a, b) => b.puntaje - a.puntaje || b.cubiertos - a.cubiertos)
+        .slice(0, 10);
+    res.json(resultados);
 }));
 
 router.delete('/tutors/:id', requireAuth, borrarPublicacion('tutores'));

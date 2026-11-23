@@ -6,12 +6,10 @@ const session = require('express-session');
 require('./db');                                   // valida las variables de Supabase al arrancar
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
-
+const app = require('./app');
 const PORT = process.env.PORT || 3000;
-if (!process.env.SESSION_SECRET) {
-    console.error('Falta SESSION_SECRET en el archivo .env');
-    process.exit(1);
-}
+app.listen(PORT, () => console.log(`UNSA Conecta en http://localhost:${PORT}`));
+
 
 const app = express();
 
