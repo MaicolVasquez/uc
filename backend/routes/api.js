@@ -150,6 +150,8 @@ const mapLostFound = (r, uid) => {
         hasSensitiveDoc: !!r.contiene_documento,
         custodyType: r.tipo_custodia || 'NO_APLICA',
         custodyPoint: r.punto_entrega || '',
+        hasVerification: Boolean(r.pregunta_verificacion),
+        verificationQuestion: r.pregunta_verificacion || '',
         showWhatsapp,
         phone: (showWhatsapp || isMine) ? (r.telefono || '') : '',
         img: r.url_foto || '',
@@ -417,6 +419,9 @@ router.post('/lost-found', requireAuth, h(async (req, res) => {
         url_foto: httpUrl(b.img),
         descripcion: txt(b.desc, 1000),
         contiene_documento: Boolean(b.hasSensitiveDoc),
+        pregunta_verificacion: b.status === 'ENCONTRADO'
+            ? (txt(b.verificationQuestion, 200) || null)
+            : null,
         estado: estadoInicial()
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
@@ -484,6 +489,9 @@ router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
         telefono: showWhatsapp ? phoneDigits : null,
         url_foto: nuevaFoto,
         descripcion: txt(b.desc, 1000),
+        pregunta_verificacion: b.status === 'ENCONTRADO'
+            ? (txt(b.verificationQuestion, 200) || null)
+            : null,
         contiene_documento: Boolean(b.hasSensitiveDoc)
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
@@ -633,6 +641,86 @@ router.post('/lost-found/:id/contactar', requireAuth, h(async (req, res) => {
 
     if (e2) throw e2;
     res.json({ ok: true, conversacionId });
+}));
+
+router.post('/lost-found/:id/reclamar', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    const solicitanteId = req.session.userId;
+    const respuesta = txt(req.body?.answer, 300);
+
+    if (respuesta.length < 3) {
+        return bad(res, 'Escribe una respuesta o seña de verificación válida.');
+    }
+
+    const { data: objeto, error: e1 } = await supabase
+        .from('objetos_perdidos')
+        .select('id, usuario_id, tipo, titulo, estado_resolucion, pregunta_verificacion')
+        .eq('id', req.params.id)
+        .maybeSingle();
+
+    if (e1) throw e1;
+    if (!objeto) return res.status(404).json({ error: 'Publicación no encontrada.' });
+    if (objeto.tipo !== 'ENCONTRADO') {
+        return bad(res, 'Solo puedes reclamar objetos reportados como encontrados.');
+    }
+    if (objeto.estado_resolucion === 'RESUELTO') {
+        return bad(res, 'Este objeto ya fue marcado como devuelto.');
+    }
+    if (objeto.usuario_id === solicitanteId) {
+        return bad(res, 'No puedes reclamar tu propia publicación.');
+    }
+
+    // Registrar reclamo (1 por estudiante y objeto para evitar intentos masivos)
+    const { error: e2 } = await supabase
+        .from('reclamos_objetos')
+        .insert({
+            objeto_id: objeto.id,
+            solicitante_id: solicitanteId,
+            respuesta
+        });
+
+    if (e2) {
+        if (e2.code === '23505') {
+            return res.status(409).json({
+                error: 'Ya enviaste una solicitud de reclamo por este objeto. Revisa tu chat en Cuenta.'
+            });
+        }
+        throw e2;
+    }
+
+    // Abrir o recuperar chat directo con quien encontró el objeto
+    const { data: conversacionId, error: e3 } = await supabase.rpc(
+        'obtener_o_crear_chat_directo',
+        {
+            p_solicitante: solicitanteId,
+            p_destinatario: objeto.usuario_id
+        }
+    );
+    if (e3) throw e3;
+
+    // Enviar automáticamente la respuesta de verificación como mensaje en el chat
+    const textoMensaje = objeto.pregunta_verificacion
+        ? `🔎 Solicitud de reclamo por "${objeto.titulo}"\n• Pregunta: ${objeto.pregunta_verificacion}\n• Respuesta: ${respuesta}`
+        : `🔎 Solicitud de reclamo por "${objeto.titulo}"\n• Seña de verificación: ${respuesta}`;
+
+    const { error: e4 } = await supabase
+        .from('mensajes')
+        .insert({
+            conversacion_id: conversacionId,
+            remitente_id: solicitanteId,
+            contenido: textoMensaje
+        });
+    if (e4) throw e4;
+
+    // Notificar en la campanita al estudiante que encontró el objeto
+    await notificar([objeto.usuario_id], {
+        tipo: 'objeto_encontrado',
+        titulo: 'Alguien reclama un objeto que encontraste',
+        detalle: `${objeto.titulo}: "${respuesta}"`,
+        enlace: `cuenta.html?chat=${conversacionId}`
+    });
+
+    res.status(201).json({ ok: true, conversacionId });
 }));
 
 // =====================================================
