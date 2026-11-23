@@ -133,10 +133,35 @@ buildLayout();
 // Devuelve el usuario o null (sin sesión / backend apagado / abierto con file://).
 async function refreshHeaderUser() {
     let user = null;
+
     try {
-        const res = await fetch('/api/perfil', { credentials: 'same-origin' });
-        if (res.ok) user = (await res.json()).user;
-    } catch (e) { /* backend no disponible */ }
+        const res = await fetch('/api/perfil', {
+            credentials: 'same-origin'
+        });
+
+        if (res.status === 401) {
+            window.sessionStatus = 'unauthenticated';
+
+        } else if (!res.ok) {
+            window.sessionStatus = 'error';
+            return window.currentUser || null;
+
+        } else {
+            user = (await res.json()).user;
+
+            if (!user) {
+                window.sessionStatus = 'error';
+                return window.currentUser || null;
+            }
+
+            window.sessionStatus = 'authenticated';
+        }
+
+    } catch (e) {
+        console.error('Error al verificar la sesión:', e);
+        window.sessionStatus = 'error';
+        return window.currentUser || null;
+    }
 
     window.currentUser = user;
 
@@ -191,9 +216,13 @@ const sessionReady = refreshHeaderUser();
 sessionReady.then(user => {
     const currentPage = document.body.dataset.page;
 
-    if (!user && currentPage !== 'cuenta') {
-        window.location.replace('cuenta.html');
-    }
+    if (
+    !user &&
+    currentPage !== 'cuenta' &&
+    window.sessionStatus === 'unauthenticated'
+) {
+    window.location.replace('cuenta.html');
+}
 });
 // ---------- Campanita de notificaciones (estilo Facebook) ----------
 let bellItems = [];
