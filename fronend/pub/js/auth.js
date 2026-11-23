@@ -846,8 +846,9 @@ function inicializarBuscadorEstudiantes() {
 
     const input = document.getElementById('chatSearch');
 
-    if (!input) return;
+    if (!input || input.dataset.initialized === 'true') return;
 
+    input.dataset.initialized = 'true';
     input.disabled = false;
 
     input.addEventListener('input', () => {
@@ -900,13 +901,12 @@ async function handleRegister(e) {
         await apiPost('/api/auth/register', { nombre, email, password });
         // Tras registrarse, iniciamos sesión automáticamente
         await apiPost('/api/auth/login', { email, password });
-        await refreshHeaderUser();
-        const res = await fetch('/api/perfil', { credentials: 'same-origin' });
-        renderProfile((await res.json()).user);
+        const user = await refreshHeaderUser();
+        if (!user) throw new Error('No se pudo cargar tu perfil. Intenta actualizar la página.');
+        renderProfile(user);
+        inicializarBuscadorEstudiantes();
+        await inicializarMensajeria();
         openNotificationToast('¡Cuenta creada! Bienvenido a UNSA Conecta.');
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
     } catch (err) {
         showAuthError(err.message);
     }
@@ -919,13 +919,12 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPassword').value;
     try {
         await apiPost('/api/auth/login', { email, password });
-        await refreshHeaderUser();
-        const res = await fetch('/api/perfil', { credentials: 'same-origin' });
-        renderProfile((await res.json()).user);
+        const user = await refreshHeaderUser();
+        if (!user) throw new Error('No se pudo cargar tu perfil. Intenta actualizar la página.');
+        renderProfile(user);
+        inicializarBuscadorEstudiantes();
+        await inicializarMensajeria();
         openNotificationToast('Sesión iniciada correctamente.');
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
     } catch (err) {
         showAuthError(err.message);
     }
@@ -1111,5 +1110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         showAuthTab('login');
         showView('forms');
+        if (window.sessionStatus === 'error') {
+            showAuthError('No pudimos comprobar tu sesión. Revisa tu conexión y vuelve a cargar la página.');
+        }
     }
 });
