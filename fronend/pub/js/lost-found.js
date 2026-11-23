@@ -110,7 +110,8 @@ function renderLostFound(items = lostFoundData) {
         const shouldBlur = !!(item.hasSensitiveDoc && hasRealImg);
 
         const imageBlock = `
-            <div class="relative h-44 overflow-hidden bg-slate-100">
+            <div onclick="openLfDetailModal('${escapeHtml(item.id)}')"
+                 class="relative h-44 overflow-hidden bg-slate-100 cursor-pointer">
                 <img src="${img}" alt="${escapeHtml(item.title)}"
                      class="w-full h-full object-cover transition-transform duration-300 ${shouldBlur ? 'blur-md scale-110' : 'hover:scale-105'} ${isResolved ? 'grayscale-[40%]' : ''}"
                      onerror="this.src='${LF_DEFAULT_IMG}'">
@@ -126,13 +127,26 @@ function renderLostFound(items = lostFoundData) {
                     ${statusBadge}
                     ${resolvedBadge}
                 </div>
-                <div class="absolute top-3 right-3 flex gap-1">
+                <div onclick="event.stopPropagation()" class="absolute top-3 right-3 flex gap-1">
                     ${!isResolved ? editBtn('editLostFound', item) : ''}
                     ${deleteBtn('lost-found', item, 'loadLostFound')}
                 </div>
                 <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
                     ${escapeHtml(item.campus)}
                 </div>
+            </div>`;
+
+        const detailShareBar = `
+            <div class="mt-2.5 flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
+                <button type="button" onclick="openLfDetailModal('${escapeHtml(item.id)}')"
+                    class="font-bold text-slate-700 hover:text-unsa-maroon flex items-center gap-1 transition-colors">
+                    <i class="fa-solid fa-expand"></i> Ver detalle completo
+                </button>
+                <button type="button" onclick="copyLfShareLink('${escapeHtml(item.id)}')"
+                    class="font-semibold text-slate-500 hover:text-unsa-maroon flex items-center gap-1 transition-colors"
+                    title="Copiar enlace directo">
+                    <i class="fa-solid fa-link"></i> Compartir
+                </button>
             </div>`;
 
         const phone = onlyDigits(item.phone);
@@ -176,7 +190,10 @@ function renderLostFound(items = lostFoundData) {
 
                     <div class="p-4">
                         <span class="text-[10px] font-bold uppercase text-unsa-maroon tracking-wider">${escapeHtml(item.category)}</span>
-                        <h3 class="font-bold text-slate-900 text-sm mt-0.5 line-clamp-2">${escapeHtml(item.title)}</h3>
+                        <h3 onclick="openLfDetailModal('${escapeHtml(item.id)}')"
+                            class="font-bold text-slate-900 text-sm mt-0.5 line-clamp-2 cursor-pointer hover:text-unsa-maroon transition-colors">
+                            ${escapeHtml(item.title)}
+                        </h3>
                         <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
                             <i class="fa-solid fa-location-dot text-red-500 w-4"></i> ${escapeHtml(item.location)}
                         </p>
@@ -188,6 +205,7 @@ function renderLostFound(items = lostFoundData) {
                         <p class="text-xs text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
                             "${escapeHtml(item.desc || 'Sin descripción adicional.')}"
                         </p>
+                        ${detailShareBar}
                     </div>
                 </div>
 
@@ -422,7 +440,222 @@ function editLostFound(id) {
     openModal('lostFoundModal');
 }
 
+// =====================================================
+// VISTA DETALLADA Y ENLACE COMPARTIBLE (?item=<id>)
+// =====================================================
+function getLfShareUrl(id) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('item', id);
+    return url.toString();
+}
+
+async function copyLfShareLink(id) {
+    const shareUrl = getLfShareUrl(id);
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(shareUrl);
+        } else {
+            const tmp = document.createElement('input');
+            tmp.value = shareUrl;
+            document.body.appendChild(tmp);
+            tmp.select();
+            document.execCommand('copy');
+            tmp.remove();
+        }
+        openNotificationToast('Enlace del reporte copiado al portapapeles.');
+    } catch {
+        openNotificationToast('No se pudo copiar el enlace automáticamente.');
+    }
+}
+
+function setItemQueryParam(id) {
+    const url = new URL(window.location.href);
+    if (id) {
+        url.searchParams.set('item', id);
+    } else {
+        url.searchParams.delete('item');
+    }
+    window.history.replaceState({}, '', url.toString());
+}
+
+async function openLfDetailModal(id) {
+    if (!id) return;
+    let item = lostFoundData.find(x => x.id === id);
+
+    if (!item) {
+        try {
+            item = await apiFetch(`/api/lost-found/${encodeURIComponent(id)}`);
+        } catch (err) {
+            openNotificationToast('El reporte solicitado no existe o ya fue eliminado.');
+            setItemQueryParam(null);
+            return;
+        }
+    }
+
+    const isLost = item.status === 'PERDIDO';
+    const isResolved = item.resolutionStatus === 'RESUELTO';
+    const esAdminUser = !!(window.currentUser && window.currentUser.rol === 'admin');
+    const canManage = !!(item.mine || esAdminUser);
+    const hasRealImg = !!safeUrl(item.img);
+    const img = escapeHtml(safeUrl(item.img) || LF_DEFAULT_IMG);
+    const shouldBlur = !!(item.hasSensitiveDoc && hasRealImg);
+    const phone = onlyDigits(item.phone);
+    const hasWhatsapp = !!(item.showWhatsapp && phone);
+
+    const formattedDate = item.datetime
+        ? new Date(item.datetime).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })
+        : 'No especificada';
+
+    const mapSpot = UNSA_MAP_SPOTS.find(s => s.id === item.mapLocationId);
+    const campusKey = CAMPUS_NAME_TO_KEY[item.campus] || 'ingenierias';
+    const mapHref = mapSpot
+        ? `mapa.html?loc=${encodeURIComponent(mapSpot.id)}`
+        : `mapa.html?campus=${encodeURIComponent(campusKey)}`;
+    const mapLabel = mapSpot
+        ? `Ver en UNSA Maps: ${escapeHtml(mapSpot.title)}`
+        : `Ver Área de ${escapeHtml(item.campus)} en UNSA Maps`;
+
+    const statusBadge = isLost
+        ? `<span class="bg-red-100 text-red-700 text-xs font-extrabold px-3 py-1 rounded-full border border-red-200">🔴 PERDIDO</span>`
+        : `<span class="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3 py-1 rounded-full border border-emerald-200">🟢 ENCONTRADO</span>`;
+
+    const resolvedBadge = isResolved
+        ? `<span class="bg-slate-900 text-unsa-gold text-xs font-extrabold px-3 py-1 rounded-full">✅ ${isLost ? 'RECUPERADO' : 'DEVUELTO'}</span>`
+        : '';
+
+    let custodyInfo = '';
+    if (!isLost) {
+        custodyInfo = (item.custodyType === 'PUNTO_SEGURO' && item.custodyPoint)
+            ? `<div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-bold flex items-center gap-2">
+                   <i class="fa-solid fa-building-shield text-blue-600 text-sm"></i>
+                   <span>Dejado en punto seguro: ${escapeHtml(item.custodyPoint)}</span>
+               </div>`
+            : `<div class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700 font-semibold flex items-center gap-2">
+                   <i class="fa-solid fa-hand-holding text-unsa-maroon text-sm"></i>
+                   <span>En custodia del estudiante que lo encontró</span>
+               </div>`;
+    }
+
+    let actionFooter = '';
+    if (isResolved) {
+        actionFooter = `
+            <div class="p-3 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold text-center">
+                Este caso ya fue cerrado y no admite nuevos contactos.
+            </div>`;
+        if (canManage) {
+            actionFooter += `
+                <button type="button" onclick="closeModal('lfDetailModal'); reabrirCaso('${escapeHtml(item.id)}')"
+                    class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-left"></i> Reabrir caso
+                </button>`;
+        }
+    } else if (item.mine) {
+        actionFooter = `
+            <button type="button" onclick="closeModal('lfDetailModal'); resolverCaso('${escapeHtml(item.id)}', ${isLost})"
+                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check text-unsa-gold"></i>
+                ${isLost ? 'Marcar como recuperado' : 'Marcar como devuelto'}
+            </button>`;
+    } else {
+        actionFooter = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                ${!isLost ? `
+                <button type="button" onclick="closeModal('lfDetailModal'); openClaimModal('${escapeHtml(item.id)}')"
+                    class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-hand-holding-heart text-unsa-gold"></i> Reclamar este objeto
+                </button>
+                <button type="button" onclick="contactarPorChat('${escapeHtml(item.id)}')"
+                    class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-comments text-unsa-maroon"></i> Consultar por Chat
+                </button>` : `
+                <button type="button" onclick="contactarPorChat('${escapeHtml(item.id)}')"
+                    class="w-full sm:col-span-2 bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-comments text-unsa-gold"></i> ¡Lo vi! Contactar por Chat UNSA
+                </button>`}
+                ${hasWhatsapp ? `
+                <a href="https://wa.me/51${phone}?text=Hola,%20te%20contacto%20desde%20UNSA%20Conecta%20por%20el%20objeto:%20${encodeURIComponent(item.title)}"
+                   target="_blank" rel="noopener"
+                   class="w-full sm:col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> Contactar por WhatsApp (${phone})
+                </a>` : ''}
+            </div>`;
+    }
+
+    document.getElementById('lfDetailShareBtn').onclick = () => copyLfShareLink(item.id);
+    document.getElementById('lfDetailBody').innerHTML = `
+        <div class="relative rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 max-h-72 flex items-center justify-center">
+            <img src="${img}" alt="${escapeHtml(item.title)}"
+                 class="w-full max-h-72 object-contain ${shouldBlur ? 'blur-md scale-105' : ''}"
+                 onerror="this.src='${LF_DEFAULT_IMG}'">
+            ${shouldBlur ? `
+            <div class="absolute inset-0 bg-slate-900/40 flex flex-col items-center justify-center text-white text-center px-4">
+                <i class="fa-solid fa-eye-slash text-unsa-gold text-2xl mb-1"></i>
+                <span class="text-xs font-extrabold uppercase">Documento Personal Protegido</span>
+                <span class="text-[11px] text-slate-200">Imagen difuminada por seguridad</span>
+            </div>` : ''}
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                ${statusBadge}
+                ${resolvedBadge}
+                <span class="text-xs font-bold uppercase text-unsa-maroon bg-red-50 px-2.5 py-1 rounded-full">
+                    ${escapeHtml(item.category)}
+                </span>
+            </div>
+            <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                Área de ${escapeHtml(item.campus)}
+            </span>
+        </div>
+
+        <div>
+            <h2 class="text-lg font-extrabold text-slate-900">${escapeHtml(item.title)}</h2>
+            <p class="text-xs text-slate-500 mt-1">
+                Publicado por <strong class="text-slate-700">${escapeHtml(item.authorName || 'Estudiante UNSA')}</strong>
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div>
+                <span class="text-slate-400 font-bold uppercase text-[10px] block">Lugar exacto</span>
+                <span class="text-slate-800 font-semibold mt-0.5 block">
+                    <i class="fa-solid fa-location-dot text-red-500 mr-1"></i>${escapeHtml(item.location)}
+                </span>
+                <a href="${mapHref}" class="inline-flex items-center gap-1 text-[11px] font-bold text-unsa-maroon hover:underline mt-1">
+                    <i class="fa-solid fa-map-location-dot"></i> ${mapLabel}
+                </a>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold uppercase text-[10px] block">Fecha y hora del suceso</span>
+                <span class="text-slate-800 font-semibold mt-0.5 block">
+                    <i class="fa-regular fa-clock text-unsa-gold mr-1"></i>${escapeHtml(formattedDate)}
+                </span>
+            </div>
+        </div>
+
+        ${custodyInfo}
+
+        <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Descripción completa</span>
+            <p class="text-sm text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-line leading-relaxed">
+                ${escapeHtml(item.desc || 'Sin descripción adicional.')}
+            </p>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+            ${actionFooter}
+        </div>
+    `;
+
+    setItemQueryParam(item.id);
+    openModal('lfDetailModal');
+}
+
 document.addEventListener('modalclosed', e => {
+    if (e.detail === 'lfDetailModal') {
+        setItemQueryParam(null);
+        return;
+    }
     setModalMode('lfModalTitle', 'lfSubmitBtn', false, 'Reportar Objeto', 'Publicar Reporte');
     if (e.detail === 'lostFoundModal') {
         lfEditingId = null;
@@ -437,10 +670,16 @@ document.addEventListener('modalclosed', e => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const campusSelect = document.getElementById('lfCampusInput');
     if (campusSelect) onLfCampusChange(campusSelect.value);
-    loadLostFound();
+
+    await loadLostFound();
+
+    const itemId = new URLSearchParams(window.location.search).get('item');
+    if (itemId) {
+        openLfDetailModal(itemId);
+    }
 });
 
 async function resolverCaso(id, isLost) {
@@ -588,7 +827,7 @@ function mostrarMatchBanner(matches) {
             ? '<span class="text-emerald-700 font-extrabold">ENCONTRADO</span>'
             : '<span class="text-red-600 font-extrabold">PERDIDO</span>';
         return `
-            <button type="button" onclick="enfocarCoincidencia('${escapeHtml(m.title)}')"
+            <button type="button" onclick="openLfDetailModal('${escapeHtml(m.id)}')"
                 class="text-left bg-white hover:bg-amber-100/70 border border-amber-300 rounded-xl px-3 py-2 text-xs transition-colors flex items-center gap-2 shadow-xs">
                 <span class="text-[10px]">${badge}</span>
                 <span class="font-bold text-slate-800">${escapeHtml(m.title)}</span>
