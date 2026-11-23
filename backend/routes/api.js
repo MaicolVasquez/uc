@@ -2,7 +2,7 @@
 // que usa el frontend (title, desc, location...) y las columnas de Supabase.
 const express = require('express');
 const { supabase } = require('../db');
-const { puntuar, limpiarNiveles, codigosValidos, nombresDe, catalogoPublico } = require('../services/recomendador');
+const { puntuar, limpiarNiveles, codigosValidos, nombresDe, catalogoPublico } = require('../lib/recomendador')
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const crypto = require('crypto');
 const router = express.Router();
