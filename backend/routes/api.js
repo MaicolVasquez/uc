@@ -40,6 +40,108 @@ function parseCustody(tipo, b) {
     return { tipo_custodia: custodyType, punto_entrega: custodyPoint };
 }
 
+const STOPWORDS_ES = new Set([
+    'de', 'la', 'el', 'en', 'un', 'una', 'unos', 'unas', 'con', 'por', 'para',
+    'mi', 'mis', 'tu', 'tus', 'su', 'sus', 'se', 'del', 'al', 'los', 'las',
+    'que', 'y', 'o', 'a', 'lo', 'como', 'mas', 'pero', 'sin', 'sobre', 'entre',
+    'este', 'esta', 'esto', 'ese', 'esa', 'cerca', 'lado', 'frente', 'piso'
+]);
+
+function extraerTokens(texto) {
+    return new Set(
+        String(texto || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length >= 3 && !STOPWORDS_ES.has(w))
+    );
+}
+
+async function buscarYNotificarCoincidencias(nuevo) {
+    if (nuevo.estado !== 'aprobado') return [];
+
+    const tipoOpuesto = nuevo.tipo === 'PERDIDO' ? 'ENCONTRADO' : 'PERDIDO';
+    const { data: candidatos, error } = await supabase
+        .from('objetos_perdidos')
+        .select('id, usuario_id, tipo, titulo, lugar_exacto, mapa_ubicacion_id, descripcion, fecha_hora')
+        .eq('tipo', tipoOpuesto)
+        .eq('estado', 'aprobado')
+        .eq('estado_resolucion', 'ACTIVO')
+        .eq('campus', nuevo.campus)
+        .eq('categoria', nuevo.categoria)
+        .neq('usuario_id', nuevo.usuario_id)
+        .order('creado_en', { ascending: false })
+        .limit(40);
+
+    if (error || !candidatos || !candidatos.length) return [];
+
+    const tokensTituloNuevo = extraerTokens(nuevo.titulo);
+    const tokensTodoNuevo = extraerTokens(`${nuevo.titulo} ${nuevo.lugar_exacto} ${nuevo.descripcion || ''}`);
+    if (!tokensTodoNuevo.size) return [];
+
+    const evaluados = candidatos.map(cand => {
+        const tokensTituloCand = extraerTokens(cand.titulo);
+        const tokensTodoCand = extraerTokens(`${cand.titulo} ${cand.lugar_exacto} ${cand.descripcion || ''}`);
+
+        let coincidenciasTitulo = 0;
+        for (const t of tokensTituloNuevo) {
+            if (tokensTituloCand.has(t) || tokensTodoCand.has(t)) coincidenciasTitulo++;
+        }
+
+        let coincidenciasGenerales = 0;
+        for (const t of tokensTodoNuevo) {
+            if (tokensTodoCand.has(t)) coincidenciasGenerales++;
+        }
+
+        const mismoPabellon = Boolean(
+            nuevo.mapa_ubicacion_id && nuevo.mapa_ubicacion_id === cand.mapa_ubicacion_id
+        );
+
+        const score = (coincidenciasTitulo * 3) + coincidenciasGenerales + (mismoPabellon ? 2 : 0);
+        const esValido = coincidenciasTitulo >= 1 || (coincidenciasGenerales >= 2 && mismoPabellon);
+
+        return { cand, score, esValido };
+    })
+        .filter(x => x.esValido)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+
+    if (!evaluados.length) return [];
+
+    // Notificar a los autores de las publicaciones coincidentes existentes
+    for (const { cand } of evaluados) {
+        await notificar([cand.usuario_id], {
+            tipo: 'objeto_encontrado',
+            titulo: nuevo.tipo === 'ENCONTRADO'
+                ? '¡Posible coincidencia con tu objeto perdido!'
+                : 'Alguien busca un objeto similar al que encontraste',
+            detalle: `${nuevo.titulo} · ${nuevo.lugar_exacto} (${nuevo.campus})`,
+            enlace: `index.html?item=${nuevo.id}`
+        });
+    }
+
+    // Notificar al autor del reporte recién creado
+    const principal = evaluados[0].cand;
+    await notificar([nuevo.usuario_id], {
+        tipo: 'objeto_encontrado',
+        titulo: evaluados.length === 1
+            ? '¡Encontramos 1 reporte similar al tuyo!'
+            : `¡Encontramos ${evaluados.length} reportes similares al tuyo!`,
+        detalle: `Revisa: ${principal.titulo} · ${principal.lugar_exacto}`,
+        enlace: `index.html?item=${principal.id}`
+    });
+
+    return evaluados.map(({ cand }) => ({
+        id: cand.id,
+        title: cand.titulo,
+        location: cand.lugar_exacto || '',
+        datetime: cand.fecha_hora,
+        status: cand.tipo
+    }));
+}
+
 async function esAdmin(userId) {
     const { data } = await supabase.from('perfiles').select('rol').eq('id', userId).single();
     return !!data && data.rol === 'admin';
@@ -445,7 +547,12 @@ router.post('/lost-found', requireAuth, h(async (req, res) => {
 
     const { data, error } = await supabase.from('objetos_perdidos').insert(row).select().single();
     if (error) throw error;
-    res.status(201).json(mapLostFound(data, req.session.userId));
+
+    const matches = await buscarYNotificarCoincidencias(data);
+    res.status(201).json({
+        ...mapLostFound(data, req.session.userId),
+        matches
+    });
 }));
 
 router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
