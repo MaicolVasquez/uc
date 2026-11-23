@@ -136,7 +136,29 @@ function renderLostFound(items = lostFoundData) {
             </div>`;
 
         const phone = onlyDigits(item.phone);
+        const hasWhatsapp = !!(item.showWhatsapp && phone);
         const resolveBtnLabel = isLost ? 'Marcar como recuperado' : 'Marcar como devuelto';
+
+        const contactButtonsBlock = isResolved
+            ? `<div class="w-full mt-3 bg-slate-100 text-slate-500 font-semibold py-2 px-3 rounded-xl text-xs text-center">
+                   Caso cerrado · Contacto deshabilitado
+               </div>`
+            : item.mine
+                ? `<div class="w-full mt-2 bg-amber-50 border border-amber-200 text-amber-900 font-semibold py-2 px-3 rounded-xl text-[11px] text-center">
+                       <i class="fa-solid fa-user-check mr-1"></i> Esta es tu publicación${hasWhatsapp ? ` · WhatsApp visible (${phone})` : ' · Contacto por Chat UNSA'}
+                   </div>`
+                : `<div class="space-y-2 mt-3">
+                       <button type="button" onclick="contactarPorChat('${escapeHtml(item.id)}')"
+                           class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-sm">
+                           <i class="fa-solid fa-comments text-unsa-gold text-sm"></i> Contactar por Chat UNSA
+                       </button>
+                       ${hasWhatsapp ? `
+                       <a href="https://wa.me/51${phone}?text=Hola,%20te%20contacto%20desde%20UNSA%20Conecta%20por%20el%20objeto:%20${encodeURIComponent(item.title)}"
+                          target="_blank" rel="noopener"
+                          class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
+                           <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp (${phone})
+                       </a>` : ''}
+                   </div>`;
 
         return `
             <div class="bg-white rounded-2xl border ${isResolved ? 'border-slate-300 opacity-85' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
@@ -173,15 +195,7 @@ function renderLostFound(items = lostFoundData) {
                         <i class="fa-solid fa-rotate-left"></i> Reabrir caso
                     </button>` : ''}
 
-                    ${!isResolved ? `
-                    <a href="https://wa.me/51${phone}?text=Hola,%20te%20contacto%20desde%20UNSA%20Conecta%20por%20el%20objeto:%20${encodeURIComponent(item.title)}"
-                       target="_blank" rel="noopener"
-                       class="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
-                        <i class="fa-brands fa-whatsapp text-sm"></i> Contactar al WhatsApp (${phone})
-                    </a>` : `
-                    <div class="w-full mt-3 bg-slate-100 text-slate-500 font-semibold py-2 px-3 rounded-xl text-xs text-center">
-                        Caso cerrado · Contacto deshabilitado
-                    </div>`}
+                    ${contactButtonsBlock}
                 </div>
             </div>`;
     }).join('');
@@ -279,6 +293,27 @@ function toggleLfUrlOption() {
     document.getElementById('lfUrlBox').classList.toggle('hidden');
 }
 
+function onLfWhatsappToggle(checked) {
+    const box = document.getElementById('lfWhatsappBox');
+    const phoneInput = document.getElementById('lfPhoneInput');
+    if (!box || !phoneInput) return;
+
+    box.classList.toggle('hidden', !checked);
+    phoneInput.required = checked;
+    if (!checked) phoneInput.value = '';
+}
+
+async function contactarPorChat(id) {
+    try {
+        const data = await apiFetch(`/api/lost-found/${encodeURIComponent(id)}/contactar`, {
+            method: 'POST'
+        });
+        window.location.href = `cuenta.html?chat=${encodeURIComponent(data.conversacionId)}`;
+    } catch (err) {
+        handleApiError(err);
+    }
+}
+
 async function handleSaveLostFound(e) {
     e.preventDefault();
     const submitBtn = document.getElementById('lfSubmitBtn');
@@ -293,6 +328,7 @@ async function handleSaveLostFound(e) {
         campus: document.getElementById('lfCampusInput').value,
         location: document.getElementById('lfLocationInput').value,
         datetime: document.getElementById('lfDateInput').value,
+        showWhatsapp: document.getElementById('lfShowWhatsappInput').checked,
         phone: document.getElementById('lfPhoneInput').value,
         img: document.getElementById('lfImgInput').value,
         imageData: lfImageData,
@@ -345,7 +381,12 @@ function editLostFound(id) {
     onLfCampusChange(it.campus, it.mapLocationId || '');
     document.getElementById('lfLocationInput').value = it.location;
     document.getElementById('lfDateInput').value = (it.datetime || '').slice(0, 16);
-    document.getElementById('lfPhoneInput').value = it.phone;
+
+    const hasPhone = !!(it.showWhatsapp && it.phone);
+    document.getElementById('lfShowWhatsappInput').checked = hasPhone;
+    onLfWhatsappToggle(hasPhone);
+    document.getElementById('lfPhoneInput').value = hasPhone ? it.phone : '';
+
     document.getElementById('lfImgInput').value = it.img || '';
     document.getElementById('lfDescInput').value = it.desc;
     document.getElementById('lfSensitiveDocInput').checked = !!it.hasSensitiveDoc;
@@ -361,6 +402,7 @@ document.addEventListener('modalclosed', e => {
         lfEditingId = null;
         document.getElementById('lostFoundForm').reset();
         document.getElementById('lfSensitiveDocInput').checked = true;
+        onLfWhatsappToggle(false);
         onLfCampusChange(document.getElementById('lfCampusInput').value);
         onLfStatusChange('PERDIDO');
         onLfCustodyChange('CONMIGO');

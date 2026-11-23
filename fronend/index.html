@@ -230,10 +230,25 @@
                         <input type="datetime-local" id="lfDateInput" required
                             class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-unsa-maroon">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono / WhatsApp *</label>
-                        <input type="tel" id="lfPhoneInput" required placeholder="987654321"
-                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                        <div class="flex items-start gap-2 text-xs text-slate-600">
+                            <i class="fa-solid fa-comments text-unsa-maroon mt-0.5"></i>
+                            <span>Otros estudiantes podrán escribirte por el <strong>Chat Interno de UNSA
+                                    Conecta</strong> sin ver tus datos personales.</span>
+                        </div>
+
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 pt-1">
+                            <input type="checkbox" id="lfShowWhatsappInput" onchange="onLfWhatsappToggle(this.checked)"
+                                class="accent-unsa-maroon rounded">
+                            <span>Mostrar también mi WhatsApp en la publicación</span>
+                        </label>
+
+                        <div id="lfWhatsappBox" class="hidden pt-1">
+                            <input type="tel" id="lfPhoneInput" maxlength="9" pattern="\d{9}"
+                                placeholder="Ej. 987654321 (9 dígitos)"
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-unsa-maroon focus:outline-none">
+                        </div>
                     </div>
                 </div>
 

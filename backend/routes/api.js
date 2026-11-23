@@ -23,10 +23,32 @@ const parseMapLocation = v => {
     return MAP_LOCATION_IDS.has(id) ? id : null;
 };
 
+function parseCustody(tipo, b) {
+    if (tipo === 'PERDIDO') {
+        return { tipo_custodia: 'NO_APLICA', punto_entrega: null };
+    }
+    const custodyType = ['CONMIGO', 'PUNTO_SEGURO'].includes(b.custodyType)
+        ? b.custodyType
+        : 'CONMIGO';
+    const custodyPoint = custodyType === 'PUNTO_SEGURO'
+        ? txt(b.custodyPoint, 150)
+        : null;
+
+    if (custodyType === 'PUNTO_SEGURO' && !custodyPoint) {
+        return { error: 'Indica en qué punto seguro dejaste el objeto.' };
+    }
+    return { tipo_custodia: custodyType, punto_entrega: custodyPoint };
+}
+
 async function esAdmin(userId) {
     const { data } = await supabase.from('perfiles').select('rol').eq('id', userId).single();
     return !!data && data.rol === 'admin';
 }
+
+const h = fn => (req, res) => fn(req, res).catch(e => {
+    console.error(e);
+    res.status(500).json({ error: 'Error del servidor.' });
+});
 
 // El admin borra cualquier fila; un usuario normal solo las suyas
 const borrarPublicacion = tabla => h(async (req, res) => {
@@ -37,11 +59,6 @@ const borrarPublicacion = tabla => h(async (req, res) => {
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'No encontrado.' });
     res.json({ ok: true });
-});
-
-const h = fn => (req, res) => fn(req, res).catch(e => {
-    console.error(e);
-    res.status(500).json({ error: 'Error del servidor.' });
 });
 
 async function rolDe(userId) {
@@ -98,124 +115,6 @@ async function eliminarImagenBucket(publicUrl, bucket) {
     }
 }
 
-// 2. Actualizar POST /lost-found:
-router.post('/lost-found', requireAuth, h(async (req, res) => {
-    const b = req.body || {};
-    const row = {
-        usuario_id: req.session.userId,
-        tipo: b.status,
-        titulo: txt(b.title, 150),
-        categoria: txt(b.category, 50),
-        campus: txt(b.campus, 50),
-        lugar_exacto: txt(b.location, 200),
-        fecha_hora: b.datetime,
-        telefono: digits(b.phone),
-        url_foto: httpUrl(b.img),
-        descripcion: txt(b.desc, 1000),
-        estado: estadoInicial(),
-        contiene_documento: Boolean(b.hasSensitiveDoc),
-        mapa_ubicacion_id: parseMapLocation(b.mapLocationId),
-    };
-    if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
-    if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
-    if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
-    if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
-
-    if (b.imageData) {
-        try {
-            row.url_foto = await subirImagenObjeto(b.imageData);
-        } catch (e) {
-            if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
-            if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
-            throw e;
-        }
-    }
-
-    const custodia = parseCustody(row.tipo, b);
-    if (custodia.error) return bad(res, custodia.error);
-    row.tipo_custodia = custodia.tipo_custodia;
-    row.punto_entrega = custodia.punto_entrega;
-
-    const { data, error } = await supabase.from('objetos_perdidos').insert(row).select().single();
-    if (error) throw error;
-    res.status(201).json(mapLostFound(data, req.session.userId));
-}));
-
-// 3. Actualizar PUT /lost-found/:id:
-router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
-    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
-    const b = req.body || {};
-
-    const { data: actual, error: e0 } = await supabase.from('objetos_perdidos')
-        .select('id, url_foto')
-        .eq('id', req.params.id)
-        .eq('usuario_id', req.session.userId)
-        .maybeSingle();
-    if (e0) throw e0;
-    if (!actual) return res.status(404).json({ error: 'Publicación no encontrada.' });
-
-    let nuevaFoto = httpUrl(b.img);
-    if (b.imageData) {
-        try {
-            nuevaFoto = await subirImagenObjeto(b.imageData);
-        } catch (e) {
-            if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
-            if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
-            throw e;
-        }
-    }
-
-    const row = {
-        tipo: b.status,
-        titulo: txt(b.title, 150),
-        categoria: txt(b.category, 50),
-        campus: txt(b.campus, 50),
-        lugar_exacto: txt(b.location, 200),
-        fecha_hora: b.datetime,
-        telefono: digits(b.phone),
-        url_foto: nuevaFoto,
-        descripcion: txt(b.desc, 1000),
-        contiene_documento: Boolean(b.hasSensitiveDoc),
-        mapa_ubicacion_id: parseMapLocation(b.mapLocationId),
-    };
-    if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
-    if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
-    if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
-    if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
-
-    const custodia = parseCustody(row.tipo, b);
-    if (custodia.error) return bad(res, custodia.error);
-    row.tipo_custodia = custodia.tipo_custodia;
-    row.punto_entrega = custodia.punto_entrega;
-
-    const { data, error } = await supabase.from('objetos_perdidos').update(row)
-        .eq('id', req.params.id).eq('usuario_id', req.session.userId)
-        .select().maybeSingle();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
-
-    // Si cambió o se eliminó la foto anterior almacenada en Storage, limpiarla
-    if (actual.url_foto && actual.url_foto !== nuevaFoto) {
-        await eliminarImagenBucket(actual.url_foto, 'objetos-perdidos');
-    }
-
-    res.json(mapLostFound(data, req.session.userId));
-}));
-
-// 4. Actualizar DELETE /lost-found/:id para borrar también la foto del bucket:
-router.delete('/lost-found/:id', requireAuth, h(async (req, res) => {
-    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
-    let q = supabase.from('objetos_perdidos').delete().eq('id', req.params.id);
-    if (!(await esAdmin(req.session.userId))) q = q.eq('usuario_id', req.session.userId);
-    const { data, error } = await q.select('id, url_foto').maybeSingle();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'No encontrado.' });
-
-    if (data.url_foto) {
-        await eliminarImagenBucket(data.url_foto, 'objetos-perdidos');
-    }
-    res.json({ ok: true });
-}));
 // ---------- notificaciones personales (campanita) ----------
 async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }) {
     const ids = [...new Set(usuarioIds)].filter(Boolean);
@@ -232,32 +131,40 @@ async function notificar(usuarioIds, { tipo, titulo, detalle = '', enlace = '' }
         if (error) console.error('No se pudo crear la notificación:', error.message);
     }
 }
+
 // ---------- mappers: fila de BD -> objeto que espera el frontend ----------
-const mapLostFound = (r, uid) => ({
-    id: r.id,
-    title: r.titulo,
-    category: r.categoria || '',
-    campus: r.campus || '',
-    location: r.lugar_exacto || '',
-    mapLocationId: r.mapa_ubicacion_id || '',
-    datetime: r.fecha_hora,
-    status: r.tipo,
-    resolutionStatus: r.estado_resolucion || 'ACTIVO',
-    resolvedAt: r.resuelto_en || null,
-    hasSensitiveDoc: !!r.contiene_documento,
-    custodyType: r.tipo_custodia || 'NO_APLICA',
-    custodyPoint: r.punto_entrega || '',
-    phone: r.telefono || '',
-    img: r.url_foto || '',
-    desc: r.descripcion || '',
-    mine: !!uid && r.usuario_id === uid
-});
+const mapLostFound = (r, uid) => {
+    const isMine = !!uid && r.usuario_id === uid;
+    const showWhatsapp = !!r.mostrar_whatsapp;
+    return {
+        id: r.id,
+        title: r.titulo,
+        category: r.categoria || '',
+        campus: r.campus || '',
+        location: r.lugar_exacto || '',
+        mapLocationId: r.mapa_ubicacion_id || '',
+        datetime: r.fecha_hora,
+        status: r.tipo,
+        resolutionStatus: r.estado_resolucion || 'ACTIVO',
+        resolvedAt: r.resuelto_en || null,
+        hasSensitiveDoc: !!r.contiene_documento,
+        custodyType: r.tipo_custodia || 'NO_APLICA',
+        custodyPoint: r.punto_entrega || '',
+        showWhatsapp,
+        phone: (showWhatsapp || isMine) ? (r.telefono || '') : '',
+        img: r.url_foto || '',
+        desc: r.descripcion || '',
+        mine: isMine
+    };
+};
+
 const mapTutor = (r, uid) => ({
     id: r.id, name: r.nombre_completo, career: r.carrera || '', semester: r.semestre || '',
     faculty: r.campus || '', courses: (r.cursos || '').split(',').map(s => s.trim()).filter(Boolean),
     modality: r.modalidad || '', price: r.precio || '', phone: r.telefono || '', bio: r.bio || '',
     mine: !!uid && r.usuario_id === uid
 });
+
 const mapHueco = (r, uid, joinedByMe = false) => ({
     id: r.id, title: r.titulo, category: r.categoria || '', campus: r.campus || '',
     location: r.lugar_exacto || '', time: r.horario || '', capacity: r.aforo || 0,
@@ -265,6 +172,7 @@ const mapHueco = (r, uid, joinedByMe = false) => ({
     mine: !!uid && r.usuario_id === uid,
     joinedByMe
 });
+
 const mapAnn = (r, nombres, uid) => ({
     id: r.id, title: r.titulo, category: r.categoria || '', urgency: r.urgencia || 'INFO',
     campus: r.campus_afectado || '', content: r.contenido || '',
@@ -274,10 +182,12 @@ const mapAnn = (r, nombres, uid) => ({
     authorName: (nombres && nombres.get(r.admin_id)) || '',
     mine: !!uid && r.admin_id === uid
 });
+
 const mapNotif = r => ({
     id: r.id, tipo: r.tipo, titulo: r.titulo, detalle: r.detalle || '',
     enlace: r.enlace || '', leida: r.leida, creadoEn: r.creado_en
 });
+
 /* =====================================================
    BUSCADOR DE ESTUDIANTES
 ===================================================== */
@@ -475,23 +385,6 @@ router.get('/perfil/actividad', requireAuth, h(async (req, res) => {
 
 }));
 
-function parseCustody(tipo, b) {
-    if (tipo === 'PERDIDO') {
-        return { tipo_custodia: 'NO_APLICA', punto_entrega: null };
-    }
-    const custodyType = ['CONMIGO', 'PUNTO_SEGURO'].includes(b.custodyType)
-        ? b.custodyType
-        : 'CONMIGO';
-    const custodyPoint = custodyType === 'PUNTO_SEGURO'
-        ? txt(b.custodyPoint, 150)
-        : null;
-
-    if (custodyType === 'PUNTO_SEGURO' && !custodyPoint) {
-        return { error: 'Indica en qué punto seguro dejaste el objeto.' };
-    }
-    return { tipo_custodia: custodyType, punto_entrega: custodyPoint };
-}
-
 // =====================================================
 // OBJETOS PERDIDOS
 // =====================================================
@@ -504,6 +397,12 @@ router.get('/lost-found', h(async (req, res) => {
 
 router.post('/lost-found', requireAuth, h(async (req, res) => {
     const b = req.body || {};
+    const showWhatsapp = Boolean(b.showWhatsapp);
+    const phoneDigits = digits(b.phone);
+    if (showWhatsapp && !telOk(phoneDigits)) {
+        return bad(res, 'Ingresa un número de WhatsApp válido de 9 dígitos o desmarca la opción.');
+    }
+
     const row = {
         usuario_id: req.session.userId,
         tipo: b.status,
@@ -511,50 +410,120 @@ router.post('/lost-found', requireAuth, h(async (req, res) => {
         categoria: txt(b.category, 50),
         campus: txt(b.campus, 50),
         lugar_exacto: txt(b.location, 200),
+        mapa_ubicacion_id: parseMapLocation(b.mapLocationId),
         fecha_hora: b.datetime,
-        telefono: digits(b.phone),
+        mostrar_whatsapp: showWhatsapp,
+        telefono: showWhatsapp ? phoneDigits : null,
         url_foto: httpUrl(b.img),
         descripcion: txt(b.desc, 1000),
+        contiene_documento: Boolean(b.hasSensitiveDoc),
         estado: estadoInicial()
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
     if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
-    if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
+
+    const custodia = parseCustody(row.tipo, b);
+    if (custodia.error) return bad(res, custodia.error);
+    row.tipo_custodia = custodia.tipo_custodia;
+    row.punto_entrega = custodia.punto_entrega;
+
+    if (b.imageData) {
+        try {
+            row.url_foto = await subirImagenObjeto(b.imageData);
+        } catch (e) {
+            if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
+            if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
+            throw e;
+        }
+    }
 
     const { data, error } = await supabase.from('objetos_perdidos').insert(row).select().single();
     if (error) throw error;
     res.status(201).json(mapLostFound(data, req.session.userId));
 }));
+
 router.put('/lost-found/:id', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
     const b = req.body || {};
+
+    const { data: actual, error: e0 } = await supabase.from('objetos_perdidos')
+        .select('id, url_foto')
+        .eq('id', req.params.id)
+        .eq('usuario_id', req.session.userId)
+        .maybeSingle();
+    if (e0) throw e0;
+    if (!actual) return res.status(404).json({ error: 'Publicación no encontrada.' });
+
+    const showWhatsapp = Boolean(b.showWhatsapp);
+    const phoneDigits = digits(b.phone);
+    if (showWhatsapp && !telOk(phoneDigits)) {
+        return bad(res, 'Ingresa un número de WhatsApp válido de 9 dígitos o desmarca la opción.');
+    }
+
+    let nuevaFoto = httpUrl(b.img);
+    if (b.imageData) {
+        try {
+            nuevaFoto = await subirImagenObjeto(b.imageData);
+        } catch (e) {
+            if (e.message === 'IMG_FORMATO') return bad(res, 'La imagen debe ser JPG, PNG o WebP.');
+            if (e.message === 'IMG_GRANDE') return bad(res, 'La imagen supera los 2 MB.');
+            throw e;
+        }
+    }
+
     const row = {
         tipo: b.status,
         titulo: txt(b.title, 150),
         categoria: txt(b.category, 50),
         campus: txt(b.campus, 50),
         lugar_exacto: txt(b.location, 200),
+        mapa_ubicacion_id: parseMapLocation(b.mapLocationId),
         fecha_hora: b.datetime,
-        telefono: digits(b.phone),
-        url_foto: httpUrl(b.img),
-        descripcion: txt(b.desc, 1000)
+        mostrar_whatsapp: showWhatsapp,
+        telefono: showWhatsapp ? phoneDigits : null,
+        url_foto: nuevaFoto,
+        descripcion: txt(b.desc, 1000),
+        contiene_documento: Boolean(b.hasSensitiveDoc)
     };
     if (!['PERDIDO', 'ENCONTRADO'].includes(row.tipo)) return bad(res, 'Tipo de reporte no válido.');
     if (!row.titulo || !row.lugar_exacto) return bad(res, 'Faltan campos obligatorios.');
     if (!row.fecha_hora || isNaN(Date.parse(row.fecha_hora))) return bad(res, 'Fecha no válida.');
-    if (!telOk(row.telefono)) return bad(res, 'El teléfono debe tener 9 dígitos.');
+
+    const custodia = parseCustody(row.tipo, b);
+    if (custodia.error) return bad(res, custodia.error);
+    row.tipo_custodia = custodia.tipo_custodia;
+    row.punto_entrega = custodia.punto_entrega;
 
     const { data, error } = await supabase.from('objetos_perdidos').update(row)
-        .eq('id', req.params.id).eq('usuario_id', req.session.userId)   // solo el dueño
+        .eq('id', req.params.id).eq('usuario_id', req.session.userId)
         .select().maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
+
+    // Si cambió o se eliminó la foto anterior almacenada en Storage, limpiarla
+    if (actual.url_foto && actual.url_foto !== nuevaFoto) {
+        await eliminarImagenBucket(actual.url_foto, 'objetos-perdidos');
+    }
+
     res.json(mapLostFound(data, req.session.userId));
 }));
-router.delete('/lost-found/:id', requireAuth, borrarPublicacion('objetos_perdidos'))
 
-// Solo admin: marca un reporte PERDIDO como ENCONTRADO y avisa a su dueño
+router.delete('/lost-found/:id', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    let q = supabase.from('objetos_perdidos').delete().eq('id', req.params.id);
+    if (!(await esAdmin(req.session.userId))) q = q.eq('usuario_id', req.session.userId);
+    const { data, error } = await q.select('id, url_foto').maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'No encontrado.' });
+
+    if (data.url_foto) {
+        await eliminarImagenBucket(data.url_foto, 'objetos-perdidos');
+    }
+    res.json({ ok: true });
+}));
+
+// Autor o admin: marca un reporte como resuelto (recuperado / devuelto)
 router.patch('/lost-found/:id/resolver', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
 
@@ -602,6 +571,7 @@ router.patch('/lost-found/:id/resolver', requireAuth, h(async (req, res) => {
     res.json(mapLostFound(data, req.session.userId));
 }));
 
+// Autor o admin: vuelve a marcar un reporte cerrado como activo
 router.patch('/lost-found/:id/reabrir', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
 
@@ -632,6 +602,39 @@ router.patch('/lost-found/:id/reabrir', requireAuth, h(async (req, res) => {
     if (error) throw error;
     res.json(mapLostFound(data, req.session.userId));
 }));
+
+// Abrir o recuperar chat directo con el autor de la publicación
+router.post('/lost-found/:id/contactar', requireAuth, h(async (req, res) => {
+    if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
+    const solicitanteId = req.session.userId;
+
+    const { data: objeto, error: e1 } = await supabase
+        .from('objetos_perdidos')
+        .select('id, usuario_id, titulo, estado_resolucion')
+        .eq('id', req.params.id)
+        .maybeSingle();
+
+    if (e1) throw e1;
+    if (!objeto) return res.status(404).json({ error: 'Publicación no encontrada.' });
+    if (objeto.estado_resolucion === 'RESUELTO') {
+        return bad(res, 'Este caso ya fue cerrado.');
+    }
+    if (objeto.usuario_id === solicitanteId) {
+        return bad(res, 'Esta publicación te pertenece.');
+    }
+
+    const { data: conversacionId, error: e2 } = await supabase.rpc(
+        'obtener_o_crear_chat_directo',
+        {
+            p_solicitante: solicitanteId,
+            p_destinatario: objeto.usuario_id
+        }
+    );
+
+    if (e2) throw e2;
+    res.json({ ok: true, conversacionId });
+}));
+
 // =====================================================
 // TUTORES
 // =====================================================
@@ -665,6 +668,7 @@ router.post('/tutors', requireAuth, h(async (req, res) => {
     if (error) throw error;
     res.status(201).json(mapTutor(data, req.session.userId));
 }));
+
 router.put('/tutors/:id', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
     const b = req.body || {};
@@ -686,6 +690,7 @@ router.put('/tutors/:id', requireAuth, h(async (req, res) => {
     if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
     res.json(mapTutor(data, req.session.userId));
 }));
+
 router.delete('/tutors/:id', requireAuth, borrarPublicacion('tutores'));
 
 
@@ -763,6 +768,7 @@ router.post('/huecos', requireAuth, h(async (req, res) => {
     if (error) throw error;
     res.status(201).json(mapHueco(data, req.session.userId));
 }));
+
 router.put('/huecos/:id', requireAuth, h(async (req, res) => {
     if (!UUID_RE.test(req.params.id)) return bad(res, 'ID no válido.');
     const b = req.body || {};
@@ -790,6 +796,7 @@ router.put('/huecos/:id', requireAuth, h(async (req, res) => {
     if (!data) return res.status(404).json({ error: 'Publicación no encontrada.' });
     res.json(mapHueco(data, req.session.userId));
 }));
+
 router.delete('/huecos/:id', requireAuth, borrarPublicacion('punto_hueco'));
 
 // Unirse: una sola vez por usuario y sin pasarse del aforo (todo lo hace la función SQL)
@@ -991,6 +998,7 @@ router.post('/announcements', requirePublicador, h(async (req, res) => {
     const nombres = new Map([[req.session.userId, perfil && perfil.nombre]]);
     res.status(201).json(mapAnn(data, nombres, req.session.userId));
 }));
+
 // =====================================================
 // MIS NOTIFICACIONES (campanita)
 // =====================================================
@@ -1022,6 +1030,7 @@ router.post('/mis-notificaciones/:id/leer', requireAuth, h(async (req, res) => {
     if (error) throw error;
     res.json({ ok: true });
 }));
+
 // =====================================================
 // MODERACIÓN (solo admin) — útil si AUTO_APROBAR=false
 // =====================================================
