@@ -1,30 +1,98 @@
 // Módulo: Estudiante a Estudiante (Tutorías)
+
+const TUTOR_DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';
+
+// ---------- Estado ----------
 let tutorEditingId = null;
-const TUTOR_DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';      // arriba del archivo
+let catalog = [];                            // cursos tutorables (vienen de /api/catalogo)
+let tutorNiveles = {};                       // { codigo: nivel } del formulario del tutor
+const picks = { prio: [], sec: [] };         // búsqueda del estudiante
+const PICK_MAX = { prio: 3, sec: 5 };
+const LEVEL_TXT = { 1: 'Especialista', 2: 'Intermedio', 3: 'Bases' };
 
 const CAREERS_BY_AREA = {
     'Biomédicas': [
-        'Agronomía','Biología','Ciencias de la Nutrición','Enfermería','Ingeniería Pesquera','Medicina Humana'
+        'Agronomía', 'Biología', 'Ciencias de la Nutrición', 'Enfermería', 'Ingeniería Pesquera', 'Medicina Humana'
     ],
     'Ingenierías': [
-        'Arquitectura','Ciencia de la Computación','Física','Ingeniería Ambiental','Ingeniería Civil',
-        'Ingeniería de Industrias Alimentarias','Ingeniería de Materiales','Ingeniería de Minas',
-        'Ingeniería de Sistemas','Ingeniería de Telecomunicaciones','Ingeniería Eléctrica',
-        'Ingeniería Electrónica','Ingeniería Geofísica','Ingeniería Geológica','Ingeniería Industrial',
-        'Ingeniería Mecánica','Ingeniería Mecatrónica','Ingeniería Metalúrgica','Ingeniería Química',
-        'Ingeniería Sanitaria','Matemáticas','Química'
+        'Arquitectura', 'Ciencia de la Computación', 'Física', 'Ingeniería Ambiental', 'Ingeniería Civil',
+        'Ingeniería de Industrias Alimentarias', 'Ingeniería de Materiales', 'Ingeniería de Minas',
+        'Ingeniería de Sistemas', 'Ingeniería de Telecomunicaciones', 'Ingeniería Eléctrica',
+        'Ingeniería Electrónica', 'Ingeniería Geofísica', 'Ingeniería Geológica', 'Ingeniería Industrial',
+        'Ingeniería Mecánica', 'Ingeniería Mecatrónica', 'Ingeniería Metalúrgica', 'Ingeniería Química',
+        'Ingeniería Sanitaria', 'Matemáticas', 'Química'
     ],
     'Sociales': [
-        'Administración','Antropología','Artes','Banca y Seguros','Ciencias de la Comunicación',
-        'Contabilidad','Derecho','Economía','Educación','Filosofía','Finanzas','Historia',
-        'Literatura y Lingüística','Marketing','Psicología','Relaciones Industriales','Sociología',
-        'Trabajo Social','Turismo y Hotelería'
+        'Administración', 'Antropología', 'Artes', 'Banca y Seguros', 'Ciencias de la Comunicación',
+        'Contabilidad', 'Derecho', 'Economía', 'Educación', 'Filosofía', 'Finanzas', 'Historia',
+        'Literatura y Lingüística', 'Marketing', 'Psicología', 'Relaciones Industriales', 'Sociología',
+        'Trabajo Social', 'Turismo y Hotelería'
     ]
 };
+
+// ---------- Utilidades ----------
+function val(id) {
+    const el = document.getElementById(id);
+    if (!el) throw new Error(`Falta el campo "${id}" en tutorias.html`);
+    return el.value;
+}
+
+const nameOf = code => (catalog.find(c => c.codigo === code) || {}).nombre || code;
+const optionValue = c => `${c.codigo} · ${c.nombre}` + (c.alias.length ? ` (${c.alias.join(', ')})` : '');
+
+const chip = (label, onclick) =>
+    `<span class="bg-amber-50 text-unsa-maroon text-[11px] font-bold px-2 py-0.5 rounded-md border border-amber-200">
+        ${escapeHtml(label)} <button type="button" onclick="${onclick}" class="ml-1">&times;</button></span>`;
+
+// ---------- Catálogo ----------
+async function loadCatalog() {
+    try {
+        catalog = await apiFetch('/api/catalogo');
+        document.getElementById('courseList').innerHTML =
+            catalog.map(c => `<option value="${escapeHtml(optionValue(c))}"></option>`).join('');
+    } catch (err) {
+        handleApiError(err);
+    }
+}
+
+function findCourse(text) {
+    const t = String(text).trim().toLowerCase();
+    if (!t) return undefined;
+    const code = (t.match(/\d{7}/) || [])[0];
+    const exact = catalog.find(c => c.codigo === code || c.nombre.toLowerCase() === t ||
+        c.alias.some(a => a.toLowerCase() === t));
+    if (exact) return exact;
+    const parcial = catalog.filter(c => c.nombre.toLowerCase().includes(t));
+    return parcial.length === 1 ? parcial[0] : undefined;
+}
+
+// ---------- Formulario del tutor: cursos y niveles ----------
+function addTutorCourse() {
+    const input = document.getElementById('tutorCoursePick');
+    const c = findCourse(input.value);
+    if (!c) return openNotificationToast('Elige un curso de la lista.');
+    tutorNiveles[c.codigo] = Number(document.getElementById('tutorLevelPick').value);
+    input.value = '';
+    renderTutorCourses();
+}
+
+function removeTutorCourse(code) {
+    delete tutorNiveles[code];
+    renderTutorCourses();
+}
+
+function renderTutorCourses() {
+    const box = document.getElementById('tutorCoursesChosen');
+    if (!box) return;
+    box.innerHTML = Object.entries(tutorNiveles)
+        .map(([code, n]) => chip(`${nameOf(code)} · ${LEVEL_TXT[n]}`, `removeTutorCourse('${code}')`))
+        .join('');
+}
 
 // Llena el select de carreras según el área elegida
 function fillCareers(area, selected = '') {
     const select = document.getElementById('tutorCareer');
+    if (!select) return;
     const careers = [...(CAREERS_BY_AREA[area] || [])];
 
     // Si un tutor antiguo tiene una carrera escrita a mano que no está en la lista, la conservamos
@@ -35,6 +103,72 @@ function fillCareers(area, selected = '') {
 
     if (selected) select.value = selected;
 }
+
+// ---------- Búsqueda del estudiante ----------
+function addPick(kind, input) {
+    const c = findCourse(input.value);
+    input.value = '';
+    if (!c) return;
+    const other = kind === 'prio' ? 'sec' : 'prio';
+    if (picks[kind].includes(c.codigo) || picks[other].includes(c.codigo)) return;
+    if (picks[kind].length >= PICK_MAX[kind]) return openNotificationToast(`Máximo ${PICK_MAX[kind]} temas.`);
+    picks[kind].push(c.codigo);
+    renderPicks();
+}
+
+function removePick(kind, code) {
+    picks[kind] = picks[kind].filter(x => x !== code);
+    renderPicks();
+}
+
+function renderPicks() {
+    for (const kind of ['prio', 'sec']) {
+        const box = document.getElementById(kind + 'Chips');
+        if (box) box.innerHTML = picks[kind].map(code => chip(nameOf(code), `removePick('${kind}','${code}')`)).join('');
+    }
+}
+
+async function runRecommendation() {
+    if (!picks.prio.length) return openNotificationToast('Elige al menos un tema prioritario.');
+    try {
+        const items = await apiFetch('/api/tutors/recomendar',
+            { method: 'POST', body: { prioritarios: picks.prio, secundarios: picks.sec } });
+        renderReco(items);
+    } catch (err) {
+        handleApiError(err);
+    }
+}
+
+function renderReco(items) {
+    const box = document.getElementById('recoResults');
+    if (!box) return;
+    if (!items.length) {
+        box.innerHTML = `<p class="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg">Ningún tutor cubre tus temas prioritarios todavía. Puedes enviar una solicitud de asesoría.</p>`;
+        return;
+    }
+    box.innerHTML = items.map((r, i) => `
+        <div class="border border-slate-200 rounded-xl p-4">
+            <div class="flex justify-between items-start gap-3">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400">#${i + 1}</p>
+                    <h3 class="font-bold text-slate-900">${escapeHtml(r.tutor.name)}</h3>
+                    <p class="text-xs text-unsa-maroon font-semibold">${escapeHtml(r.tutor.career)} (${escapeHtml(r.tutor.semester)})</p>
+                </div>
+                <div class="text-2xl font-extrabold text-unsa-maroon">${Number(r.puntaje).toFixed(1)}</div>
+            </div>
+            <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+                <div class="h-full bg-emerald-500" style="width:${Math.min(100, r.puntaje)}%"></div>
+            </div>
+            <p class="text-xs text-slate-600 mt-2">${escapeHtml(r.explicacion)}</p>
+            <a href="https://wa.me/51${onlyDigits(r.tutor.phone)}?text=Hola%20${encodeURIComponent(r.tutor.name)},%20te%20contacto%20desde%20UNSA%20Conecta%20para%20una%20tutoria"
+               target="_blank" rel="noopener"
+               class="inline-flex items-center gap-2 mt-3 text-xs font-bold text-emerald-700">
+                <i class="fa-brands fa-whatsapp"></i> Contactar
+            </a>
+        </div>`).join('');
+}
+
+// ---------- Listado de tutores ----------
 async function loadTutors() {
     try {
         await sessionReady;
@@ -58,7 +192,11 @@ function renderTutors(items = tutorsData) {
     }
 
     grid.innerHTML = items.map(tut => {
-        const coursesBadges = tut.courses.map(c =>
+        const niveles = Object.entries(tut.niveles || {});
+        const etiquetas = niveles.length
+            ? niveles.map(([code, n]) => `${nameOf(code)} · ${LEVEL_TXT[n] || ''}`)
+            : (tut.courses || []);
+        const coursesBadges = etiquetas.map(c =>
             `<span class="bg-amber-50 text-unsa-maroon font-bold text-[10px] px-2 py-0.5 rounded-md border border-amber-200">${escapeHtml(c)}</span>`
         ).join(' ');
 
@@ -76,22 +214,22 @@ function renderTutors(items = tutorsData) {
                             <p class="text-[11px] text-slate-500"><i class="fa-solid fa-graduation-cap"></i> Área de ${escapeHtml(tut.faculty)}</p>
                         </div>
                     </div>
- 
+
                     <div class="mt-4">
                         <p class="text-[11px] font-bold uppercase text-slate-400 tracking-wider mb-1">Cursos ofertados:</p>
                         <div class="flex flex-wrap gap-1">${coursesBadges}</div>
                     </div>
- 
+
                     <p class="text-xs text-slate-600 mt-3 line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                         "${escapeHtml(tut.bio)}"
                     </p>
- 
+
                     <div class="mt-3 text-xs space-y-1 text-slate-600">
                         <p><span class="font-bold">Modalidad:</span> ${escapeHtml(tut.modality)}</p>
                         <p><span class="font-bold">Precio/Condición:</span> <span class="text-emerald-700 font-extrabold">${escapeHtml(tut.price)}</span></p>
                     </div>
                 </div>
- 
+
                 <a href="https://wa.me/51${onlyDigits(tut.phone)}?text=Hola%20${encodeURIComponent(tut.name)},%20te%20contacto%20desde%20UNSA%20Conecta%20para%20una%20tutoria"
                    target="_blank" rel="noopener"
                    class="w-full mt-4 bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
@@ -108,7 +246,7 @@ function filterTutors() {
 
     const filtered = tutorsData.filter(tut => {
         const matchesQuery = tut.name.toLowerCase().includes(query) ||
-            tut.courses.some(c => c.toLowerCase().includes(query)) ||
+            (tut.courses || []).some(c => c.toLowerCase().includes(query)) ||
             tut.career.toLowerCase().includes(query);
         const matchesFaculty = faculty === 'ALL' || tut.faculty === faculty;
         const matchesModality = modality === 'ALL' || tut.modality.includes(modality);
@@ -118,23 +256,28 @@ function filterTutors() {
     renderTutors(filtered);
 }
 
+// ---------- Guardar y editar tutor ----------
 async function handleSaveTutor(e) {
     e.preventDefault();
-    const payload = {
-        name: document.getElementById('tutorName').value,
-        career: document.getElementById('tutorCareer').value,
-        semester: document.getElementById('tutorSemester').value,
-        faculty: document.getElementById('tutorFaculty').value,
-        courses: document.getElementById('tutorCourses').value.split(',').map(s => s.trim()).filter(Boolean),
-        modality: document.getElementById('tutorModality').value,
-        price: document.getElementById('tutorPrice').value,
-        phone: document.getElementById('tutorPhone').value,
-        bio: document.getElementById('tutorBio').value
-    };
+
+    if (!Object.keys(tutorNiveles).length) {
+        return openNotificationToast('Añade al menos un curso con su nivel (pulsa "Añadir").');
+    }
 
     const editingId = tutorEditingId;
-
     try {
+        const payload = {
+            name: val('tutorName'),
+            career: val('tutorCareer'),
+            semester: val('tutorSemester'),
+            faculty: val('tutorFaculty'),
+            niveles: tutorNiveles,
+            modality: val('tutorModality'),
+            price: val('tutorPrice'),
+            phone: val('tutorPhone'),
+            bio: val('tutorBio')
+        };
+
         if (editingId) {
             await apiFetch(`/api/tutors/${encodeURIComponent(editingId)}`, { method: 'PUT', body: payload });
         } else {
@@ -148,6 +291,24 @@ async function handleSaveTutor(e) {
     }
 }
 
+function editTutor(id) {
+    const t = tutorsData.find(x => x.id === id);
+    if (!t) return;
+    tutorEditingId = id;
+    document.getElementById('tutorName').value = t.name;
+    document.getElementById('tutorFaculty').value = t.faculty;
+    fillCareers(t.faculty, t.career);
+    document.getElementById('tutorSemester').value = t.semester;
+    tutorNiveles = { ...(t.niveles || {}) };
+    renderTutorCourses();
+    document.getElementById('tutorModality').value = t.modality;
+    document.getElementById('tutorPrice').value = t.price;
+    document.getElementById('tutorPhone').value = t.phone;
+    document.getElementById('tutorBio').value = t.bio;
+    openModal('tutorRegisterModal');
+}
+
+// ---------- Solicitud de asesoría ----------
 async function handleSaveTutorRequest(e) {
     e.preventDefault();
     const payload = {
@@ -167,37 +328,22 @@ async function handleSaveTutorRequest(e) {
     }
 }
 
-function editTutor(id) {
-    const t = tutorsData.find(x => x.id === id);
-    if (!t) return;
-    tutorEditingId = id;
-    document.getElementById('tutorName').value = t.name;
-    document.getElementById('tutorFaculty').value = t.faculty;
-    fillCareers(t.faculty, t.career);
-    document.getElementById('tutorSemester').value = t.semester;
-    document.getElementById('tutorCourses').value = t.courses.join(', ');
-    document.getElementById('tutorModality').value = t.modality;
-    document.getElementById('tutorPrice').value = t.price;
-    document.getElementById('tutorPhone').value = t.phone;
-    document.getElementById('tutorBio').value = t.bio;
-    openModal('tutorRegisterModal');
-}
-
+// ---------- Arranque ----------
 document.addEventListener('modalclosed', e => {
-    tutorEditingId = null;
     if (e.detail === 'tutorRegisterModal') {
+        tutorEditingId = null;
+        tutorNiveles = {};
+        renderTutorCourses();
         document.getElementById('tutorRegisterForm').reset();
         // reset() vuelve el área a la primera opción pero no dispara "change", así que rellenamos a mano
         fillCareers(document.getElementById('tutorFaculty').value);
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const facultySelect = document.getElementById('tutorFaculty');
+    if (facultySelect) fillCareers(facultySelect.value);
 
-    if (facultySelect) {
-        fillCareers(facultySelect.value);
-    }
-
+    await loadCatalog();   // primero el catálogo, para que las tarjetas muestren los nombres de los cursos
     loadTutors();
 });
