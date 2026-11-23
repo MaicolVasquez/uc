@@ -145,13 +145,22 @@ function renderLostFound(items = lostFoundData) {
                </div>`
             : item.mine
                 ? `<div class="w-full mt-2 bg-amber-50 border border-amber-200 text-amber-900 font-semibold py-2 px-3 rounded-xl text-[11px] text-center">
-                       <i class="fa-solid fa-user-check mr-1"></i> Esta es tu publicación${hasWhatsapp ? ` · WhatsApp visible (${phone})` : ' · Contacto por Chat UNSA'}
+                       <i class="fa-solid fa-user-check mr-1"></i> Esta es tu publicación${item.hasVerification ? ' · Con verificación' : ''}
                    </div>`
                 : `<div class="space-y-2 mt-3">
+                       ${!isLost ? `
+                       <button type="button" onclick="openClaimModal('${escapeHtml(item.id)}')"
+                           class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-sm">
+                           <i class="fa-solid fa-hand-holding-heart text-unsa-gold text-sm"></i> Reclamar este objeto
+                       </button>
+                       <button type="button" onclick="contactarPorChat('${escapeHtml(item.id)}')"
+                           class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
+                           <i class="fa-solid fa-comments text-unsa-maroon text-sm"></i> Consultar por Chat UNSA
+                       </button>` : `
                        <button type="button" onclick="contactarPorChat('${escapeHtml(item.id)}')"
                            class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-sm">
-                           <i class="fa-solid fa-comments text-unsa-gold text-sm"></i> Contactar por Chat UNSA
-                       </button>
+                           <i class="fa-solid fa-comments text-unsa-gold text-sm"></i> ¡Lo vi! Contactar por Chat
+                       </button>`}
                        ${hasWhatsapp ? `
                        <a href="https://wa.me/51${phone}?text=Hola,%20te%20contacto%20desde%20UNSA%20Conecta%20por%20el%20objeto:%20${encodeURIComponent(item.title)}"
                           target="_blank" rel="noopener"
@@ -336,6 +345,7 @@ async function handleSaveLostFound(e) {
         hasSensitiveDoc: document.getElementById('lfSensitiveDocInput').checked,
         custodyType: document.querySelector('input[name="custodyType"]:checked')?.value || 'CONMIGO',
         custodyPoint: document.getElementById('lfCustodyPointInput').value,
+        verificationQuestion: document.getElementById('lfVerificationQuestionInput').value,
         mapLocationId: document.getElementById('lfMapLocationInput').value
     };
 
@@ -373,6 +383,7 @@ function editLostFound(id) {
         if (cRadio) cRadio.checked = true;
         onLfCustodyChange(cType);
         document.getElementById('lfCustodyPointInput').value = it.custodyPoint || '';
+        document.getElementById('lfVerificationQuestionInput').value = it.verificationQuestion || '';
     }
 
     document.getElementById('lfTitleInput').value = it.title;
@@ -490,4 +501,54 @@ function setCustodyPoint(label) {
     if (!input) return;
     input.value = label;
     input.focus();
+}
+
+function openClaimModal(id) {
+    const item = lostFoundData.find(x => x.id === id);
+    if (!item) return;
+
+    document.getElementById('claimObjectId').value = item.id;
+    document.getElementById('claimObjectTitle').textContent = item.title;
+    document.getElementById('claimAnswerInput').value = '';
+
+    const qBox = document.getElementById('claimQuestionBox');
+    const qText = document.getElementById('claimQuestionText');
+    const aLabel = document.getElementById('claimAnswerLabel');
+
+    if (item.hasVerification && item.verificationQuestion) {
+        qBox.classList.remove('hidden');
+        qText.textContent = item.verificationQuestion;
+        aLabel.textContent = 'Tu respuesta a la pregunta *';
+    } else {
+        qBox.classList.add('hidden');
+        qText.textContent = '';
+        aLabel.textContent = 'Indica una seña o detalle que demuestre que es tuyo *';
+    }
+
+    openModal('claimObjectModal');
+}
+
+async function handleClaimObject(e) {
+    e.preventDefault();
+    const id = document.getElementById('claimObjectId').value;
+    const answer = document.getElementById('claimAnswerInput').value.trim();
+    const btn = document.getElementById('claimSubmitBtn');
+    const prevText = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const data = await apiFetch(`/api/lost-found/${encodeURIComponent(id)}/reclamar`, {
+            method: 'POST',
+            body: { answer }
+        });
+        closeModal('claimObjectModal');
+        window.location.href = `cuenta.html?chat=${encodeURIComponent(data.conversacionId)}`;
+    } catch (err) {
+        handleApiError(err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = prevText;
+    }
 }
