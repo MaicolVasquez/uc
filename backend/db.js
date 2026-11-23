@@ -1,5 +1,5 @@
 // Cliente único de Supabase (solo backend: usa la service_role key, JAMÁS al navegador)
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const { createClient } = require('@supabase/supabase-js');
 
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
