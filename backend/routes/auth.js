@@ -57,10 +57,23 @@ router.get('/perfil', h(async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Sin sesión.' });
  
     const { data: perfil, error } = await supabase
-        .from('perfiles').select('id, rol, nombre, creado_en').eq('id', req.session.userId).single();
-    if (error || !perfil) {
-        return req.session.destroy(() => res.status(401).json({ error: 'Sin sesión.' }));
-    }
+    .from('perfiles')
+    .select('id, rol, nombre, creado_en')
+    .eq('id', req.session.userId)
+    .maybeSingle();
+
+if (error) {
+    console.error('Error al consultar el perfil:', error.message);
+    return res.status(503).json({
+        error: 'No se pudo comprobar tu perfil. Intenta nuevamente.'
+    });
+}
+
+if (!perfil) {
+    return req.session.destroy(() =>
+        res.status(401).json({ error: 'Perfil no encontrado.' })
+    );
+}
     res.json({
         user: { id: perfil.id, email: req.session.email, nombre: perfil.nombre, rol: perfil.rol, createdAt: perfil.creado_en }
     });
