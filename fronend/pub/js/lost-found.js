@@ -336,6 +336,7 @@ async function handleSaveLostFound(e) {
         category: document.getElementById('lfCategoryInput').value,
         campus: document.getElementById('lfCampusInput').value,
         location: document.getElementById('lfLocationInput').value,
+        mapLocationId: document.getElementById('lfMapLocationInput').value,
         datetime: document.getElementById('lfDateInput').value,
         showWhatsapp: document.getElementById('lfShowWhatsappInput').checked,
         phone: document.getElementById('lfPhoneInput').value,
@@ -345,20 +346,34 @@ async function handleSaveLostFound(e) {
         hasSensitiveDoc: document.getElementById('lfSensitiveDocInput').checked,
         custodyType: document.querySelector('input[name="custodyType"]:checked')?.value || 'CONMIGO',
         custodyPoint: document.getElementById('lfCustodyPointInput').value,
-        verificationQuestion: document.getElementById('lfVerificationQuestionInput').value,
-        mapLocationId: document.getElementById('lfMapLocationInput').value
+        verificationQuestion: document.getElementById('lfVerificationQuestionInput').value
     };
 
     try {
-        if (lfEditingId) {
-            await apiFetch(`/api/lost-found/${encodeURIComponent(lfEditingId)}`, { method: 'PUT', body: payload });
-        } else {
-            await apiFetch('/api/lost-found', { method: 'POST', body: payload });
-        }
         const fueEdicion = !!lfEditingId;
+        let respuesta = null;
+
+        if (fueEdicion) {
+            respuesta = await apiFetch(`/api/lost-found/${encodeURIComponent(lfEditingId)}`, {
+                method: 'PUT',
+                body: payload
+            });
+        } else {
+            respuesta = await apiFetch('/api/lost-found', {
+                method: 'POST',
+                body: payload
+            });
+        }
+
         await loadLostFound();
         closeModal('lostFoundModal');
-        openNotificationToast(fueEdicion ? 'Publicación actualizada.' : 'Objeto publicado correctamente en la red de la UNSA.');
+
+        if (!fueEdicion && respuesta && Array.isArray(respuesta.matches) && respuesta.matches.length > 0) {
+            mostrarMatchBanner(respuesta.matches);
+            openNotificationToast(`¡Publicado! Encontramos ${respuesta.matches.length} posible(s) coincidencia(s).`);
+        } else {
+            openNotificationToast(fueEdicion ? 'Publicación actualizada.' : 'Objeto publicado correctamente en la red de la UNSA.');
+        }
     } catch (err) {
         handleApiError(err);
     } finally {
@@ -551,4 +566,53 @@ async function handleClaimObject(e) {
         btn.disabled = false;
         btn.textContent = prevText;
     }
+}
+
+function mostrarMatchBanner(matches) {
+    const banner = document.getElementById('lfMatchBanner');
+    const titleEl = document.getElementById('lfMatchBannerTitle');
+    const listEl = document.getElementById('lfMatchBannerList');
+    if (!banner || !titleEl || !listEl) return;
+
+    if (!Array.isArray(matches) || matches.length === 0) {
+        banner.classList.add('hidden');
+        return;
+    }
+
+    titleEl.textContent = matches.length === 1
+        ? '¡Posible coincidencia encontrada en el campus!'
+        : `¡Se encontraron ${matches.length} posibles coincidencias en el campus!`;
+
+    listEl.innerHTML = matches.map(m => {
+        const badge = m.status === 'ENCONTRADO'
+            ? '<span class="text-emerald-700 font-extrabold">ENCONTRADO</span>'
+            : '<span class="text-red-600 font-extrabold">PERDIDO</span>';
+        return `
+            <button type="button" onclick="enfocarCoincidencia('${escapeHtml(m.title)}')"
+                class="text-left bg-white hover:bg-amber-100/70 border border-amber-300 rounded-xl px-3 py-2 text-xs transition-colors flex items-center gap-2 shadow-xs">
+                <span class="text-[10px]">${badge}</span>
+                <span class="font-bold text-slate-800">${escapeHtml(m.title)}</span>
+                <span class="text-slate-500">· ${escapeHtml(m.location)}</span>
+                <i class="fa-solid fa-arrow-right text-unsa-maroon ml-1"></i>
+            </button>`;
+    }).join('');
+
+    banner.classList.remove('hidden');
+}
+
+function cerrarMatchBanner() {
+    const banner = document.getElementById('lfMatchBanner');
+    if (banner) banner.classList.add('hidden');
+}
+
+function enfocarCoincidencia(titulo) {
+    document.getElementById('lfSearch').value = titulo;
+    document.getElementById('lfStatusFilter').value = 'ALL';
+    document.getElementById('lfResolutionFilter').value = 'ACTIVO';
+    document.getElementById('lfCampusFilter').value = 'ALL';
+    document.getElementById('lfCategoryFilter').value = 'ALL';
+    filterLostFound();
+
+    const grid = document.getElementById('lostFoundGrid');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
