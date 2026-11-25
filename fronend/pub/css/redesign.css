@@ -917,3 +917,320 @@ body[data-page] #mobileMenu {
         transform: none;
     }
 }
+/* ======================================
+   ALUMNO A ALUMNO - REDISEÑO
+====================================== */
+
+.tutor-reco-panel,
+.tutor-filter-panel {
+    background: #ffffff;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.tutor-reco-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.tutor-reco-icon,
+.tutor-empty-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: var(--rose);
+    color: var(--wine);
+    border-radius: 16px;
+    font-size: 23px;
+}
+
+.tutor-kicker {
+    color: var(--wine);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.tutor-reco-heading h2 {
+    color: var(--ink);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+}
+
+.tutor-reco-heading p,
+.tutor-filter-heading p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+.tutor-filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tutor-filter-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.tutor-filter-heading h2 {
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.tutor-filter-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.tutor-filter-options select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    cursor: pointer;
+}
+
+/* Tarjetas de tutores */
+
+.tutor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.tutor-card {
+    background: #ffffff;
+    padding: 22px;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .2s ease,
+                box-shadow .2s ease;
+}
+
+.tutor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px #24222d12;
+}
+
+.tutor-avatar {
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--rose);
+    border: 3px solid var(--rose);
+}
+
+.tutor-course-chip {
+    display: inline-block;
+    background: var(--rose);
+    color: var(--wine);
+    padding: 5px 9px;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.tutor-bio {
+    padding: 12px;
+    margin-top: 14px;
+    background: var(--canvas);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+/* Recomendaciones */
+
+.tutor-reco-summary {
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+}
+
+.tutor-reco-summary h3 {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.tutor-reco-summary p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.tutor-reco-result {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.tutor-reco-first {
+    border-color: #d8aebd;
+    background: #fffbfc;
+}
+
+.tutor-rank {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: var(--rose);
+    color: var(--wine);
+    font-size: 10px;
+    font-weight: 750;
+}
+
+.tutor-score {
+    text-align: right;
+    color: var(--wine);
+    flex-shrink: 0;
+}
+
+.tutor-score strong {
+    display: block;
+    font-size: 27px;
+    font-weight: 850;
+}
+
+.tutor-score small {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+.tutor-score-track {
+    height: 7px;
+    margin: 15px 0;
+    background: var(--rose);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.tutor-score-track span {
+    display: block;
+    height: 100%;
+    border-radius: 20px;
+    background: var(--wine);
+}
+
+.tutor-explanation {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+    margin-bottom: 15px;
+}
+
+/* Resultados vacíos */
+
+.tutor-empty {
+    grid-column: 1 / -1;
+    padding: 35px 20px;
+    background: #ffffff;
+    border: 1px dashed var(--line);
+    border-radius: 16px;
+    text-align: center;
+}
+
+.tutor-empty-icon {
+    margin: 0 auto 15px;
+}
+
+.tutor-empty h3 {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.tutor-empty p {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 8px 0 18px;
+}
+
+.tutor-loading {
+    padding: 18px;
+    background: var(--canvas);
+    color: var(--muted);
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+#tutorRecoBtn:disabled {
+    opacity: .65;
+    cursor: wait;
+}
+
+/* Formularios */
+
+#tutorRegisterModal > div,
+#tutorRequestModal > div {
+    border-radius: 22px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Diseño responsive */
+
+@media (max-width: 1250px) {
+    .tutor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+
+    .tutor-grid,
+    .tutor-filter-options {
+        grid-template-columns: 1fr;
+    }
+
+    .tutor-filter-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .tutor-reco-panel,
+    .tutor-filter-panel {
+        padding: 16px;
+    }
+
+    .tutor-reco-heading h2 {
+        font-size: 18px;
+    }
+
+    .tutor-card {
+        padding: 17px;
+    }
+
+    .tutor-score strong {
+        font-size: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .tutor-card {
+        transition: none;
+    }
+
+    .tutor-card:hover {
+        transform: none;
+    }
+}
