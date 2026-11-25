@@ -100,119 +100,464 @@ const UNSA_LOCATIONS = [
     }
 ];
 
-let selectedLocation = UNSA_LOCATIONS[0];
+let selectedLocation = null;
+let currentCampus = 'ALL';
 
-function initMap() {
-    // Center default on Ingenierías campus
-    map = L.map('unsaMap').setView([CAMPUS_COORDS.ingenierias.lat, CAMPUS_COORDS.ingenierias.lng], 17);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors | UNSA Conecta'
-    }).addTo(map);
-
-    renderMapMarkers();
-    updateLocationPanel(UNSA_LOCATIONS[0]);
+// Normalizar las búsquedas
+function normalizeMapText(value) {
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 }
 
+// Inicializar Leaflet
+function initMap() {
+
+    map = L.map('unsaMap', {
+        zoomControl: false,
+        minZoom: 12,
+        maxZoom: 19
+    }).setView([-16.406, -71.529], 14);
+
+    L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }
+    ).addTo(map);
+
+    L.control.zoom({
+        position: 'bottomright'
+    }).addTo(map);
+
+    refreshMapLocations();
+
+    // Adaptar el mapa al tamaño de su contenedor
+    if (typeof ResizeObserver !== 'undefined') {
+
+        const observer = new ResizeObserver(() => {
+            map.invalidateSize();
+        });
+
+        observer.observe(
+            document.getElementById('unsaMap')
+        );
+    }
+}
+
+// Crear marcador personalizado
+function createMapIcon(selected = false) {
+
+    return L.divIcon({
+
+        className: selected
+            ? 'unsa-map-pin selected'
+            : 'unsa-map-pin',
+
+        html: `
+            <span>
+                <i class="fa-solid fa-building-columns"></i>
+            </span>
+        `,
+
+        iconSize: [36, 36],
+        iconAnchor: [18, 36],
+        popupAnchor: [0, -36]
+
+    });
+}
+
+// Obtener lugares según los filtros
+function getFilteredLocations() {
+
+    const query = normalizeMapText(
+        document.getElementById('mapSearchInput').value
+    );
+
+    return UNSA_LOCATIONS.filter(loc => {
+
+        const matchesCampus =
+            currentCampus === 'ALL' ||
+            loc.campusKey === currentCampus;
+
+        const matchesQuery = [
+            loc.title,
+            loc.campusName,
+            loc.services,
+            loc.desc
+        ].some(value =>
+            normalizeMapText(value).includes(query)
+        );
+
+        return matchesCampus && matchesQuery;
+
+    });
+}
+
+// Mostrar marcadores
 function renderMapMarkers(locations = UNSA_LOCATIONS) {
-    // Clear old markers
-    currentMarkers.forEach(m => map.removeLayer(m));
+
+    currentMarkers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+
     currentMarkers = [];
 
     locations.forEach(loc => {
-        const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+
+        const marker = L.marker(
+            [loc.lat, loc.lng],
+            {
+                icon: createMapIcon(
+                    selectedLocation?.id === loc.id
+                ),
+                title: loc.title
+            }
+        ).addTo(map);
+
+        marker.locationId = loc.id;
+
         marker.bindPopup(`
-                    <div class="font-sans text-xs">
-                        <strong class="text-unsa-maroon text-sm font-bold block">${loc.title}</strong>
-                        <span class="text-slate-500">${loc.campusName}</span><br>
-                        <button onclick="selectLocationById('${loc.id}')" class="mt-2 bg-unsa-maroon text-white font-bold px-2 py-1 rounded text-[10px]">
-                            Ver Detalles
-                        </button>
-                    </div>
-                `);
+
+            <div class="font-sans text-xs">
+
+                <strong class="text-unsa-maroon text-sm font-bold">
+                    ${escapeHtml(loc.title)}
+                </strong>
+
+                <p class="text-slate-500">
+                    ${escapeHtml(loc.campusName)}
+                </p>
+
+            </div>
+
+        `);
 
         marker.on('click', () => {
             updateLocationPanel(loc);
         });
 
         currentMarkers.push(marker);
+
     });
 }
 
-function setActiveCampusButton(key) {
-    document.querySelectorAll('.campus-btn').forEach(btn => {
-        const active = btn.dataset.campus === key;
-        btn.classList.toggle('bg-white', active);
-        btn.classList.toggle('shadow-sm', active);
-    });
-}
+// Mostrar resultados en el panel lateral
+function renderLocationList(locations) {
 
-function zoomToCampus(key) {
-    const coord = CAMPUS_COORDS[key];
-    if (coord && map) {
-        map.flyTo([coord.lat, coord.lng], coord.zoom, { duration: 1.5 });
-        setActiveCampusButton(key);
-    }
-}
-
-function selectLocationById(id) {
-    const loc = UNSA_LOCATIONS.find(l => l.id === id);
-    if (loc) {
-        updateLocationPanel(loc);
-        map.flyTo([loc.lat, loc.lng], 18);
-    }
-}
-
-function updateLocationPanel(loc) {
-    selectedLocation = loc;
-    document.getElementById('locTitle').innerText = loc.title;
-    document.getElementById('locCampus').innerHTML = `<i class="fa-solid fa-location-dot text-red-500"></i> ${loc.campusName}`;
-    document.getElementById('locImg').src = loc.img;
-    document.getElementById('locDesc').innerText = loc.desc;
-    document.getElementById('locHours').innerText = loc.hours;
-    document.getElementById('locServices').innerText = loc.services;
-}
-
-function searchMapLocation() {
-    const query = document.getElementById('mapSearchInput').value.toLowerCase();
-    const filtered = UNSA_LOCATIONS.filter(l =>
-        l.title.toLowerCase().includes(query) ||
-        l.campusName.toLowerCase().includes(query) ||
-        l.services.toLowerCase().includes(query)
+    const list = document.getElementById(
+        'mapLocationsList'
     );
 
-    renderMapMarkers(filtered);
-    if (filtered.length > 0) {
-        selectLocationById(filtered[0].id);
+    const counter = document.getElementById(
+        'mapResultsCount'
+    );
+
+    counter.textContent = locations.length === 1
+        ? '1 ubicación encontrada'
+        : `${locations.length} ubicaciones encontradas`;
+
+    if (!locations.length) {
+
+        list.innerHTML = `
+            <div class="unsa-map-empty">
+
+                <i class="fa-solid fa-map-location-dot text-2xl mb-3"></i>
+
+                <p>No encontramos ubicaciones.</p>
+
+                <p>Prueba con otro nombre o área.</p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    list.replaceChildren();
+
+    locations.forEach(loc => {
+
+        const button = document.createElement('button');
+
+        button.type = 'button';
+
+        button.className = 'unsa-location-item';
+
+        if (selectedLocation?.id === loc.id) {
+            button.classList.add('active');
+        }
+
+        button.setAttribute(
+            'aria-pressed',
+            String(selectedLocation?.id === loc.id)
+        );
+
+        button.innerHTML = `
+
+            <div class="unsa-location-icon">
+
+                <i class="fa-solid fa-building-columns"></i>
+
+            </div>
+
+            <div class="min-w-0">
+
+                <strong>
+                    ${escapeHtml(loc.title)}
+                </strong>
+
+                <small>
+                    ${escapeHtml(loc.campusName)}
+                </small>
+
+            </div>
+
+        `;
+
+        button.addEventListener('click', () => {
+            selectLocationById(loc.id);
+        });
+
+        list.appendChild(button);
+
+    });
+}
+
+// Ajustar el mapa a los resultados
+function fitMapLocations(locations) {
+
+    if (!locations.length) return;
+
+    if (locations.length === 1) {
+
+        map.setView(
+            [locations[0].lat, locations[0].lng],
+            17
+        );
+
+        return;
+    }
+
+    const bounds = L.latLngBounds(
+        locations.map(loc => [loc.lat, loc.lng])
+    );
+
+    map.fitBounds(bounds, {
+        padding: [40, 40],
+        maxZoom: 17
+    });
+}
+
+// Actualizar búsqueda, lista y marcadores
+function refreshMapLocations() {
+
+    const locations = getFilteredLocations();
+
+    if (
+        selectedLocation &&
+        !locations.some(loc => loc.id === selectedLocation.id)
+    ) {
+
+        selectedLocation = null;
+
+        document.getElementById('locationDetailPanel')
+            .classList.add('hidden');
+
+    }
+
+    renderMapMarkers(locations);
+    renderLocationList(locations);
+    fitMapLocations(locations);
+
+}
+
+// Cambiar campus activo
+function setActiveCampusButton(key) {
+
+    document.querySelectorAll('.campus-btn')
+        .forEach(btn => {
+
+            const active = btn.dataset.campus === key;
+
+            btn.classList.toggle('active', active);
+
+            btn.setAttribute(
+                'aria-pressed',
+                String(active)
+            );
+
+        });
+}
+
+// Filtrar por campus
+function zoomToCampus(key) {
+
+    if (!map) return;
+
+    if (key !== 'ALL' && !CAMPUS_COORDS[key]) {
+        return;
+    }
+
+    currentCampus = key;
+
+    document.getElementById('mapSearchInput').value = '';
+
+    selectedLocation = null;
+
+    document.getElementById('locationDetailPanel')
+        .classList.add('hidden');
+
+    setActiveCampusButton(key);
+
+    refreshMapLocations();
+
+    if (
+        key !== 'ALL' &&
+        getFilteredLocations().length === 0
+    ) {
+
+        const coord = CAMPUS_COORDS[key];
+
+        map.setView(
+            [coord.lat, coord.lng],
+            coord.zoom
+        );
+
     }
 }
 
-function getDirectionsToCurrent() {
-    if (!selectedLocation) return;
-    openNotificationToast(`Indicaciones para llegar a ${selectedLocation.title}: Ingresa por la garita principal de ${selectedLocation.campusName} y sigue las señalizaciones doradas.`);
+// Seleccionar un lugar
+function selectLocationById(id) {
+
+    const loc = UNSA_LOCATIONS.find(
+        location => location.id === id
+    );
+
+    if (!loc || !map) return;
+
+    updateLocationPanel(loc);
+
+    map.flyTo([loc.lat, loc.lng], 18, {
+        duration: .8
+    });
+
+    const marker = currentMarkers.find(
+        item => item.locationId === loc.id
+    );
+
+    if (marker) {
+        marker.openPopup();
+    }
 }
 
+// Actualizar detalles de una ubicación
+function updateLocationPanel(loc) {
+
+    selectedLocation = loc;
+
+    document.getElementById('locationDetailPanel')
+        .classList.remove('hidden');
+
+    document.getElementById('locTitle').textContent =
+        loc.title;
+
+    document.getElementById('locCampus').textContent =
+        loc.campusName;
+
+    document.getElementById('locDesc').textContent =
+        loc.desc;
+
+    document.getElementById('locHours').textContent =
+        loc.hours || 'No especificado';
+
+    document.getElementById('locServices').textContent =
+        loc.services || 'No especificado';
+
+    currentMarkers.forEach(marker => {
+
+        marker.setIcon(
+            createMapIcon(marker.locationId === loc.id)
+        );
+
+    });
+
+    renderLocationList(getFilteredLocations());
+
+}
+
+// Buscar lugares
+function searchMapLocation() {
+
+    if (!map) return;
+
+    refreshMapLocations();
+
+}
+
+// Abrir indicaciones en Google Maps
+function getDirectionsToCurrent() {
+
+    if (!selectedLocation) return;
+
+    const destination =
+        `${selectedLocation.lat},${selectedLocation.lng}`;
+
+    const url =
+        'https://www.google.com/maps/dir/?api=1' +
+        '&destination=' + encodeURIComponent(destination) +
+        '&travelmode=walking';
+
+    window.open(
+        url,
+        '_blank',
+        'noopener,noreferrer'
+    );
+
+}
+
+// Inicialización del módulo
 document.addEventListener('DOMContentLoaded', () => {
+
     initMap();
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
     const locId = params.get('loc');
     const campusKey = params.get('campus');
 
     if (locId) {
-        const loc = UNSA_LOCATIONS.find(l => l.id === locId);
+
+        const loc = UNSA_LOCATIONS.find(
+            item => item.id === locId
+        );
+
         if (loc) {
+
+            zoomToCampus(loc.campusKey);
             selectLocationById(loc.id);
-            setActiveCampusButton(loc.campusKey);
-            const idx = UNSA_LOCATIONS.findIndex(l => l.id === loc.id);
-            if (idx !== -1 && currentMarkers[idx]) {
-                currentMarkers[idx].openPopup();
-            }
+
         }
-    } else if (campusKey && CAMPUS_COORDS[campusKey]) {
+
+    } else if (
+        campusKey && CAMPUS_COORDS[campusKey]
+    ) {
+
         zoomToCampus(campusKey);
+
     }
 
-    setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+    setTimeout(() => {
+
+        if (map) {
+            map.invalidateSize();
+        }
+
+    }, 200);
+
 });
