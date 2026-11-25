@@ -682,23 +682,6 @@ body[data-page] #mobileMenu {
 }
 
 @media(min-width:1050px) {
-    #tab-cuenta-content:has(#authForms:not(.hidden)) {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-        align-items: center;
-        gap: 40px;
-        min-height: 620px
-    }
-
-    #tab-cuenta-content:has(#authForms:not(.hidden)) .uc-login-intro {
-        display: block;
-        padding: 35px 15px
-    }
-
-    #tab-cuenta-content:has(#authForms:not(.hidden)) #authForms {
-        width: 100%;
-        max-width: 420px
-    }
 
     .uc-login-intro h2 {
         font-size: clamp(35px, 4.5vw, 58px);
