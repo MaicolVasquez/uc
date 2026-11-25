@@ -732,3 +732,29 @@ body[data-page] #mobileMenu {
         margin-top: 15px
     }
 }
+/* Ajustes adicionales de navegación */
+
+.uc-sidebar {
+    overflow-y: auto;
+}
+
+#reportar-objeto,
+#conversationList {
+    scroll-margin-top: 100px;
+}
+
+@media (max-width: 1049px) {
+
+    #layout-top header .h-20 > a:first-child .text-white {
+        color: var(--wine) !important;
+    }
+
+    #layout-top header .h-20 > a:first-child .text-slate-300 {
+        color: var(--muted) !important;
+    }
+
+    #layout-top header .h-20 > a:first-child .text-unsa-gold {
+        color: var(--wine2) !important;
+    }
+
+}

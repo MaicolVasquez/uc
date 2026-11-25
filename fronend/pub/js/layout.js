@@ -2,10 +2,11 @@
 // Cada página solo declara <body data-page="..."> y este script pinta el resto.
 
 const NAV_ITEMS = [
+    { id: 'dashboard', href: 'home.html', icon: 'fa-house', label: 'Inicio', mobile: 'Inicio', footer: 'Inicio' },
     { id: 'lost-found', href: 'index.html', icon: 'fa-box-open', label: 'Objetos Perdidos', mobile: 'Objetos Perdidos', footer: 'Objetos Perdidos' },
-    { id: 'maps', href: 'mapa.html', icon: 'fa-map-location-dot', label: 'UNSA Maps', mobile: 'UNSA Maps (Croquis)', footer: 'UNSA Maps' },
+    { id: 'maps', href: 'mapa.html', icon: 'fa-map-location-dot', label: 'Mapa UNSA', mobile: 'UNSA Maps (Croquis)', footer: 'UNSA Maps' },
     { id: 'announcements', href: 'notificaciones.html', icon: 'fa-bullhorn', label: 'Notificaciones', mobile: 'Notificaciones e Info', footer: 'Avisos', badge: true },
-    { id: 'tutoring', href: 'tutorias.html', icon: 'fa-graduation-cap', label: 'Estudiante a Estudiante', mobile: 'Estudiante a Estudiante', footer: 'Tutores' },
+    { id: 'tutoring', href: 'tutorias.html', icon: 'fa-graduation-cap', label: 'Alumno a alumno', mobile: 'Estudiante a Estudiante', footer: 'Tutores' },
     { id: 'huecos', href: 'punto-hueco.html', icon: 'fa-mug-hot', label: 'Punto Hueco', mobile: 'Punto Hueco', footer: 'Punto Hueco' }
 ];
 
@@ -39,11 +40,20 @@ function buildLayout() {
 
     document.getElementById('layout-top').innerHTML = `
 
+    <aside class="uc-sidebar" aria-label="Navegación principal">
+      <a class="uc-brand" href="home.html"><span class="uc-mark">U</span><span>UNSA<span class="uc-brand-sub">CONECTA</span></span></a>
+      <p class="uc-side-label">ESPACIO ESTUDIANTIL</p>
+      <nav>${desktopNav}<a class="nav-btn ${current === 'cuenta' && new URLSearchParams(location.search).has('mensajes') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html?mensajes=1#conversationList"><i class="fa-regular fa-comments"></i> Mensajes</a><a class="nav-btn ${current === 'cuenta' && !new URLSearchParams(location.search).has('mensajes') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html"><i class="fa-regular fa-user"></i> Mi perfil</a></nav>
+      <a class="uc-primary uc-side-action" href="index.html#reportar-objeto">
+    <i class="fa-solid fa-plus"></i> Reportar objeto
+</a>
+      <div class="uc-side-bottom"><span class="uc-side-label">UNSA CONECTA</span><a href="home.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> Portada pública</a><small>Tu campus, más cerca.</small></div>
+    </aside>
     <header class="bg-unsa-maroon text-white sticky top-0 z-40 shadow-xl border-b border-unsa-gold/30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <!-- Brand Logo & Title -->
-                <a href="index.html" class="flex items-center gap-3">
+                <a href="home.html" class="flex items-center gap-3">
                     <div
                         class="w-12 h-12 rounded-xl bg-gradient-to-br from-unsa-gold to-amber-600 flex items-center justify-center text-unsa-maroon font-black text-2xl shadow-lg border border-yellow-200">
                         U
@@ -58,8 +68,7 @@ function buildLayout() {
                     </div>
                 </a>
 
-                <!-- Desktop Navigation Tabs -->
-                <nav class="hidden md:flex space-x-1 lg:space-x-2">${desktopNav}</nav>
+                <div class="uc-breadcrumb"><span>Comunidad</span> <i class="fa-solid fa-chevron-right"></i> ${NAV_ITEMS.find(n => n.id === current)?.label || 'Mi cuenta'}</div>
 
                                 <!-- Header Actions -->
                 <div class="flex items-center gap-3">
@@ -92,7 +101,7 @@ function buildLayout() {
 
                     <a href="cuenta.html" id="headerUserLink" title="Mi cuenta"
                         class="hidden lg:flex items-center gap-2 pl-3 border-l border-white/20 hover:opacity-90 transition-opacity">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                        <img src="/pub/img/avatar.svg"
                             alt="Avatar" class="w-9 h-9 rounded-full ring-2 ring-unsa-gold object-cover">
                         <div class="text-xs">
                             <p id="headerUserName" class="font-bold text-white leading-tight">Estudiante Agustino</p>
@@ -249,12 +258,12 @@ sessionReady.then(user => {
     const currentPage = document.body.dataset.page;
 
     if (
-    !user &&
-    currentPage !== 'cuenta' &&
-    window.sessionStatus === 'unauthenticated'
-) {
-    window.location.replace('cuenta.html');
-}
+        !user &&
+        currentPage !== 'cuenta' &&
+        window.sessionStatus === 'unauthenticated'
+    ) {
+        window.location.replace('cuenta.html');
+    }
 });
 // ---------- Campanita de notificaciones (estilo Facebook) ----------
 let bellItems = [];
