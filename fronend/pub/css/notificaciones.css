@@ -1,0 +1,141 @@
+/* ======================================
+   NOTIFICACIONES - UNSA CONECTA
+====================================== */
+
+.ann-hero {
+    padding: 28px;
+    border-radius: 20px;
+    background: linear-gradient(120deg, #7b1e38, #a33e5b);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.ann-hero h1 {
+    color: white !important;
+}
+
+.ann-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.ann-stat {
+    background: white;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+}
+
+.ann-stat i {
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+.ann-stat strong {
+    display: block;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.ann-stat p {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.ann-filter-panel {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 20px;
+}
+
+.ann-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 12px;
+}
+
+.ann-filter-row input,
+.ann-filter-row select {
+    width: 100%;
+    min-width: 0;
+    background: var(--canvas);
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.ann-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    transition: transform .2s ease,
+                box-shadow .2s ease;
+}
+
+.ann-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px #24222d12;
+}
+
+.ann-card-urgent {
+    border-color: #fecaca;
+    border-top: 4px solid #dc2626;
+}
+
+.ann-empty {
+    grid-column: 1 / -1;
+    background: white;
+    padding: 45px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 18px;
+    text-align: center;
+    color: var(--muted);
+}
+
+@media (max-width: 640px) {
+
+    .ann-hero {
+        padding: 22px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ann-stats-grid {
+        gap: 8px;
+    }
+
+    .ann-stat {
+        padding: 12px;
+    }
+
+    .ann-stat strong {
+        font-size: 24px;
+    }
+
+    .ann-filter-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ann-card {
+        transition: none;
+    }
+
+    .ann-card:hover {
+        transform: none;
+    }
+}

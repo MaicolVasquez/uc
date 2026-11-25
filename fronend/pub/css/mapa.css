@@ -1,0 +1,288 @@
+/* ======================================
+   MAPA UNSA - REDISEÑO
+====================================== */
+
+.unsa-map-hero {
+    background: linear-gradient(120deg, #7b1e38, #a33e5b);
+    color: white;
+    padding: 28px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.unsa-map-shell {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    min-width: 0;
+    min-height: 620px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.unsa-map-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 18px;
+    border-right: 1px solid var(--line);
+    gap: 16px;
+}
+
+.unsa-map-search {
+    position: relative;
+}
+
+.unsa-map-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+}
+
+.unsa-map-search input {
+    width: 100%;
+    padding: 12px 12px 12px 36px;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    font-size: 12px;
+    outline: none;
+}
+
+.unsa-map-search input:focus {
+    border-color: var(--wine);
+}
+
+.unsa-campus-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.unsa-campus-buttons .campus-btn {
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    background: white;
+    cursor: pointer;
+}
+
+.unsa-campus-buttons .campus-btn.active {
+    color: var(--wine);
+    background: var(--rose);
+    border-color: #d8aebd;
+}
+
+/* Listado de ubicaciones */
+
+.unsa-map-results {
+    max-height: 380px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 5px;
+}
+
+.unsa-map-results::-webkit-scrollbar {
+    width: 5px;
+}
+
+.unsa-map-results::-webkit-scrollbar-thumb {
+    background: #d8c5ce;
+    border-radius: 10px;
+}
+
+.unsa-map-results::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.unsa-location-item {
+    flex-shrink: 0;
+}
+
+.unsa-location-item {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    width: 100%;
+    gap: 10px;
+    padding: 11px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: white;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+
+.unsa-location-item:hover,
+.unsa-location-item.active {
+    background: var(--rose);
+    border-color: #d8aebd;
+}
+
+.unsa-location-icon {
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: var(--rose);
+    color: var(--wine);
+    border-radius: 10px;
+}
+
+.unsa-location-item strong {
+    display: block;
+    color: var(--ink);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.unsa-location-item small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* Información de ubicación */
+
+.unsa-location-detail {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+}
+
+.unsa-location-detail h3 {
+    font-size: 17px;
+    line-height: 1.4;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 8px 0;
+}
+
+.unsa-location-detail p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.unsa-map-info-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+}
+
+.unsa-map-info-row strong {
+    display: block;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+
+/* Contenedor Leaflet */
+
+.unsa-map-area {
+    position: relative;
+    min-width: 0;
+    min-height: 620px;
+    display: flex;
+    flex-direction: column;
+}
+
+#unsaMap {
+    width: 100%;
+    height: 620px;
+    min-height: 620px;
+    flex: 1;
+    border-radius: 0;
+}
+
+.unsa-map-pin {
+    background: transparent;
+    border: none;
+}
+
+.unsa-map-pin span {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50% 50% 50% 8px;
+    transform: rotate(-45deg);
+    background: var(--wine);
+    border: 2px solid white;
+    color: white;
+    box-shadow: 0 3px 10px #0004;
+}
+
+.unsa-map-pin span i {
+    transform: rotate(45deg);
+    font-size: 13px;
+}
+
+.unsa-map-pin.selected span {
+    background: #b77924;
+}
+
+.unsa-map-empty {
+    text-align: center;
+    padding: 24px 12px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+#unsaMap .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+    .unsa-map-shell {
+        grid-template-columns: 260px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .unsa-map-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px;
+    }
+
+    .unsa-map-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .unsa-map-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .unsa-map-area,
+    #unsaMap {
+        min-height: 420px;
+    }
+
+    .unsa-map-results {
+        max-height: 210px;
+    }
+}
+.unsa-map-hero h1 {
+    color: white !important;
+}
+
+@media (max-width: 760px) {
+    #unsaMap {
+        height: 420px;
+        min-height: 420px;
+    }
+}

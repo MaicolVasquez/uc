@@ -1234,3 +1234,632 @@ body[data-page] #mobileMenu {
         transform: none;
     }
 }
+/* ======================================
+   PUNTO HUECO - REDISEÑO
+====================================== */
+
+.hueco-hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(120deg, #7b1e38, #a33e5b);
+    color: white;
+    padding: 28px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.hueco-hero::after {
+    content: '';
+    position: absolute;
+    right: -80px;
+    top: -140px;
+    width: 350px;
+    height: 350px;
+    border: 50px solid #ffffff12;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hueco-hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+.hueco-create-btn {
+    background: white;
+    color: var(--wine);
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    white-space: nowrap;
+}
+
+.hueco-create-btn:hover {
+    background: var(--rose);
+}
+
+/* Panel de búsqueda */
+
+.hueco-filter-panel {
+    background: white;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.hueco-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.hueco-filter-row input,
+.hueco-filter-row select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.hueco-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    padding-top: 16px;
+}
+
+.hueco-cat-btn {
+    transition: background-color .2s ease,
+                color .2s ease;
+}
+
+/* Tarjetas de actividades */
+
+.hueco-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.hueco-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 20px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    transition: transform .2s ease,
+                box-shadow .2s ease;
+    overflow-wrap: anywhere;
+}
+
+.hueco-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px #24222d12;
+}
+
+.hueco-card-joined {
+    border-color: #a9d6c1;
+}
+
+.hueco-card-mine {
+    border-color: #d5afbd;
+}
+
+.hueco-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.hueco-category-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 21px;
+}
+
+.hueco-status {
+    display: inline-block;
+    padding: 6px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.hueco-status-open {
+    background: #e8f4ee;
+    color: #27775e;
+}
+
+.hueco-status-full {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.hueco-status-joined {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.hueco-status-mine {
+    background: var(--rose);
+    color: var(--wine);
+}
+
+.hueco-card-title {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -.4px;
+    color: var(--ink);
+    line-height: 1.4;
+}
+
+.hueco-category-label {
+    font-size: 11px;
+    font-weight: 750;
+    color: var(--muted);
+    margin-bottom: 5px;
+}
+
+.hueco-info {
+    display: grid;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.hueco-info p {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.hueco-info i {
+    width: 15px;
+    flex-shrink: 0;
+    color: var(--wine);
+    text-align: center;
+    margin-top: 3px;
+}
+
+.hueco-description {
+    background: var(--canvas);
+    color: var(--muted);
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 15px;
+}
+
+/* Ocupación de cupos */
+
+.hueco-capacity {
+    margin-top: 18px;
+}
+
+.hueco-capacity-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 750;
+    margin-bottom: 8px;
+}
+
+.hueco-progress {
+    height: 8px;
+    background: #edf0f2;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.hueco-progress span {
+    height: 100%;
+    display: block;
+    background: #27775e;
+    border-radius: 20px;
+    transition: width .3s ease;
+}
+
+.hueco-progress-full span {
+    background: #dc2626;
+}
+
+.hueco-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    border-top: 1px solid var(--line);
+    padding-top: 15px;
+    margin-top: 18px;
+}
+
+.hueco-actions button {
+    flex: 1 1 auto;
+    font-size: 12px;
+}
+
+.hueco-actions button:disabled {
+    background: #e5e7eb;
+    color: #777;
+    cursor: not-allowed;
+}
+
+/* Resultados vacíos */
+
+.hueco-empty {
+    grid-column: 1 / -1;
+    padding: 45px 20px;
+    background: white;
+    border: 1px dashed var(--line);
+    border-radius: 18px;
+    text-align: center;
+}
+
+.hueco-empty i {
+    color: var(--wine);
+    font-size: 30px;
+    margin-bottom: 15px;
+}
+
+.hueco-empty h3 {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.hueco-empty p {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 8px 0 20px;
+}
+
+/* Formularios */
+
+#huecoCreateModal > div,
+#huecoManageModal > div {
+    border-radius: 22px;
+}
+
+/* Responsive */
+
+@media (max-width: 1250px) {
+    .hueco-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .hueco-grid,
+    .hueco-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hueco-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px;
+    }
+
+    .hueco-create-btn {
+        width: 100%;
+    }
+
+    .hueco-filter-panel,
+    .hueco-card {
+        padding: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hueco-card,
+    .hueco-progress span {
+        transition: none;
+    }
+
+    .hueco-card:hover {
+        transform: none;
+    }
+}
+/* ======================================
+   MAPA UNSA - REDISEÑO
+====================================== */
+
+.unsa-map-hero {
+    background: linear-gradient(120deg, #7b1e38, #a33e5b);
+    color: white;
+    padding: 28px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.unsa-map-shell {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    min-width: 0;
+    min-height: 620px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.unsa-map-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 18px;
+    border-right: 1px solid var(--line);
+    gap: 16px;
+}
+
+.unsa-map-search {
+    position: relative;
+}
+
+.unsa-map-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+}
+
+.unsa-map-search input {
+    width: 100%;
+    padding: 12px 12px 12px 36px;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    font-size: 12px;
+    outline: none;
+}
+
+.unsa-map-search input:focus {
+    border-color: var(--wine);
+}
+
+.unsa-campus-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.unsa-campus-buttons .campus-btn {
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    background: white;
+    cursor: pointer;
+}
+
+.unsa-campus-buttons .campus-btn.active {
+    color: var(--wine);
+    background: var(--rose);
+    border-color: #d8aebd;
+}
+
+/* Listado de ubicaciones */
+
+.unsa-map-results {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.unsa-location-item {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    width: 100%;
+    gap: 10px;
+    padding: 11px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: white;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+
+.unsa-location-item:hover,
+.unsa-location-item.active {
+    background: var(--rose);
+    border-color: #d8aebd;
+}
+
+.unsa-location-icon {
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: var(--rose);
+    color: var(--wine);
+    border-radius: 10px;
+}
+
+.unsa-location-item strong {
+    display: block;
+    color: var(--ink);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.unsa-location-item small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* Información de ubicación */
+
+.unsa-location-detail {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+}
+
+.unsa-location-detail h3 {
+    font-size: 17px;
+    line-height: 1.4;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 8px 0;
+}
+
+.unsa-location-detail p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.unsa-map-info-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+}
+
+.unsa-map-info-row strong {
+    display: block;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+
+/* Contenedor Leaflet */
+
+.unsa-map-area {
+    position: relative;
+    min-width: 0;
+    min-height: 620px;
+    display: flex;
+    flex-direction: column;
+}
+
+#unsaMap {
+    width: 100%;
+    min-height: 620px;
+    flex: 1;
+    border-radius: 0;
+}
+
+.unsa-map-pin {
+    background: transparent;
+    border: none;
+}
+
+.unsa-map-pin span {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50% 50% 50% 8px;
+    transform: rotate(-45deg);
+    background: var(--wine);
+    border: 2px solid white;
+    color: white;
+    box-shadow: 0 3px 10px #0004;
+}
+
+.unsa-map-pin span i {
+    transform: rotate(45deg);
+    font-size: 13px;
+}
+
+.unsa-map-pin.selected span {
+    background: #b77924;
+}
+
+.unsa-map-empty {
+    text-align: center;
+    padding: 24px 12px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+#unsaMap .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+    .unsa-map-shell {
+        grid-template-columns: 260px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .unsa-map-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px;
+    }
+
+    .unsa-map-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .unsa-map-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .unsa-map-area,
+    #unsaMap {
+        min-height: 420px;
+    }
+
+    .unsa-map-results {
+        max-height: 210px;
+    }
+}
+/* Prueba de estilos del mapa */
+
+.unsa-map-hero {
+    background: #7b1e38 !important;
+    color: white !important;
+    padding: 28px;
+    border-radius: 20px;
+}
+
+.unsa-map-shell {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    background: white;
+    min-height: 620px;
+}
+
+#unsaMap {
+    width: 100%;
+    height: 620px !important;
+    min-height: 620px;
+}

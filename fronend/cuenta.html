@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="pub/js/tailwind.config.js"></script>
     <link rel="stylesheet" href="pub/css/redesign.css">
+    <link rel="stylesheet" href="pub/css/mensajes.css">
 </head>
 
 <body data-page="cuenta" class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
@@ -109,10 +110,10 @@
 <!-- Perfil rediseñado -->
 <div id="profileCard" class="hidden w-full">
 
-    <div class="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-5 lg:gap-7 items-start">
+    <div class="uc-account-grid">
 
         <!-- PANEL IZQUIERDO: MENSAJES -->
-        <aside class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
+<aside class="uc-chat-sidebar lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
 
             <div class="p-5 border-b border-slate-100">
                 <div class="flex items-center justify-between">
@@ -428,6 +429,25 @@
                 </button>
 </div>
 </div> <!-- FIN DEL PANEL DE PERFIL -->
+<div id="messagesEmpty" class="uc-messages-empty">
+
+    <div class="uc-messages-empty-icon">
+        <i class="fa-regular fa-comments"></i>
+    </div>
+
+    <h2>Tus conversaciones empiezan aquí</h2>
+
+    <p>
+        Selecciona una conversación o busca a otro estudiante
+        para comenzar a comunicarte dentro de UNSA Conecta.
+    </p>
+
+    <p class="text-xs mt-6">
+        <i class="fa-solid fa-shield-halved text-unsa-maroon"></i>
+        Solo los participantes pueden acceder a sus conversaciones.
+    </p>
+
+</div>
 <!-- PANEL DE CONVERSACION -->
 <section id="chatPanel"
     class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -464,14 +484,14 @@
 
         </div>
 
-        <span class="text-xs text-emerald-600 font-semibold">
-            <i class="fa-solid fa-lock mr-1"></i>
-            Privado
-        </span>
+        <span id="chatTypeBadge"
+    class="text-xs text-emerald-600 font-semibold">
 
-    </header>
+    Privado
 
+</span>
 
+</header>
     <!-- MENSAJES -->
     <div id="chatMessages"
         class="h-[55vh] min-h-[320px] max-h-[620px] overflow-y-auto p-5 bg-slate-50 space-y-4"

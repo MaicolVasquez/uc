@@ -15,12 +15,31 @@ async function loadAnnouncements() {
         document.getElementById('annCreateBtn').classList.toggle('hidden', !canPublish());
 
         announcementsData = await apiFetch('/api/announcements');
-        filterAnnouncements();
+
+updateAnnouncementStats();
+
+filterAnnouncements();
     } catch (err) {
         handleApiError(err);
     }
 }
+function updateAnnouncementStats() {
 
+    document.getElementById('annUrgentCount').textContent =
+        announcementsData.filter(
+            a => a.urgency === 'URGENTE'
+        ).length;
+
+    document.getElementById('annInfoCount').textContent =
+        announcementsData.filter(
+            a => a.urgency === 'INFO'
+        ).length;
+
+    document.getElementById('annEventCount').textContent =
+        announcementsData.filter(
+            a => a.urgency === 'EVENTO'
+        ).length;
+}
 function formatEventAt(value) {
     if (!value) return '';
     const d = new Date(value);
@@ -41,12 +60,41 @@ const hora = d.toLocaleTimeString('es-PE', {
 }
 
 function renderAnnouncements(items = announcementsData) {
+
     const grid = document.getElementById('announcementsGrid');
 
+    document.getElementById('annResultsCount').textContent =
+        items.length === 1
+            ? '1 comunicado encontrado'
+            : `${items.length} comunicados encontrados`;
+
     if (!items.length) {
-        grid.innerHTML = `<p class="col-span-full text-center text-sm text-slate-400 py-10">No hay avisos para mostrar.</p>`;
-        return;
-    }
+
+    grid.innerHTML = `
+
+        <div class="ann-empty">
+
+            <i class="fa-regular fa-bell text-3xl text-unsa-maroon mb-4"></i>
+
+            <h3 class="text-lg font-extrabold text-slate-900">
+
+                No encontramos comunicados
+
+            </h3>
+
+            <p class="text-sm mt-2">
+
+                Prueba con otros filtros o realiza una nueva búsqueda.
+
+            </p>
+
+        </div>
+
+    `;
+
+    return;
+
+}
 
     grid.innerHTML = items.map(ann => {
         const isUrgent = ann.urgency === 'URGENTE';
@@ -62,7 +110,7 @@ function renderAnnouncements(items = announcementsData) {
         const when = formatEventAt(ann.eventAt);
 
         return `
-            <article class="bg-white rounded-2xl border ${isUrgent ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+            <article class="ann-card ${isUrgent ? 'ann-card-urgent' : ''}">
                 ${image}
                 <div class="p-5 flex flex-col flex-grow">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -90,14 +138,80 @@ function renderAnnouncements(items = announcementsData) {
     }).join('');
 }
 
-function filterAnnouncements() {
-    const urgency = document.getElementById('urgencyFilter').value;
-    let filtered = announcementsData;
+function normalizeAnnText(value) {
 
-    if (urgency !== 'ALL') filtered = filtered.filter(a => a.urgency === urgency);
-    if (currentAnnCategory !== 'ALL') filtered = filtered.filter(a => a.category === currentAnnCategory);
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+}
+
+function filterAnnouncements() {
+
+    const urgency =
+        document.getElementById('urgencyFilter').value;
+
+    const query = normalizeAnnText(
+        document.getElementById('annSearch').value
+    );
+
+    const filtered = announcementsData.filter(ann => {
+
+        const matchesUrgency =
+            urgency === 'ALL' ||
+            ann.urgency === urgency;
+
+        const matchesCategory =
+            currentAnnCategory === 'ALL' ||
+            ann.category === currentAnnCategory;
+
+        const matchesQuery = [
+            ann.title,
+            ann.content,
+            ann.category,
+            ann.campus,
+            ann.authorName
+        ].some(value =>
+            normalizeAnnText(value).includes(query)
+        );
+
+        return matchesUrgency &&
+            matchesCategory &&
+            matchesQuery;
+
+    });
 
     renderAnnouncements(filtered);
+
+}
+
+function resetAnnouncementFilters() {
+
+    document.getElementById('annSearch').value = '';
+
+    document.getElementById('urgencyFilter').value =
+        'ALL';
+
+    const firstButton = document.querySelector(
+        '.ann-cat-btn'
+    );
+
+    if (firstButton) {
+
+        filterAnnouncementCategory(
+            'ALL',
+            firstButton
+        );
+
+    } else {
+
+        currentAnnCategory = 'ALL';
+
+        filterAnnouncements();
+
+    }
 }
 
 function filterAnnouncementCategory(cat, btn) {
