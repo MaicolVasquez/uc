@@ -2,6 +2,39 @@
 
 let currentHuecoCat = 'ALL';
 let huecoEditingId = null;
+const huecoCategoryStyles = {
+
+    Estudiar: {
+        icon: 'fa-book-open',
+        background: '#e8eefc',
+        color: '#3659a8'
+    },
+
+    Socializar: {
+        icon: 'fa-mug-hot',
+        background: '#f8eaf0',
+        color: '#7b1e38'
+    },
+
+    Juegos: {
+        icon: 'fa-chess-knight',
+        background: '#f0e8fc',
+        color: '#8052b5'
+    },
+
+    Deportes: {
+        icon: 'fa-futbol',
+        background: '#e8f4ee',
+        color: '#27775e'
+    },
+
+    Creatividad: {
+        icon: 'fa-palette',
+        background: '#fff2df',
+        color: '#b77924'
+    }
+
+};
 async function loadHuecos() {
     try {
         await sessionReady;
@@ -12,125 +45,363 @@ async function loadHuecos() {
     }
 }
 
+function normalizeHuecoText(value) {
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
 function applyHuecoFilter() {
-    renderHuecos(currentHuecoCat === 'ALL' ? huecosData : huecosData.filter(h => h.category === currentHuecoCat));
+
+    const query = normalizeHuecoText(
+        document.getElementById('huecoSearch').value
+    );
+
+    const participation = document.getElementById(
+        'huecoParticipationFilter'
+    ).value;
+
+    const filtered = huecosData.filter(h => {
+
+        const matchesCategory =
+            currentHuecoCat === 'ALL' ||
+            h.category === currentHuecoCat;
+
+        const matchesQuery = [
+            h.title,
+            h.category,
+            h.campus,
+            h.location,
+            h.organizer,
+            h.desc,
+            h.time
+        ].some(value =>
+            normalizeHuecoText(value).includes(query)
+        );
+
+        const isFull =
+            Number(h.joined) >= Number(h.capacity);
+
+        let matchesParticipation = true;
+
+        switch (participation) {
+
+            case 'AVAILABLE':
+                matchesParticipation =
+                    !isFull && !h.mine && !h.joinedByMe;
+                break;
+
+            case 'JOINED':
+                matchesParticipation =
+                    !!h.joinedByMe && !h.mine;
+                break;
+
+            case 'MINE':
+                matchesParticipation = !!h.mine;
+                break;
+
+            case 'FULL':
+                matchesParticipation = isFull;
+                break;
+
+        }
+
+        return matchesCategory &&
+            matchesQuery &&
+            matchesParticipation;
+
+    });
+
+    renderHuecos(filtered);
+}
+
+function resetHuecoFilters() {
+
+    document.getElementById('huecoSearch').value = '';
+
+    document.getElementById(
+        'huecoParticipationFilter'
+    ).value = 'ALL';
+
+    const firstButton = document.querySelector(
+        '.hueco-cat-btn'
+    );
+
+    if (firstButton) {
+        filterHuecos('ALL', firstButton);
+    } else {
+        currentHuecoCat = 'ALL';
+        applyHuecoFilter();
+    }
 }
 
 function renderHuecos(items = huecosData) {
+
     const grid = document.getElementById('huecosGrid');
+    const counter = document.getElementById('huecoResultsCount');
+
+    if (counter) {
+        counter.textContent = items.length === 1
+            ? '1 actividad encontrada'
+            : `${items.length} actividades encontradas`;
+    }
 
     if (items.length === 0) {
+
         grid.innerHTML = `
-            <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-                <i class="fa-solid fa-mug-hot text-4xl mb-2"></i>
-                <p class="font-bold text-sm">No hay Puntos Hueco publicados todavía.</p>
+            <div class="hueco-empty">
+
+                <i class="fa-solid fa-mug-hot"></i>
+
+                <h3>No encontramos actividades</h3>
+
+                <p>
+                    Prueba con otros filtros o crea
+                    tu propio Punto Hueco.
+                </p>
+
+                <button type="button"
+                    onclick="openModal('huecoCreateModal')"
+                    class="uc-primary">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Crear actividad
+
+                </button>
+
             </div>`;
+
         return;
     }
 
     grid.innerHTML = items.map(hue => {
-        const isFull = hue.joined >= hue.capacity;
+
+        const capacity = Math.max(
+            0, Number(hue.capacity) || 0
+        );
+
+        const joined = Math.max(
+            0, Number(hue.joined) || 0
+        );
+
+        const isFull = joined >= capacity;
         const alreadyJoined = !!hue.joinedByMe;
-        const disableJoin = isFull || alreadyJoined;
-        const progressPct = hue.capacity ? Math.min(100, Math.round((hue.joined / hue.capacity) * 100)) : 0;
+
+        const remaining = Math.max(
+            0, capacity - joined
+        );
+
+        const progressPct = capacity > 0
+            ? Math.min(100, Math.round(joined / capacity * 100))
+            : 0;
+
+        const categoryStyle =
+            huecoCategoryStyles[hue.category] || {
+                icon: 'fa-calendar-days',
+                background: '#f8eaf0',
+                color: '#7b1e38'
+            };
+
+        let status = 'Disponible';
+        let statusClass = 'hueco-status-open';
+        let cardClass = '';
+
+        if (hue.mine) {
+
+            status = 'Mi actividad';
+            statusClass = 'hueco-status-mine';
+            cardClass = 'hueco-card-mine';
+
+        } else if (alreadyJoined) {
+
+            status = 'Ya participas';
+            statusClass = 'hueco-status-joined';
+            cardClass = 'hueco-card-joined';
+
+        } else if (isFull) {
+
+            status = 'Aforo lleno';
+            statusClass = 'hueco-status-full';
+
+        }
 
         return `
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
+
+            <article class="hueco-card ${cardClass}">
+
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="bg-amber-100 text-amber-900 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-200">
-                            ${escapeHtml(hue.category)}
+
+                    <div class="hueco-card-top">
+
+                        <div class="hueco-category-icon"
+                            style="background:${categoryStyle.background};
+                                   color:${categoryStyle.color}">
+
+                            <i class="fa-solid ${categoryStyle.icon}"></i>
+
+                        </div>
+
+                        <span class="hueco-status ${statusClass}">
+                            ${status}
                         </span>
-                        <span class="bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sucediendo Hoy
-                        </span>
+
                     </div>
- 
-                    <h3 class="font-extrabold text-slate-900 text-base mt-1">${escapeHtml(hue.title)}</h3>
- 
-                    <div class="mt-3 space-y-1.5 text-xs text-slate-600">
-                        <p class="flex items-center gap-2">
-                            <i class="fa-solid fa-location-dot text-red-500 w-4"></i>
-                            <span class="font-semibold text-slate-800">${escapeHtml(hue.campus)}:</span> ${escapeHtml(hue.location)}
-                        </p>
-                        <p class="flex items-center gap-2">
-                            <i class="fa-regular fa-clock text-unsa-gold w-4"></i>
-                            <span class="font-semibold text-slate-800">Horario:</span> ${escapeHtml(hue.time)}
-                        </p>
-                        <p class="flex items-center gap-2">
-                            <i class="fa-solid fa-user-group text-slate-400 w-4"></i>
-                            <span class="font-semibold text-slate-800">Organiza:</span> ${escapeHtml(hue.organizer)}
-                        </p>
-                    </div>
- 
-                    <p class="text-xs text-slate-600 mt-3 line-clamp-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        "${escapeHtml(hue.desc)}"
+
+                    <p class="hueco-category-label">
+                        ${escapeHtml(hue.category)}
                     </p>
- 
-                    <div class="mt-4">
-                        <div class="flex justify-between text-[11px] font-bold mb-1">
-                            <span class="text-slate-500">Participantes:</span>
-                            <span class="${isFull ? 'text-red-600' : 'text-emerald-600'}">${hue.joined} / ${hue.capacity} personas</span>
-                        </div>
-                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                            <div class="h-full ${isFull ? 'bg-red-500' : 'bg-emerald-500'} transition-all" style="width: ${progressPct}%"></div>
-                        </div>
+
+                    <h3 class="hueco-card-title">
+                        ${escapeHtml(hue.title)}
+                    </h3>
+
+                    <div class="hueco-info">
+
+                        <p>
+                            <i class="fa-solid fa-location-dot"></i>
+
+                            <span>
+                                <strong>
+                                    ${escapeHtml(hue.campus)}
+                                </strong>
+
+                                <br>
+
+                                ${escapeHtml(hue.location)}
+                            </span>
+                        </p>
+
+                        <p>
+                            <i class="fa-regular fa-clock"></i>
+
+                            <span>
+                                ${escapeHtml(hue.time)}
+                            </span>
+                        </p>
+
+                        <p>
+                            <i class="fa-solid fa-user-group"></i>
+
+                            <span>
+                                Organiza:
+                                ${escapeHtml(hue.organizer)}
+                            </span>
+                        </p>
+
                     </div>
-                </div>
- 
-                <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
-                    
-${hue.mine ? `
 
-    <div class="flex gap-2 w-full">
+                    ${hue.desc ? `
+                        <p class="hueco-description">
+                            ${escapeHtml(hue.desc)}
+                        </p>
+                    ` : ''}
 
-        <button
-            onclick="abrirModalGestion('${escapeHtml(hue.id)}')"
-            class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-2">
+                    <div class="hueco-capacity">
 
-            <i class="fa-solid fa-gear"></i>
-            Gestionar
+                        <div class="hueco-capacity-label">
 
-        </button>
+                            <span class="text-slate-600">
+                                Participantes
+                            </span>
 
-        <button
-            onclick="abrirChatPuntoHueco('${escapeHtml(hue.id)}')"
-            class="flex-1 bg-unsa-maroon hover:bg-unsa-bright text-white font-extrabold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-2">
+                            <span class="${isFull
+                                ? 'text-red-600'
+                                : 'text-emerald-600'}">
 
-            <i class="fa-solid fa-comments"></i>
-            Chat grupal
+                                ${joined} / ${capacity}
 
-        </button>
+                            </span>
 
-    </div>
+                        </div>
 
-` : alreadyJoined ? `
+                        <div class="hueco-progress
+                            ${isFull ? 'hueco-progress-full' : ''}"
+                            role="progressbar"
+                            aria-label="Ocupación de cupos"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="${progressPct}">
 
-    <button
-        onclick="abrirChatPuntoHueco('${escapeHtml(hue.id)}')"
-        class="w-full bg-unsa-maroon hover:bg-unsa-bright text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2">
+                            <span style="width:${progressPct}%">
+                            </span>
 
-        <i class="fa-solid fa-comments"></i>
-        Abrir chat grupal
+                        </div>
 
-    </button>
+                        <p class="text-xs text-slate-500 mt-2">
 
-` : `
+                            ${isFull
+                                ? 'No quedan cupos disponibles'
+                                : remaining === 1
+                                    ? 'Queda 1 cupo disponible'
+                                    : `Quedan ${remaining} cupos disponibles`
+                            }
 
-    <button
-        onclick="joinHueco('${escapeHtml(hue.id)}')"
-        ${disableJoin ? 'disabled' : ''}
-        class="w-full ${disableJoin ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 text-white'} font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2">
+                        </p>
 
-        <i class="fa-solid fa-user-plus"></i>
-        ${isFull ? 'Aforo lleno' : '¡Unirme al Hueco!'}
-
-    </button>
-
-`}
+                    </div>
 
                 </div>
-            </div>`;
+
+                <div class="hueco-actions">
+
+                    ${hue.mine ? `
+
+                        <button type="button"
+                            onclick="abrirModalGestion('${escapeHtml(hue.id)}')"
+                            class="uc-secondary">
+
+                            <i class="fa-solid fa-gear"></i>
+                            Gestionar
+
+                        </button>
+
+                        <button type="button"
+                            onclick="abrirChatPuntoHueco('${escapeHtml(hue.id)}')"
+                            class="uc-primary">
+
+                            <i class="fa-solid fa-comments"></i>
+                            Chat grupal
+
+                        </button>
+
+                    ` : alreadyJoined ? `
+
+                        <button type="button"
+                            onclick="abrirChatPuntoHueco('${escapeHtml(hue.id)}')"
+                            class="uc-primary">
+
+                            <i class="fa-solid fa-comments"></i>
+                            Abrir chat grupal
+
+                        </button>
+
+                    ` : `
+
+                        <button type="button"
+                            onclick="joinHueco('${escapeHtml(hue.id)}')"
+                            ${isFull ? 'disabled' : ''}
+                            class="uc-primary">
+
+                            <i class="fa-solid ${isFull
+                                ? 'fa-lock'
+                                : 'fa-user-plus'}"></i>
+
+                            ${isFull
+                                ? 'Aforo lleno'
+                                : 'Unirme a la actividad'}
+
+                        </button>
+
+                    `}
+
+                </div>
+
+            </article>
+
+        `;
+
     }).join('');
 }
 

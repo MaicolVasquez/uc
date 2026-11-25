@@ -23,27 +23,75 @@
 
         <section id="tab-huecos-content" class="tab-content space-y-6">
             <!-- Banner Header -->
-            <div
-                class="bg-gradient-to-r from-amber-600 via-unsa-maroon to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <span
-                        class="bg-white text-slate-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shadow-sm inline-block mb-2">
-                        Red Social Agustina
-                    </span>
-                    <h1 class="text-2xl md:text-3xl font-extrabold">Punto Hueco UNSA</h1>
-                    <p class="text-slate-200 text-sm mt-1 max-w-xl">
-                        ¿Tienes horas libres entre clases? Organiza o únete a grupos de estudio en el pasto, partidas de
-                        ajedrez, debates o simplemente tómate un café en la cafetería.
-                    </p>
-                </div>
-                <button onclick="openModal('huecoCreateModal')"
-                    class="bg-unsa-gold hover:bg-unsa-goldhover text-unsa-slate font-extrabold px-5 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-plus-circle"></i> Crear Punto Hueco
-                </button>
-            </div>
+            <!-- Banner Header -->
+<div class="hueco-hero">
 
-            <!-- Category Pills -->
-            <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-200">
+    <div>
+
+        <span class="text-xs font-extrabold uppercase tracking-widest text-white/80">
+            VIDA UNIVERSITARIA
+        </span>
+
+        <h1 class="text-2xl md:text-3xl font-extrabold mt-2">
+            Punto Hueco
+        </h1>
+
+        <p class="text-sm text-white/90 mt-2 max-w-xl">
+            Aprovecha tus horas libres, conoce nuevos compañeros,
+            organiza grupos de estudio y comparte experiencias
+            dentro del campus.
+        </p>
+
+    </div>
+
+    <button type="button"
+        onclick="openModal('huecoCreateModal')"
+        class="hueco-create-btn">
+
+        <i class="fa-solid fa-plus"></i>
+        Crear actividad
+
+    </button>
+
+</div>
+
+            <!-- Panel de búsqueda -->
+<div class="hueco-filter-panel">
+
+    <div>
+        <h2 class="text-lg font-extrabold text-slate-900">
+            Encuentra tu próximo plan
+        </h2>
+
+        <p class="text-xs text-slate-500 mt-1">
+            Explora actividades según tus intereses.
+        </p>
+    </div>
+
+    <div class="hueco-filter-row">
+
+        <input type="search"
+            id="huecoSearch"
+            aria-label="Buscar actividades"
+            placeholder="Buscar actividad, lugar u organizador..."
+            oninput="applyHuecoFilter()">
+
+        <select id="huecoParticipationFilter"
+            aria-label="Filtrar por participación"
+            onchange="applyHuecoFilter()">
+
+            <option value="ALL">Todas las actividades</option>
+            <option value="AVAILABLE">Con cupos disponibles</option>
+            <option value="JOINED">Actividades a las que me uní</option>
+            <option value="MINE">Mis actividades</option>
+            <option value="FULL">Actividades llenas</option>
+
+        </select>
+
+    </div>
+
+    <!-- Category Pills -->
+    <div class="hueco-categories">
                 <button onclick="filterHuecos('ALL', this)"
                     class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-unsa-maroon text-white shadow-sm whitespace-nowrap">
                     Todas las Actividades
@@ -68,10 +116,39 @@
                     class="hueco-cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 whitespace-nowrap">
                     🎨 Música & Proyectos
                 </button>
-            </div>
+    </div>
 
-            <!-- Meetups Grid -->
-            <div id="huecosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+</div>
+
+<div class="flex flex-wrap items-center justify-between gap-3">
+
+    <div>
+        <h2 class="text-lg font-extrabold text-slate-900">
+            Explora las actividades
+        </h2>
+
+        <p id="huecoResultsCount"
+            class="text-xs text-slate-500 mt-1"
+            aria-live="polite">
+
+            Cargando actividades...
+
+        </p>
+    </div>
+
+    <button type="button"
+        onclick="resetHuecoFilters()"
+        class="uc-secondary">
+
+        <i class="fa-solid fa-rotate-left"></i>
+        Limpiar filtros
+
+    </button>
+
+</div>
+
+<!-- Meetups Grid -->
+<div id="huecosGrid" class="hueco-grid">
                 <!-- Dynamically populated -->
             </div>
         </section>
@@ -84,7 +161,7 @@
             class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-mug-hot text-amber-600"></i><span id="huecoModalTitle">Crear Nuevo Punto
+                    <i class="fa-solid fa-mug-hot text-unsa-maroon"></i><span id="huecoModalTitle">Crear Nuevo Punto
                         Hueco</span>
                 </h3>
                 <button onclick="closeModal('huecoCreateModal')"
@@ -165,9 +242,13 @@
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" onclick="closeModal('huecoCreateModal')"
                         class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" id="huecoSubmitBtn"
-                        class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow">Publicar
-                        Punto Hueco</button>
+                    <button type="submit"
+    id="huecoSubmitBtn"
+    class="uc-primary">
+
+    Publicar actividad
+
+</button>
                 </div>
             </form>
         </div>
