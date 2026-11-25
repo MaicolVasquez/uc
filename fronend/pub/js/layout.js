@@ -2,7 +2,7 @@
 // Cada página solo declara <body data-page="..."> y este script pinta el resto.
 
 const NAV_ITEMS = [
-    { id: 'dashboard', href: 'home.html', icon: 'fa-house', label: 'Inicio', mobile: 'Inicio', footer: 'Inicio' },
+    { id: 'dashboard', href: 'dashboard.html', icon: 'fa-house', label: 'Inicio', mobile: 'Inicio', footer: 'Inicio' },
     { id: 'lost-found', href: 'index.html', icon: 'fa-box-open', label: 'Objetos Perdidos', mobile: 'Objetos Perdidos', footer: 'Objetos Perdidos' },
     { id: 'maps', href: 'mapa.html', icon: 'fa-map-location-dot', label: 'Mapa UNSA', mobile: 'UNSA Maps (Croquis)', footer: 'UNSA Maps' },
     { id: 'announcements', href: 'notificaciones.html', icon: 'fa-bullhorn', label: 'Notificaciones', mobile: 'Notificaciones e Info', footer: 'Avisos', badge: true },
@@ -44,8 +44,8 @@ function buildLayout() {
       <a class="uc-brand" href="home.html"><span class="uc-mark">U</span><span>UNSA<span class="uc-brand-sub">CONECTA</span></span></a>
       <p class="uc-side-label">ESPACIO ESTUDIANTIL</p>
       <nav>${desktopNav}<a class="nav-btn ${current === 'cuenta' && new URLSearchParams(location.search).has('mensajes') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html?mensajes=1#conversationList"><i class="fa-regular fa-comments"></i> Mensajes</a><a class="nav-btn ${current === 'cuenta' && !new URLSearchParams(location.search).has('mensajes') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html"><i class="fa-regular fa-user"></i> Mi perfil</a></nav>
-      <a class="uc-primary uc-side-action" href="index.html#reportar-objeto">
-    <i class="fa-solid fa-plus"></i> Reportar objeto
+      <a class="uc-primary uc-side-action" href="dashboard.html#publicar">
+    <i class="fa-solid fa-plus"></i> Nueva publicación
 </a>
       <div class="uc-side-bottom"><span class="uc-side-label">UNSA CONECTA</span><a href="home.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> Portada pública</a><small>Tu campus, más cerca.</small></div>
     </aside>
@@ -72,6 +72,13 @@ function buildLayout() {
 
                                 <!-- Header Actions -->
                 <div class="flex items-center gap-3">
+                <form class="uc-global-search" action="dashboard.html">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input
+        name="q"
+        aria-label="Buscar módulos"
+        placeholder="Buscar en UNSA Conecta…">
+</form>
                     <div id="bellWrap" class="relative">
                         <button id="bellBtn" onclick="toggleBellPanel(event)" title="Notificaciones"
                             class="p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10 relative w-10 h-10">
@@ -255,6 +262,7 @@ const sessionReady = refreshHeaderUser();
 
 // Verificar la promesa y redirigir si es nula
 sessionReady.then(user => {
+
     const currentPage = document.body.dataset.page;
 
     if (
@@ -262,8 +270,13 @@ sessionReady.then(user => {
         currentPage !== 'cuenta' &&
         window.sessionStatus === 'unauthenticated'
     ) {
-        window.location.replace('cuenta.html');
+        const destination = currentPage === 'dashboard'
+            ? 'cuenta.html?next=dashboard'
+            : 'cuenta.html';
+
+        window.location.replace(destination);
     }
+
 });
 // ---------- Campanita de notificaciones (estilo Facebook) ----------
 let bellItems = [];

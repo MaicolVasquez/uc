@@ -903,31 +903,60 @@ async function handleRegister(e) {
         await apiPost('/api/auth/login', { email, password });
         const user = await refreshHeaderUser();
         if (!user) throw new Error('No se pudo cargar tu perfil. Intenta actualizar la página.');
-        renderProfile(user);
-        inicializarBuscadorEstudiantes();
-        await inicializarMensajeria();
-        openNotificationToast('¡Cuenta creada! Bienvenido a UNSA Conecta.');
+        window.location.replace('dashboard.html');
     } catch (err) {
         showAuthError(err.message);
     }
 }
 
 async function handleLogin(e) {
+
     e.preventDefault();
     showAuthError('');
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
+
+    const email = document.getElementById('loginEmail')
+        .value.trim();
+
+    const password = document.getElementById('loginPassword')
+        .value;
+
     try {
-        await apiPost('/api/auth/login', { email, password });
+
+        await apiPost('/api/auth/login', {
+            email,
+            password
+        });
+
         const user = await refreshHeaderUser();
-        if (!user) throw new Error('No se pudo cargar tu perfil. Intenta actualizar la página.');
+
+        if (!user) {
+            throw new Error(
+                'No se pudo cargar tu perfil. Intenta actualizar la página.'
+            );
+        }
+
+        const params = new URLSearchParams(window.location.search);
+
+        if (
+            params.get('next') === 'dashboard' ||
+            (!params.has('chat') && !params.has('mensajes'))
+        ) {
+            window.location.replace('dashboard.html');
+            return;
+        }
+
         renderProfile(user);
         inicializarBuscadorEstudiantes();
         await inicializarMensajeria();
+
         openNotificationToast('Sesión iniciada correctamente.');
+
     } catch (err) {
+
         showAuthError(err.message);
+
     }
+
 }
 
 async function handleLogout() {
