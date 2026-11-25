@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="pub/js/tailwind.config.js"></script>
     <link rel="stylesheet" href="pub/css/redesign.css">
+    <link rel="stylesheet" href="pub/css/notificaciones.css">
 </head>
 
 <body data-page="announcements" class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
@@ -22,29 +23,103 @@
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         <section id="tab-announcements-content" class="tab-content space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-900">Tablón de Notificaciones y Avisos UNSA</h1>
-                    <p class="text-sm text-slate-500">Mantente informado sobre feriados académicos, comunicados de
-                        huelgas, trámites de matrícula, estado de bibliotecas.</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-medium text-slate-500">Filtrar por Urgencia:</span>
-                    <select id="urgencyFilter" onchange="filterAnnouncements()"
-                        class="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg p-2 font-medium focus:ring-2 focus:ring-unsa-maroon">
-                        <option value="ALL">Todas las alertas</option>
-                        <option value="URGENTE">🚨 Alta Prioridad (Urgentes)</option>
-                        <option value="INFO">ℹ️ Información General</option>
-                        <option value="EVENTO">📅 Eventos y Asambleas</option>
-                    </select>
+            <div class="ann-hero">
 
-                    <!-- Solo visible para administradores (lo activa announcements.js) -->
-                    <button id="annCreateBtn" onclick="openModal('annCreateModal')"
-                        class="hidden ml-2 bg-unsa-maroon hover:bg-unsa-dark text-white font-bold px-3 py-2 rounded-lg text-xs whitespace-nowrap">
-                        <i class="fa-solid fa-plus"></i> Nuevo anuncio
-                    </button>
-                </div>
-            </div>
+    <div>
+
+        <span class="text-xs font-extrabold uppercase tracking-widest text-white/80">
+            INFORMACIÓN UNIVERSITARIA
+        </span>
+
+        <h1 class="text-2xl md:text-3xl font-extrabold mt-2">
+            Notificaciones y avisos
+        </h1>
+
+        <p class="text-sm text-white/90 mt-2 max-w-xl">
+            Mantente informado sobre los comunicados,
+            eventos y novedades de la comunidad agustina.
+        </p>
+
+    </div>
+
+    <button type="button"
+        id="annCreateBtn"
+        onclick="openModal('annCreateModal')"
+        class="hidden uc-secondary">
+
+        <i class="fa-solid fa-plus"></i>
+        Nuevo anuncio
+
+    </button>
+
+</div>
+
+<!-- Indicadores -->
+
+<div class="ann-stats-grid">
+
+    <div class="ann-stat">
+
+        <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+
+        <strong id="annUrgentCount">—</strong>
+
+        <p>Avisos urgentes</p>
+
+    </div>
+
+    <div class="ann-stat">
+
+        <i class="fa-solid fa-circle-info text-blue-600"></i>
+
+        <strong id="annInfoCount">—</strong>
+
+        <p>Informativos</p>
+
+    </div>
+
+    <div class="ann-stat">
+
+        <i class="fa-solid fa-calendar-days text-amber-600"></i>
+
+        <strong id="annEventCount">—</strong>
+
+        <p>Eventos</p>
+
+    </div>
+
+</div>
+
+<!-- Buscador y filtro -->
+
+<div class="ann-filter-panel">
+
+    <h2 class="text-base font-extrabold text-slate-900 mb-4">
+        Encuentra un comunicado
+    </h2>
+
+    <div class="ann-filter-row">
+
+        <input type="search"
+            id="annSearch"
+            aria-label="Buscar comunicados"
+            placeholder="Buscar título, categoría o campus..."
+            oninput="filterAnnouncements()">
+
+        <select id="urgencyFilter"
+            aria-label="Filtrar por urgencia"
+            onchange="filterAnnouncements()">
+
+            <option value="ALL">Todas las alertas</option>
+            <option value="URGENTE">Avisos urgentes</option>
+            <option value="INFO">Información general</option>
+            <option value="EVENTO">Eventos</option>
+
+        </select>
+
+    </div>
+
+</div>
 
             <!-- Categories Tabs Filter -->
             <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-200">
@@ -69,7 +144,34 @@
                     📝 Trámites & Matrícula
                 </button>
             </div>
-            
+            <div class="flex flex-wrap items-center justify-between gap-3">
+
+    <div>
+
+        <h2 class="text-lg font-extrabold text-slate-900">
+            Comunicados universitarios
+        </h2>
+
+        <p id="annResultsCount"
+            class="text-xs text-slate-500 mt-1"
+            aria-live="polite">
+
+            Cargando avisos...
+
+        </p>
+
+    </div>
+
+    <button type="button"
+        onclick="resetAnnouncementFilters()"
+        class="uc-secondary">
+
+        <i class="fa-solid fa-rotate-left"></i>
+        Limpiar filtros
+
+    </button>
+
+</div>
             <!-- Grid List of Announcements -->
             <div id="announcementsGrid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"></div>
             
