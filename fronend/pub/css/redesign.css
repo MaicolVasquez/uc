@@ -758,3 +758,162 @@ body[data-page] #mobileMenu {
     }
 
 }
+/* ======================================
+   OBJETOS PERDIDOS - REDISEÑO
+====================================== */
+
+.lf-filter-panel {
+    border-radius: 18px;
+}
+
+.lf-filter-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.lf-filter-options select {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 12px;
+    background: #f8f8fa;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.lf-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.lf-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 3px 12px #24222d06;
+    transition: transform .2s ease,
+                box-shadow .2s ease,
+                border-color .2s ease;
+}
+
+.lf-card:hover {
+    transform: translateY(-3px);
+    border-color: #d9b7c4;
+    box-shadow: 0 10px 28px #24222d12;
+}
+
+.lf-card-closed {
+    background: #fafafa;
+}
+
+.lf-card-image {
+    height: 190px;
+}
+
+.lf-card-title {
+    font-size: 16px;
+    line-height: 1.4;
+    letter-spacing: -.3px;
+}
+
+.lf-empty {
+    grid-column: 1 / -1;
+    padding: 55px 20px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px dashed var(--line);
+    border-radius: 18px;
+}
+
+.lf-empty-icon {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 18px;
+    display: grid;
+    place-items: center;
+    background: var(--rose);
+    color: var(--wine);
+    font-size: 26px;
+    border-radius: 20px;
+}
+
+.lf-empty h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.lf-empty p {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 9px 0 20px;
+}
+
+/* Ventana de detalles */
+
+#lfDetailModal > div {
+    border-radius: 22px;
+}
+
+#lfDetailBody {
+    padding: 24px;
+}
+
+#lfDetailBody h2 {
+    font-size: 23px;
+    letter-spacing: -.6px;
+}
+
+#lfDetailBody button,
+#lfDetailBody a {
+    transition: background-color .2s ease;
+}
+
+/* Diseño adaptable */
+
+@media (max-width: 1250px) {
+    .lf-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lf-filter-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .lf-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lf-filter-options {
+        grid-template-columns: 1fr;
+    }
+
+    .lf-card-image {
+        height: 210px;
+    }
+
+    #lfDetailBody {
+        padding: 16px;
+    }
+
+    #lfDetailBody h2 {
+        font-size: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lf-card {
+        transition: none;
+    }
+
+    .lf-card:hover {
+        transform: none;
+    }
+}
