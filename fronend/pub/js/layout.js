@@ -43,7 +43,13 @@ function buildLayout() {
     <aside class="uc-sidebar" aria-label="Navegación principal">
       <a class="uc-brand" href="home.html"><span class="uc-mark">U</span><span>UNSA<span class="uc-brand-sub">CONECTA</span></span></a>
       <p class="uc-side-label">ESPACIO ESTUDIANTIL</p>
-      <nav>${desktopNav}<a class="nav-btn ${current === 'cuenta' && new URLSearchParams(location.search).has('mensajes') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html?mensajes=1#conversationList"><i class="fa-regular fa-comments"></i> Mensajes</a><a class="nav-btn ${current === 'cuenta' && !new URLSearchParams(location.search).has('mensajes') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html"><i class="fa-regular fa-user"></i> Mi perfil</a></nav>
+      <nav>${desktopNav}<a class="nav-btn ${current === 'cuenta' &&
+(
+    new URLSearchParams(location.search).has('mensajes') ||
+    new URLSearchParams(location.search).has('chat')
+) ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html?mensajes=1"><i class="fa-regular fa-comments"></i> Mensajes</a><a class="nav-btn ${current === 'cuenta' &&
+!new URLSearchParams(location.search).has('mensajes') &&
+!new URLSearchParams(location.search).has('chat') ? 'bg-white/20 text-white font-bold' : ''}" href="cuenta.html"><i class="fa-regular fa-user"></i> Mi perfil</a></nav>
       <a class="uc-primary uc-side-action" href="dashboard.html#publicar">
     <i class="fa-solid fa-plus"></i> Nueva publicación
 </a>

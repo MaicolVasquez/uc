@@ -1,7 +1,27 @@
 // Módulo: Cuenta (registro, login, perfil y logout contra el backend Express)
 
 const ACTIVE_TAB = ['border-b-2', 'border-unsa-gold', 'text-unsa-maroon'];
+function configureAccountMode() {
 
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    const messagesMode =
+        params.has('mensajes') ||
+        params.has('chat');
+
+    document.body.classList.toggle(
+        'uc-messages-mode',
+        messagesMode
+    );
+
+    document.title = messagesMode
+        ? 'Mensajes | UNSA Conecta'
+        : 'Mi cuenta | UNSA Conecta';
+}
+
+configureAccountMode();
 async function apiPost(url, body) {
     const res = await fetch(url, {
         method: 'POST',
@@ -208,22 +228,38 @@ return conversaciones;
 
             button.type = 'button';
 
-            button.className =
-                'w-full text-left flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 hover:border-amber-300 transition-colors';
+            button.className = 'uc-conversation-item';
+
+button.dataset.conversationId = conv.id;
 
             if (conv.id === activeConversationId) {
 
-                button.classList.add('bg-red-50', 'border-red-200');
+    button.classList.add('uc-conversation-active');
 
-            }
+}
 
             const avatar = document.createElement('div');
 
-            avatar.className =
-                'w-10 h-10 shrink-0 rounded-full bg-red-100 text-unsa-maroon flex items-center justify-center font-bold';
+            avatar.className = 'uc-conversation-avatar';
 
-            avatar.textContent =
-                (conv.titulo || 'U').charAt(0).toUpperCase();
+if (conv.tipo === 'grupo') {
+
+    avatar.classList.add(
+        'uc-conversation-avatar-group'
+    );
+
+    const icon = document.createElement('i');
+
+    icon.className = 'fa-solid fa-users';
+
+    avatar.appendChild(icon);
+
+} else {
+
+    avatar.textContent =
+        (conv.titulo || 'U').charAt(0).toUpperCase();
+
+}
 
             const info = document.createElement('div');
 
@@ -390,17 +426,18 @@ async function cargarMensajes(conversacionId, forceRender = false) {
         const bubble = document.createElement('div');
 
         bubble.className = `
-            max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3
-            ${
-                mensaje.esMio
-                    ? 'bg-unsa-maroon text-white rounded-br-sm'
-                    : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'
-            }
-        `;
+    uc-message-bubble
+    ${
+        mensaje.esMio
+            ? 'uc-message-mine'
+            : 'uc-message-other'
+    }
+`;
 
         const content = document.createElement('p');
 
-        content.className = 'text-sm whitespace-pre-wrap break-words';
+        content.className =
+    'text-sm whitespace-pre-wrap break-words leading-relaxed';
 
         content.textContent = mensaje.contenido;
 
@@ -460,7 +497,27 @@ async function abrirChat(conversacionId, titulo, tipo = 'directa') {
     }
 
     activeConversationId = conversacionId;
+    document.body.classList.add('uc-messages-mode');
 
+const chatUrl = new URL(window.location.href);
+
+chatUrl.searchParams.set('mensajes', '1');
+chatUrl.searchParams.set('chat', conversacionId);
+
+chatUrl.hash = '';
+
+window.history.replaceState({}, '', chatUrl);
+
+document.querySelectorAll(
+    '#conversationList .uc-conversation-item'
+).forEach(button => {
+
+    button.classList.toggle(
+        'uc-conversation-active',
+        button.dataset.conversationId === String(conversacionId)
+    );
+
+});
     activeConversationTitle = titulo || 'Conversación';
 
     lastMessagesSignature = '';
@@ -482,7 +539,10 @@ async function abrirChat(conversacionId, titulo, tipo = 'directa') {
         tipo === 'grupo'
             ? 'Grupo de estudiantes'
             : 'Conversación privada';
-
+    document.getElementById('chatTypeBadge').textContent =
+    tipo === 'grupo'
+        ? 'Chat grupal'
+        : 'Chat privado';
     document.getElementById('chatStatus').textContent =
         'Cargando mensajes...';
 
@@ -612,13 +672,16 @@ function cerrarChat() {
         .classList.add('hidden');
 
     document.getElementById('profileOverview')
-        .classList.remove('hidden');
+    .classList.add('hidden');
+
+document.body.classList.add('uc-messages-mode');
 
     cargarConversaciones();
     const url = new URL(window.location.href);
 
 url.searchParams.delete('chat');
-
+url.searchParams.set('mensajes', '1');
+url.hash = '';
 window.history.replaceState({}, '', url);
 
 }

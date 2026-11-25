@@ -4,7 +4,7 @@ const quickLinks = [
     ['fa-mug-hot', 'Punto Hueco', 'punto-hueco.html'],
     ['fa-map-location-dot', 'Mapa UNSA', 'mapa.html'],
     ['fa-bullhorn', 'Avisos', 'notificaciones.html'],
-    ['fa-comments', 'Mensajes', 'cuenta.html?mensajes=1#conversationList'],
+    ['fa-comments', 'Mensajes', 'cuenta.html?mensajes=1'],
     ['fa-user', 'Mi perfil', 'cuenta.html']
 ];
 
