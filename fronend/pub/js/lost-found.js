@@ -1,7 +1,7 @@
 // Módulo: Objetos Perdidos
 let lfEditingId = null;
 let lfImageData = null;
-const LF_DEFAULT_IMG = 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=400&auto=format&fit=crop&q=80';
+const LF_DEFAULT_IMG = '/pub/img/objeto.svg';
 
 const UNSA_MAP_SPOTS = [
     { id: 'loc-1', campus: 'Ingenierías', campusKey: 'ingenierias', title: 'Pabellón Cs. de la Computación' },
@@ -43,15 +43,43 @@ async function loadLostFound() {
 }
 
 function renderLostFound(items = lostFoundData) {
+
     const grid = document.getElementById('lostFoundGrid');
-    if (items.length === 0) {
-        grid.innerHTML = `
-            <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-                <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
-                <p class="font-bold text-sm">No se encontraron objetos con los filtros seleccionados.</p>
-            </div>`;
-        return;
+    const counter = document.getElementById('lfResultsCount');
+
+    if (counter) {
+        counter.textContent = items.length === 1
+            ? '1 publicación encontrada'
+            : `${items.length} publicaciones encontradas`;
     }
+    if (items.length === 0) {
+
+    grid.innerHTML = `
+        <div class="lf-empty">
+
+            <div class="lf-empty-icon">
+                <i class="fa-solid fa-box-open"></i>
+            </div>
+
+            <h3>No encontramos publicaciones</h3>
+
+            <p>
+                Prueba con otra búsqueda o modifica
+                los filtros seleccionados.
+            </p>
+
+            <button type="button"
+                onclick="resetLfFilters()"
+                class="uc-secondary">
+
+                Limpiar filtros
+
+            </button>
+
+        </div>`;
+
+    return;
+}
 
     const esAdminUser = !!(window.currentUser && window.currentUser.rol === 'admin');
 
@@ -129,10 +157,10 @@ const diasRestantes = item.expiresAt
 
         const imageBlock = `
             <div onclick="openLfDetailModal('${escapeHtml(item.id)}')"
-                 class="relative h-44 overflow-hidden bg-slate-100 cursor-pointer">
+                 class="lf-card-image relative overflow-hidden bg-slate-100 cursor-pointer">
                 <img src="${img}" alt="${escapeHtml(item.title)}"
                      class="w-full h-full object-cover transition-transform duration-300 ${shouldBlur ? 'blur-md scale-110' : 'hover:scale-105'} ${isResolved ? 'grayscale-[40%]' : ''}"
-                     onerror="this.src='${LF_DEFAULT_IMG}'">
+                     onerror="this.onerror=null;this.src='${LF_DEFAULT_IMG}'">
                 ${shouldBlur ? `
                 <div class="absolute inset-0 bg-slate-900/35 flex flex-col items-center justify-center text-white text-center px-4 pointer-events-none">
                     <span class="w-9 h-9 rounded-full bg-slate-900/80 border border-white/20 flex items-center justify-center mb-1.5">
@@ -204,14 +232,14 @@ const diasRestantes = item.expiresAt
                    </div>`;
 
         return `
-            <div class="bg-white rounded-2xl border ${isResolved ? 'border-slate-300 opacity-85' : 'border-slate-200'} shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
+            <div class="lf-card ${isClosed ? 'lf-card-closed' : ''}">
                 <div>
                     ${imageBlock}
 
                     <div class="p-4">
                         <span class="text-[10px] font-bold uppercase text-unsa-maroon tracking-wider">${escapeHtml(item.category)}</span>
                         <h3 onclick="openLfDetailModal('${escapeHtml(item.id)}')"
-                            class="font-bold text-slate-900 text-sm mt-0.5 line-clamp-2 cursor-pointer hover:text-unsa-maroon transition-colors">
+                            class="lf-card-title font-bold text-slate-900 mt-1 line-clamp-2 cursor-pointer hover:text-unsa-maroon transition-colors">
                             ${escapeHtml(item.title)}
                         </h3>
                         <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
@@ -260,18 +288,32 @@ const diasRestantes = item.expiresAt
             </div>`;
     }).join('');
 }
-
+function normalizeLfText(value) {
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
 function filterLostFound() {
-    const query = document.getElementById('lfSearch').value.toLowerCase();
+    const query = normalizeLfText(
+    document.getElementById('lfSearch').value
+);
     const status = document.getElementById('lfStatusFilter').value;
     const resolution = document.getElementById('lfResolutionFilter').value;
     const campus = document.getElementById('lfCampusFilter').value;
     const category = document.getElementById('lfCategoryFilter').value;
 
     const filtered = lostFoundData.filter(item => {
-        const matchesQuery = item.title.toLowerCase().includes(query) ||
-            item.location.toLowerCase().includes(query) ||
-            item.desc.toLowerCase().includes(query);
+        const matchesQuery = [
+    item.title,
+    item.location,
+    item.desc,
+    item.category,
+    item.campus
+].some(value =>
+    normalizeLfText(value).includes(query)
+);
         const matchesStatus = status === 'ALL' || item.status === status;
         const matchesResolution = resolution === 'ALL' || item.resolutionStatus === resolution;
         const matchesCampus = campus === 'ALL' || item.campus === campus;
@@ -281,7 +323,16 @@ function filterLostFound() {
 
     renderLostFound(filtered);
 }
+function resetLfFilters() {
 
+    document.getElementById('lfSearch').value = '';
+    document.getElementById('lfStatusFilter').value = 'ALL';
+    document.getElementById('lfResolutionFilter').value = 'ACTIVO';
+    document.getElementById('lfCampusFilter').value = 'ALL';
+    document.getElementById('lfCategoryFilter').value = 'ALL';
+
+    filterLostFound();
+}
 function resizeLfImage(file, maxW = 1000) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -645,7 +696,7 @@ const diasRestantes = item.expiresAt
         <div class="relative rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 max-h-72 flex items-center justify-center">
             <img src="${img}" alt="${escapeHtml(item.title)}"
                  class="w-full max-h-72 object-contain ${shouldBlur ? 'blur-md scale-105' : ''}"
-                 onerror="this.src='${LF_DEFAULT_IMG}'">
+                 onerror="this.onerror=null;this.src='${LF_DEFAULT_IMG}'">
             ${shouldBlur ? `
             <div class="absolute inset-0 bg-slate-900/40 flex flex-col items-center justify-center text-white text-center px-4">
                 <i class="fa-solid fa-eye-slash text-unsa-gold text-2xl mb-1"></i>

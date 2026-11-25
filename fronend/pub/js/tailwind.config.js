@@ -3,11 +3,11 @@ tailwind.config = {
         extend: {
             colors: {
                 unsa: {
-                    maroon: '#7A1D2E',
-                    dark: '#581320',
-                    bright: '#9B2238',
-                    gold: '#D4AF37',
-                    goldhover: '#B59226',
+                    maroon: '#7B1E38',
+                    dark: '#62152B',
+                    bright: '#A33E5B',
+                    gold: '#C69A60',
+                    goldhover: '#A97C48',
                     accent: '#FFF8E7',
                     slate: '#0F172A'
                 }

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Dashboard | UNSA Conecta</title>
+    <link rel="stylesheet" href="pub/css/styles.css">
+    <link rel="stylesheet" href="pub/css/redesign.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="pub/js/tailwind.config.js"></script>
+</head>
+
+<body data-page="dashboard" class="min-h-screen flex flex-col">
+    <div id="layout-top"></div>
+    <main class="flex-grow w-full mx-auto">
+        <div class="uc-title-row">
+            <div>
+                <p class="uc-kicker">TU ESPACIO ESTUDIANTIL</p>
+                <h1 class="uc-heading" id="greeting">¡Hola, agustino!</h1>
+                <p class="uc-sub">Esto está pasando hoy en tu comunidad.</p>
+            </div><a href="#publicar" class="uc-primary"><i class="fa-solid fa-plus"></i> Accesos rápidos</a>
+        </div>
+        <div class="uc-dash-stack">
+            <section class="uc-hero-banner">
+                <div><span class="text-xs font-bold tracking-widest text-pink-100">UNSA CONECTA</span>
+                    <h2>Haz que tu día en el campus cuente.</h2>
+                    <p>Encuentra personas, recursos y oportunidades cerca de ti.</p>
+                </div><a class="uc-secondary" href="#publicar">Explorar módulos <i
+                        class="fa-solid fa-arrow-right"></i></a>
+            </section>
+            <div class="uc-grid uc-grid-3">
+                <section class="uc-panel">
+                    <div class="uc-between"><span class="uc-sub">Mis publicaciones</span><span class="uc-ico"><i
+                                class="fa-solid fa-box-open"></i></span></div>
+                    <div class="uc-number" id="dash-posts">—</div><a class="uc-link" href="cuenta.html">Ver mi actividad
+                        →</a>
+                </section>
+                <section class="uc-panel">
+                    <div class="uc-between"><span class="uc-sub">Conversaciones</span><span class="uc-ico"><i
+                                class="fa-regular fa-comments"></i></span></div>
+                    <div class="uc-number" id="dash-chat">—</div><a class="uc-link" href="cuenta.html?mensajes=1#conversationList">Abrir
+                        mensajes →</a>
+                </section>
+                <section class="uc-panel">
+                    <div class="uc-between"><span class="uc-sub">Actividades con cupos</span><span class="uc-ico"><i
+                                class="fa-solid fa-calendar-days"></i></span></div>
+                    <div class="uc-number" id="dash-events">—</div><a class="uc-link" href="punto-hueco.html">Explorar
+                        actividades →</a>
+                </section>
+            </div>
+            <div class="uc-dash-columns">
+                <section class="uc-panel">
+                    <div class="uc-between">
+                        <h2 class="uc-h2">Últimas publicaciones</h2><a class="uc-link" href="index.html">Ver objetos
+                            →</a>
+                    </div>
+                    <div class="uc-feed" id="dash-feed">
+                        <p class="uc-sub">Cargando publicaciones…</p>
+                    </div>
+                </section>
+                <section class="uc-panel">
+                    <div class="uc-between">
+                        <h2 class="uc-h2">Tu próximo plan</h2><span class="uc-pill">Punto Hueco</span>
+                    </div>
+                    <div id="dash-plan" class="mt-4 uc-sub">Cargando actividades…</div>
+                </section>
+            </div>
+            <section id="publicar" class="uc-panel">
+                <h2 class="uc-h2">Accesos rápidos</h2>
+                <p class="uc-sub mb-4">Todo lo que necesitas, a un clic.</p>
+                <div class="uc-quick" id="quick-links"></div>
+                <p id="search-empty" class="uc-sub mt-3 hidden">No se encontraron módulos con ese nombre.</p>
+            </section>
+            <section class="uc-panel">
+                <div class="uc-between">
+                    <div>
+                        <h2 class="uc-h2">Explora el campus</h2>
+                        <p class="uc-sub">Ubica las tres áreas de la UNSA y sus espacios.</p>
+                    </div><a class="uc-primary" href="mapa.html">Abrir mapa <i class="fa-solid fa-location-dot"></i></a>
+                </div>
+            </section>
+        </div>
+    </main>
+    <div id="layout-bottom"></div>
+    <script src="pub/js/data.js"></script>
+    <script src="pub/js/layout.js"></script>
+    <script src="pub/js/dashboard.js"></script>
+</body>
+
+</html>
