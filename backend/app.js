@@ -25,6 +25,13 @@ app.use('/api', authRoutes);
 app.use('/api', apiRoutes);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada.' }));
 
+// Página de inicio pública
+app.get('/', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, '..', 'fronend', 'home.html')
+    );
+});
+
 // Solo local; en Vercel los estáticos los sirve su CDN
 app.use(express.static(path.join(__dirname, '..', 'fronend')));
 

@@ -5,6 +5,13 @@
             "includeFiles": "backend/**"
         }
     },
+    "redirects": [
+        {
+            "source": "/",
+            "destination": "/home.html",
+            "permanent": false
+        }
+    ],
     "rewrites": [
         {
             "source": "/api/(.*)",
