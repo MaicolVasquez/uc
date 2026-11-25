@@ -98,7 +98,7 @@ async function loadDashboard() {
     document.getElementById('dash-posts').textContent =
         summary
             ? (summary.publicaciones || 0) +
-              (summary.huecosCreados || 0)
+            (summary.huecosCreados || 0)
             : '—';
 
     document.getElementById('dash-chat').textContent =

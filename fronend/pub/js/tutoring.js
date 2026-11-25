@@ -1,6 +1,6 @@
 // Módulo: Estudiante a Estudiante (Tutorías)
 
-const TUTOR_DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';
+const TUTOR_DEFAULT_AVATAR = '/pub/img/avatar.svg';
 
 // ---------- Estado ----------
 let tutorEditingId = null;
@@ -129,43 +129,187 @@ function renderPicks() {
 }
 
 async function runRecommendation() {
-    if (!picks.prio.length) return openNotificationToast('Elige al menos un tema prioritario.');
+
+    if (!picks.prio.length) {
+
+        return openNotificationToast(
+            'Elige al menos un tema prioritario.'
+        );
+    }
+
+    const button = document.getElementById('tutorRecoBtn');
+    const box = document.getElementById('recoResults');
+
+    if (button.disabled) return;
+
+    const originalText = button.innerHTML;
+
+    button.disabled = true;
+
+    button.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Buscando tutores...
+    `;
+
+    box.innerHTML = `
+        <p class="tutor-loading">
+            Analizando los cursos y niveles de especialización...
+        </p>
+    `;
+
     try {
-        const items = await apiFetch('/api/tutors/recomendar',
-            { method: 'POST', body: { prioritarios: picks.prio, secundarios: picks.sec } });
+
+        const items = await apiFetch(
+            '/api/tutors/recomendar',
+            {
+                method: 'POST',
+                body: {
+                    prioritarios: [...picks.prio],
+                    secundarios: [...picks.sec]
+                }
+            }
+        );
+
         renderReco(items);
+
     } catch (err) {
+
+        box.textContent =
+            'No se pudieron obtener las recomendaciones.';
+
         handleApiError(err);
+
+    } finally {
+
+        button.disabled = false;
+        button.innerHTML = originalText;
+
     }
 }
 
 function renderReco(items) {
+
     const box = document.getElementById('recoResults');
+
     if (!box) return;
+
     if (!items.length) {
-        box.innerHTML = `<p class="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg">Ningún tutor cubre tus temas prioritarios todavía. Puedes enviar una solicitud de asesoría.</p>`;
+
+        box.innerHTML = `
+            <div class="tutor-empty">
+
+                <div class="tutor-empty-icon">
+                    <i class="fa-solid fa-user-magnifying-glass"></i>
+                </div>
+
+                <h3>No encontramos tutores compatibles</h3>
+
+                <p>
+                    Puedes seleccionar otros cursos o
+                    publicar una solicitud de asesoría.
+                </p>
+
+                <button type="button"
+                    onclick="openModal('tutorRequestModal')"
+                    class="uc-secondary">
+
+                    Solicitar asesoría
+
+                </button>
+
+            </div>`;
+
         return;
     }
-    box.innerHTML = items.map((r, i) => `
-        <div class="border border-slate-200 rounded-xl p-4">
-            <div class="flex justify-between items-start gap-3">
-                <div>
-                    <p class="text-[11px] font-bold text-slate-400">#${i + 1}</p>
-                    <h3 class="font-bold text-slate-900">${escapeHtml(r.tutor.name)}</h3>
-                    <p class="text-xs text-unsa-maroon font-semibold">${escapeHtml(r.tutor.career)} (${escapeHtml(r.tutor.semester)})</p>
+
+    box.innerHTML = `
+        <div class="tutor-reco-summary">
+
+            <h3>Tutores recomendados</h3>
+
+            <p>
+                ${items.length} resultados ordenados
+                por puntaje de compatibilidad.
+            </p>
+
+        </div>
+
+        ${items.map((r, i) => {
+
+            const score = Math.max(
+                0,
+                Math.min(100, Number(r.puntaje) || 0)
+            );
+
+            return `
+
+                <div class="tutor-reco-result
+                    ${i === 0 ? 'tutor-reco-first' : ''}">
+
+                    <div class="flex justify-between items-start gap-3">
+
+                        <div>
+
+                            <span class="tutor-rank">
+
+                                ${i === 0
+                                    ? 'Mejor coincidencia'
+                                    : 'Posición ' + (i + 1)}
+
+                            </span>
+
+                            <h3 class="font-extrabold text-slate-900 mt-2">
+
+                                ${escapeHtml(r.tutor.name)}
+
+                            </h3>
+
+                            <p class="text-xs text-unsa-maroon font-semibold">
+
+                                ${escapeHtml(r.tutor.career)}
+                                (${escapeHtml(r.tutor.semester)})
+
+                            </p>
+
+                        </div>
+
+                        <div class="tutor-score">
+
+                            <strong>${score.toFixed(1)}</strong>
+                            <small>de 100 puntos</small>
+
+                        </div>
+
+                    </div>
+
+                    <div class="tutor-score-track">
+
+                        <span style="width:${score}%"></span>
+
+                    </div>
+
+                    <p class="tutor-explanation">
+
+                        ${escapeHtml(r.explicacion)}
+
+                    </p>
+
+                    <a href="https://wa.me/51${onlyDigits(r.tutor.phone)}?text=Hola%20${encodeURIComponent(r.tutor.name)},%20te%20contacto%20desde%20UNSA%20Conecta%20para%20una%20tutoria"
+                        target="_blank"
+                        rel="noopener"
+                        class="uc-secondary">
+
+                        <i class="fa-brands fa-whatsapp"></i>
+                        Contactar tutor
+
+                    </a>
+
                 </div>
-                <div class="text-2xl font-extrabold text-unsa-maroon">${Number(r.puntaje).toFixed(1)}</div>
-            </div>
-            <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
-                <div class="h-full bg-emerald-500" style="width:${Math.min(100, r.puntaje)}%"></div>
-            </div>
-            <p class="text-xs text-slate-600 mt-2">${escapeHtml(r.explicacion)}</p>
-            <a href="https://wa.me/51${onlyDigits(r.tutor.phone)}?text=Hola%20${encodeURIComponent(r.tutor.name)},%20te%20contacto%20desde%20UNSA%20Conecta%20para%20una%20tutoria"
-               target="_blank" rel="noopener"
-               class="inline-flex items-center gap-2 mt-3 text-xs font-bold text-emerald-700">
-                <i class="fa-brands fa-whatsapp"></i> Contactar
-            </a>
-        </div>`).join('');
+
+            `;
+
+        }).join('')}
+    `;
 }
 
 // ---------- Listado de tutores ----------
@@ -180,16 +324,47 @@ async function loadTutors() {
 }
 
 function renderTutors(items = tutorsData) {
+
     const grid = document.getElementById('tutorsGrid');
 
-    if (items.length === 0) {
-        grid.innerHTML = `
-            <div class="col-span-full py-12 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
-                <i class="fa-solid fa-graduation-cap text-4xl mb-2"></i>
-                <p class="font-bold text-sm">Aún no hay tutores registrados.</p>
-            </div>`;
-        return;
+    const counter = document.getElementById(
+        'tutorResultsCount'
+    );
+
+    if (counter) {
+        counter.textContent = items.length === 1
+            ? '1 tutor encontrado'
+            : `${items.length} tutores encontrados`;
     }
+
+    if (items.length === 0) {
+
+    grid.innerHTML = `
+        <div class="tutor-empty">
+
+            <div class="tutor-empty-icon">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+
+            <h3>No encontramos tutores</h3>
+
+            <p>
+                Prueba con otros filtros o publica
+                una solicitud de asesoría.
+            </p>
+
+            <button type="button"
+                onclick="openModal('tutorRequestModal')"
+                class="uc-primary">
+
+                Solicitar asesoría
+
+            </button>
+
+        </div>`;
+
+    return;
+}
 
     grid.innerHTML = items.map(tut => {
         const niveles = Object.entries(tut.niveles || {});
@@ -197,14 +372,14 @@ function renderTutors(items = tutorsData) {
             ? niveles.map(([code, n]) => `${nameOf(code)} · ${LEVEL_TXT[n] || ''}`)
             : (tut.courses || []);
         const coursesBadges = etiquetas.map(c =>
-            `<span class="bg-amber-50 text-unsa-maroon font-bold text-[10px] px-2 py-0.5 rounded-md border border-amber-200">${escapeHtml(c)}</span>`
+            `<span class="tutor-course-chip">${escapeHtml(c)}</span>`
         ).join(' ');
 
         return `
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
+            <div class="tutor-card">
                 <div>
                     <div class="flex items-start gap-3">
-                        <img src="${TUTOR_DEFAULT_AVATAR}" alt="${escapeHtml(tut.name)}" class="w-14 h-14 rounded-full object-cover ring-2 ring-unsa-gold">
+                        <img src="${TUTOR_DEFAULT_AVATAR}" alt="${escapeHtml(tut.name)}" class="tutor-avatar">
                         <div class="flex-1">
                             <div class="flex items-start justify-between gap-2">
                                 <h3 class="font-bold text-slate-900 text-base">${escapeHtml(tut.name)}</h3>
@@ -220,7 +395,7 @@ function renderTutors(items = tutorsData) {
                         <div class="flex flex-wrap gap-1">${coursesBadges}</div>
                     </div>
 
-                    <p class="text-xs text-slate-600 mt-3 line-clamp-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <p class="tutor-bio">
                         "${escapeHtml(tut.bio)}"
                     </p>
 
@@ -232,28 +407,85 @@ function renderTutors(items = tutorsData) {
 
                 <a href="https://wa.me/51${onlyDigits(tut.phone)}?text=Hola%20${encodeURIComponent(tut.name)},%20te%20contacto%20desde%20UNSA%20Conecta%20para%20una%20tutoria"
                    target="_blank" rel="noopener"
-                   class="w-full mt-4 bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors">
+                   class="uc-primary w-full mt-4">
                     <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Solicitar Asesoría por WhatsApp
                 </a>
             </div>`;
     }).join('');
 }
 
+function normalizeTutorText(value) {
+    return String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
 function filterTutors() {
-    const query = document.getElementById('tutorSearch').value.toLowerCase();
-    const faculty = document.getElementById('tutorFacultyFilter').value;
-    const modality = document.getElementById('tutorModalityFilter').value;
+
+    const query = normalizeTutorText(
+        document.getElementById('tutorSearch').value
+    );
+
+    const faculty = document.getElementById(
+        'tutorFacultyFilter'
+    ).value;
+
+    const modality = document.getElementById(
+        'tutorModalityFilter'
+    ).value;
 
     const filtered = tutorsData.filter(tut => {
-        const matchesQuery = tut.name.toLowerCase().includes(query) ||
-            (tut.courses || []).some(c => c.toLowerCase().includes(query)) ||
-            tut.career.toLowerCase().includes(query);
-        const matchesFaculty = faculty === 'ALL' || tut.faculty === faculty;
-        const matchesModality = modality === 'ALL' || tut.modality.includes(modality);
-        return matchesQuery && matchesFaculty && matchesModality;
+
+        const courses = Array.isArray(tut.courses)
+            ? tut.courses
+            : [tut.courses];
+
+        const courseNames = Object.keys(tut.niveles || {})
+            .map(code => nameOf(code));
+
+        const searchable = [
+            tut.name,
+            tut.career,
+            tut.faculty,
+            tut.modality,
+            ...courses,
+            ...courseNames
+        ];
+
+        const matchesQuery = searchable.some(value =>
+            normalizeTutorText(value).includes(query)
+        );
+
+        const matchesFaculty =
+            faculty === 'ALL' || tut.faculty === faculty;
+
+        const matchesModality =
+            modality === 'ALL' ||
+            String(tut.modality ?? '').includes(modality);
+
+        return matchesQuery &&
+            matchesFaculty &&
+            matchesModality;
     });
 
     renderTutors(filtered);
+}
+
+function resetTutorFilters() {
+
+    document.getElementById('tutorSearch').value = '';
+
+    document.getElementById(
+        'tutorFacultyFilter'
+    ).value = 'ALL';
+
+    document.getElementById(
+        'tutorModalityFilter'
+    ).value = 'ALL';
+
+    filterTutors();
 }
 
 // ---------- Guardar y editar tutor ----------
