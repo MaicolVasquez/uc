@@ -12,6 +12,7 @@
     <script src="pub/js/tailwind.config.js"></script>
     <link rel="stylesheet" href="pub/css/redesign.css">
     <link rel="stylesheet" href="pub/css/mensajes.css">
+    <link rel="stylesheet" href="pub/css/cuenta.css">
 </head>
 
 <body data-page="cuenta" class="h-full text-slate-800 bg-slate-50 flex flex-col min-h-screen">
@@ -27,17 +28,91 @@
             </div>
 
             <!-- Formularios (sin sesión) -->
-            <div id="authForms" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-unsa-maroon to-unsa-bright text-white p-6 text-center">
-                    <div
-                        class="w-14 h-14 mx-auto rounded-2xl bg-unsa-gold text-unsa-maroon flex items-center justify-center text-2xl mb-3 shadow-lg">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <h1 class="text-xl font-extrabold">Tu cuenta UNSA Conecta</h1>
-                    <p class="text-xs text-yellow-100 mt-1">Inicia sesión o crea tu cuenta de estudiante</p>
-                </div>
+            <div id="authForms" class="hidden uc-auth-shell">
 
-                <div class="flex border-b border-slate-200">
+    <!-- Presentacion de la plataforma -->
+
+    <aside class="uc-auth-intro">
+
+        <a href="home.html" class="uc-auth-brand">
+
+            <span class="uc-auth-logo">U</span>
+
+            <span>
+                UNSA
+                <small>CONECTA</small>
+            </span>
+
+        </a>
+
+        <div class="uc-auth-presentation">
+
+            <p class="uc-auth-kicker">
+                TU COMUNIDAD UNIVERSITARIA
+            </p>
+
+            <h1>
+                Tu campus,<br>
+                más cerca.
+            </h1>
+
+            <p>
+                Una comunidad. Nuevas oportunidades.
+                Una mejor experiencia universitaria.
+            </p>
+
+            <ul class="uc-auth-benefits">
+
+                <li>
+                    <i class="fa-solid fa-box-open"></i>
+                    Recupera tus pertenencias
+                </li>
+
+                <li>
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    Aprende con otros estudiantes
+                </li>
+
+                <li>
+                    <i class="fa-solid fa-mug-hot"></i>
+                    Aprovecha tus horas libres
+                </li>
+
+                <li>
+                    <i class="fa-regular fa-comments"></i>
+                    Conecta con tu comunidad
+                </li>
+
+            </ul>
+
+        </div>
+
+        <p class="uc-auth-footnote">
+            Creado para la comunidad agustina.
+        </p>
+
+    </aside>
+
+    <!-- Formularios de acceso -->
+
+    <div class="uc-auth-content">
+
+        <div class="uc-auth-heading">
+
+            <p class="uc-kicker">
+                BIENVENIDO
+            </p>
+
+            <h2>Tu cuenta UNSA Conecta</h2>
+
+            <p>
+                Ingresa o crea una cuenta para continuar
+                a tu espacio universitario.
+            </p>
+
+        </div>
+
+                <div class="uc-auth-tabs flex border-b border-slate-200">
                     <button id="tabLogin" type="button" onclick="showAuthTab('login')"
                         class="flex-1 py-3 text-sm font-semibold text-slate-500 hover:text-unsa-maroon transition-colors">Iniciar
                         sesión</button>
@@ -46,7 +121,7 @@
                         cuenta</button>
                 </div>
 
-                <div id="authError"
+                <div id="authError" role="alert"
                     class="hidden mx-6 mt-5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-lg px-3 py-2">
                 </div>
 
@@ -62,8 +137,25 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1"
                             for="loginPassword">Contraseña</label>
-                        <input type="password" id="loginPassword" required autocomplete="current-password"
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold">
+                        <div class="uc-password-wrap">
+
+    <input type="password"
+        id="loginPassword"
+        required
+        autocomplete="current-password"
+        class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold">
+
+    <button type="button"
+        class="uc-password-toggle"
+        data-password-target="loginPassword"
+        aria-label="Mostrar contraseña"
+        aria-pressed="false">
+
+        <i class="fa-regular fa-eye"></i>
+
+    </button>
+
+</div>
                     </div>
                     <button type="submit"
                         class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
@@ -89,23 +181,71 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1" for="regPassword">Contraseña (mín. 6
                             caracteres)</label>
-                        <input type="password" id="regPassword" required minlength="6" autocomplete="new-password"
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold">
+                        <div class="uc-password-wrap">
+
+    <input type="password"
+        id="regPassword"
+        required
+        minlength="6"
+        autocomplete="new-password"
+        class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold">
+
+    <button type="button"
+        class="uc-password-toggle"
+        data-password-target="regPassword"
+        aria-label="Mostrar contraseña"
+        aria-pressed="false">
+
+        <i class="fa-regular fa-eye"></i>
+
+    </button>
+
+</div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1" for="regPassword2">Repetir
                             contraseña</label>
-                        <input type="password" id="regPassword2" required minlength="6" autocomplete="new-password"
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold">
+                        <div class="uc-password-wrap">
+
+    <input type="password"
+        id="regPassword2"
+        required
+        minlength="6"
+        autocomplete="new-password"
+        class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-unsa-gold">
+
+    <button type="button"
+        class="uc-password-toggle"
+        data-password-target="regPassword2"
+        aria-label="Mostrar contraseña"
+        aria-pressed="false">
+
+        <i class="fa-regular fa-eye"></i>
+
+    </button>
+
+</div>
                     </div>
                     <button type="submit"
-                        class="w-full bg-unsa-gold hover:bg-unsa-goldhover text-unsa-maroon font-bold py-2.5 rounded-xl text-sm transition-colors">
-                        Crear cuenta
-                    </button>
-                </form>
-            </div>
+    class="w-full bg-unsa-maroon hover:bg-unsa-dark text-white font-bold py-2.5 rounded-xl text-sm transition-colors">
 
-            <!-- Perfil (con sesión) -->
+    Crear cuenta
+
+</button>
+                                </form>
+
+                <a href="home.html" class="uc-auth-return">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Volver a la portada pública
+
+                </a>
+
+            </div> <!-- FIN UC-AUTH-CONTENT -->
+
+        </div> <!-- FIN AUTHFORMS -->
+
+        <!-- Perfil (con sesión) -->
             
 <!-- Perfil rediseñado -->
 <div id="profileCard" class="hidden w-full">
@@ -234,22 +374,47 @@
         <div class="min-w-0 space-y-7">
 
     <div id="profileOverview" class="space-y-6">
+        <div class="uc-profile-page-heading">
 
+    <div>
+
+        <p class="uc-kicker">
+            TU ESPACIO PERSONAL
+        </p>
+
+        <h2>Mi perfil</h2>
+
+        <p>
+            Consulta tu cuenta y tu participación
+            en UNSA Conecta.
+        </p>
+
+    </div>
+
+    <a href="cuenta.html?mensajes=1"
+        class="uc-secondary">
+
+        <i class="fa-regular fa-comments"></i>
+        Mis mensajes
+
+    </a>
+
+</div>
             <!-- ENCABEZADO DEL PERFIL -->
-            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <section class="uc-profile-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-                <div class="bg-gradient-to-r from-unsa-maroon to-unsa-bright p-6 sm:p-8 text-white">
+    <div class="uc-profile-hero">
 
                     <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
 
                         <div id="profileInitial"
-                            class="w-20 h-20 shrink-0 rounded-2xl bg-unsa-gold text-unsa-maroon flex items-center justify-center text-3xl font-black shadow-lg">
+    class="uc-profile-avatar">
                             U
                         </div>
 
                         <div class="text-center sm:text-left flex-1 min-w-0">
 
-                            <span class="text-xs text-yellow-200 font-bold uppercase tracking-wider">
+                            <span class="text-xs text-white/80 font-bold uppercase tracking-wider">
                                 Mi perfil universitario
                             </span>
 
@@ -259,7 +424,7 @@
                             </h1>
 
                             <p id="profileEmail"
-                                class="text-sm text-yellow-100 mt-2 break-all">
+                                class="text-sm text-white/90 mt-2 break-all">
                                 —
                             </p>
 
@@ -277,7 +442,7 @@
                 </div>
 
                 <!-- INFORMACIÓN DE LA CUENTA -->
-                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="uc-profile-details grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                     <div class="bg-slate-50 rounded-xl p-4">
                         <div class="flex items-center gap-2 text-slate-400 text-xs font-semibold">
@@ -358,7 +523,7 @@
                             class="text-2xl font-extrabold text-slate-800">—</p>
 
                         <p class="text-xs text-slate-500 mt-1">
-                            Grupos participantes
+                            Actividades en las que participas
                         </p>
                     </div>
 
@@ -373,7 +538,7 @@
 
             
 <!-- HISTORIAL DE ACTIVIDAD -->
-<section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+<section class="uc-profile-history bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
     <!-- ENCABEZADO -->
     <div class="p-5 border-b border-slate-100">
@@ -416,17 +581,31 @@
 
 
             <!-- CERRAR SESIÓN -->
-            <div class="flex justify-end">
+            <!-- CERRAR SESIÓN -->
 
-                <button
-                    type="button"
-                    onclick="handleLogout()"
-                    class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+<div class="uc-profile-session">
 
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Cerrar sesión
+    <div>
 
-                </button>
+        <h3>Sesión actual</h3>
+
+        <p>
+            Cierra tu sesión cuando termines
+            de usar la plataforma.
+        </p>
+
+    </div>
+
+    <button type="button"
+        id="logoutBtn"
+        onclick="handleLogout()"
+        class="uc-logout-btn">
+
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Cerrar sesión
+
+    </button>
+
 </div>
 </div> <!-- FIN DEL PANEL DE PERFIL -->
 <div id="messagesEmpty" class="uc-messages-empty">
@@ -542,19 +721,17 @@
 
         </button>
 
-    </form>
+            </form>
 
-</section>
+    </section> <!-- FIN CHAT -->
 
-            </div>
+            </div> <!-- FIN PANEL DERECHO -->
 
-        </div>
+        </div> <!-- FIN UC-ACCOUNT-GRID -->
 
-    </div>
+    </div> <!-- FIN PROFILECARD -->
 
-</div>
-
-        </section>
+        </section> <!-- FIN TAB CUENTA -->
     </main>
 
     <div id="layout-bottom"></div>

@@ -22,6 +22,44 @@ function configureAccountMode() {
 }
 
 configureAccountMode();
+// Mostrar u ocultar contrasenas
+
+document.querySelectorAll('[data-password-target]')
+    .forEach(button => {
+
+        button.addEventListener('click', () => {
+
+            const input = document.getElementById(
+                button.dataset.passwordTarget
+            );
+
+            if (!input) return;
+
+            const showPassword = input.type === 'password';
+
+            input.type = showPassword
+                ? 'text'
+                : 'password';
+
+            button.innerHTML = showPassword
+                ? '<i class="fa-regular fa-eye-slash"></i>'
+                : '<i class="fa-regular fa-eye"></i>';
+
+            button.setAttribute(
+                'aria-label',
+                showPassword
+                    ? 'Ocultar contraseña'
+                    : 'Mostrar contraseña'
+            );
+
+            button.setAttribute(
+                'aria-pressed',
+                String(showPassword)
+            );
+
+        });
+
+    });
 async function apiPost(url, body) {
     const res = await fetch(url, {
         method: 'POST',
@@ -1023,16 +1061,61 @@ async function handleLogin(e) {
 }
 
 async function handleLogout() {
-    try {
-        await apiPost('/api/auth/logout');
-    } catch (err) {
-        return openNotificationToast(err.message);
+
+    const button = document.getElementById('logoutBtn');
+
+    if (button?.disabled) return;
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Cerrando sesión...
+        `;
+
     }
-    await refreshHeaderUser();
-    document.getElementById('loginForm').reset();
-    showAuthTab('login');
-    showView('forms');
-    openNotificationToast('Sesión cerrada.');
+
+    try {
+
+        await apiPost('/api/auth/logout');
+
+        // Detener la actualizacion del chat
+
+        if (chatPollingTimer) {
+
+            clearInterval(chatPollingTimer);
+            chatPollingTimer = null;
+
+        }
+
+        activeConversationId = null;
+        window.currentUser = null;
+
+        // Regresar a la portada publica
+
+        window.location.replace('home.html');
+
+    } catch (err) {
+
+        openNotificationToast(
+            err.message || 'No se pudo cerrar la sesión.'
+        );
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.innerHTML = `
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Cerrar sesión
+            `;
+
+        }
+
+    }
+
 }
 
 // ==========================================

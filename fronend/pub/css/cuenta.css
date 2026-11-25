@@ -1,0 +1,462 @@
+/* ======================================
+   CUENTA Y AUTENTICACION - UNSA CONECTA
+====================================== */
+
+/* Ocultar navegacion durante el acceso */
+
+body[data-page="cuenta"]:has(#authForms:not(.hidden)) {
+    padding-left: 0 !important;
+}
+
+body[data-page="cuenta"]:has(#authForms:not(.hidden)) #layout-top {
+    display: none;
+}
+
+body[data-page="cuenta"]:has(#authForms:not(.hidden)) > main {
+    width: 100%;
+    max-width: 1200px !important;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 32px !important;
+}
+
+/* Contenedor principal */
+
+#authForms.hidden {
+    display: none !important;
+}
+
+#authForms:not(.hidden) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 18px 60px #34202a12;
+}
+
+/* Panel izquierdo */
+
+.uc-auth-intro {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 44px;
+    min-height: 580px;
+    padding: clamp(28px, 4vw, 52px);
+    background: linear-gradient(
+        145deg, #62152b, #7b1e38 55%, #a33e5b
+    );
+    color: white;
+    overflow: hidden;
+}
+
+.uc-auth-intro::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    width: 360px;
+    height: 360px;
+    right: -155px;
+    bottom: -175px;
+    border: 50px solid #ffffff10;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.uc-auth-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    align-self: flex-start;
+    color: white;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.uc-auth-brand small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #f1ceda;
+}
+
+.uc-auth-logo {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    background: white;
+    color: var(--wine);
+    font-size: 26px;
+}
+
+.uc-auth-kicker {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.7px;
+    color: #f1ceda;
+}
+
+.uc-auth-presentation h1 {
+    margin: 12px 0 18px;
+    font-size: clamp(36px, 4.5vw, 58px);
+    font-weight: 850;
+    line-height: 1.08;
+    letter-spacing: -1.5px !important;
+    color: white !important;
+}
+
+.uc-auth-presentation > p:not(.uc-auth-kicker) {
+    color: #f4dce4;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.uc-auth-benefits {
+    display: grid;
+    gap: 16px;
+    border-top: 1px solid #ffffff30;
+    padding-top: 24px;
+    margin-top: 28px;
+    list-style: none;
+}
+
+.uc-auth-benefits li {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: white;
+    font-size: 13px;
+}
+
+.uc-auth-benefits i {
+    width: 21px;
+    flex-shrink: 0;
+    text-align: center;
+    color: #f0c6d4;
+}
+
+.uc-auth-footnote {
+    font-size: 11px;
+    color: #f0c6d4;
+}
+
+/* Panel derecho: formularios */
+
+.uc-auth-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(24px, 4vw, 52px);
+}
+
+.uc-auth-heading {
+    margin-bottom: 24px;
+}
+
+.uc-auth-heading h2 {
+    font-size: clamp(22px, 2.3vw, 30px);
+    line-height: 1.25;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 10px 0;
+}
+
+.uc-auth-heading > p:last-child {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.uc-auth-tabs button {
+    padding: 12px 8px;
+}
+
+#authForms form {
+    padding: 24px 0;
+}
+
+#authForms form label {
+    margin-bottom: 7px;
+    font-size: 12px;
+    color: #45434e;
+}
+
+#authForms form input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    background: #f8f8fa;
+    border: 1px solid #e0dfe5;
+}
+
+#authForms form input:focus {
+    outline: 2px solid #d8aebd;
+    outline-offset: 1px;
+}
+
+#authForms form button[type="submit"] {
+    margin-top: 8px;
+    min-height: 46px;
+}
+
+#authError {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Mostrar y ocultar contrasena */
+
+.uc-password-wrap {
+    position: relative;
+}
+
+#authForms .uc-password-wrap input {
+    padding-right: 48px;
+}
+
+.uc-password-toggle {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.uc-password-toggle:hover {
+    color: var(--wine);
+    background: var(--rose);
+}
+
+.uc-auth-return {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--wine);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 12px 0;
+}
+
+.uc-auth-return:hover {
+    text-decoration: underline;
+}
+
+/* Perfil universitario */
+
+.uc-profile-page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.uc-profile-page-heading h2 {
+    font-size: 30px;
+    line-height: 1.2;
+    font-weight: 850;
+    color: var(--ink);
+    margin: 8px 0;
+}
+
+.uc-profile-page-heading p:last-child {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.uc-profile-card {
+    border-radius: 20px;
+}
+
+.uc-profile-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(120deg, #62152b, #a33e5b);
+    color: white;
+    padding: 32px;
+}
+
+.uc-profile-hero::after {
+    content: '';
+    position: absolute;
+    right: -85px;
+    top: -165px;
+    width: 370px;
+    height: 370px;
+    border-radius: 50%;
+    border: 55px solid #ffffff10;
+    z-index: -1;
+    pointer-events: none;
+}
+
+#profileName {
+    color: white !important;
+}
+
+.uc-profile-avatar {
+    display: grid;
+    place-items: center;
+    width: 86px;
+    height: 86px;
+    border: 3px solid #f5dce4;
+    border-radius: 24px;
+    background: white;
+    color: var(--wine);
+    font-size: 34px;
+    font-weight: 850;
+    flex-shrink: 0;
+}
+
+.uc-profile-details {
+    padding: 24px;
+}
+
+.uc-profile-details > div {
+    background: var(--canvas);
+    padding: 18px;
+    min-width: 0;
+    border-radius: 12px;
+}
+
+/* Indicadores e historial */
+
+.uc-profile-stats > div {
+    min-width: 0;
+    padding: 22px;
+    border-radius: 18px;
+}
+
+.uc-profile-stats > div > p:last-child {
+    line-height: 1.5;
+}
+
+.uc-profile-history {
+    border-radius: 18px;
+}
+
+#activityTimeline article {
+    padding: 20px 24px;
+    transition: background-color .15s ease;
+}
+
+#activityTimeline article:hover {
+    background: #fbf9fa;
+}
+
+/* Cierre de sesion */
+
+.uc-profile-session {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 20px 24px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+}
+
+.uc-profile-session h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.uc-profile-session p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+.uc-logout-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 18px;
+    border: 1px solid #e8c6cf;
+    border-radius: 11px;
+    background: #fff5f7;
+    color: var(--wine);
+    font-size: 13px;
+    font-weight: 750;
+    flex-shrink: 0;
+}
+
+.uc-logout-btn:hover {
+    background: var(--rose);
+}
+
+.uc-logout-btn:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+/* Responsive */
+
+@media (max-width: 760px) {
+
+    body[data-page="cuenta"]:has(#authForms:not(.hidden)) > main {
+        padding: 16px !important;
+        align-items: flex-start;
+    }
+
+    #authForms:not(.hidden) {
+        grid-template-columns: minmax(0, 1fr);
+        border-radius: 18px;
+    }
+
+    .uc-auth-intro {
+        min-height: 0;
+        padding: 24px;
+        gap: 18px;
+    }
+
+    .uc-auth-presentation h1 {
+        font-size: 36px;
+    }
+
+    .uc-auth-benefits,
+    .uc-auth-footnote {
+        display: none;
+    }
+
+    .uc-auth-content {
+        padding: 24px;
+    }
+
+    .uc-profile-hero,
+    .uc-profile-details {
+        padding: 20px;
+    }
+
+    .uc-profile-page-heading h2 {
+        font-size: 25px;
+    }
+
+    .uc-profile-session {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 18px;
+    }
+}
