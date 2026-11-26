@@ -5,10 +5,14 @@ const NAV_ITEMS = [
     { id: 'dashboard', href: 'dashboard.html', icon: 'fa-house', label: 'Inicio', mobile: 'Inicio', footer: 'Inicio' },
     { id: 'lost-found', href: 'index.html', icon: 'fa-box-open', label: 'Objetos Perdidos', mobile: 'Objetos Perdidos', footer: 'Objetos Perdidos' },
     { id: 'maps', href: 'mapa.html', icon: 'fa-map-location-dot', label: 'Mapa UNSA', mobile: 'UNSA Maps (Croquis)', footer: 'UNSA Maps' },
-    { id: 'announcements', href: 'notificaciones.html', icon: 'fa-bullhorn', label: 'Notificaciones', mobile: 'Notificaciones e Info', footer: 'Avisos', badge: true },
-    { id: 'tutoring', href: 'tutorias.html', icon: 'fa-graduation-cap', label: 'Alumno a alumno', mobile: 'Estudiante a Estudiante', footer: 'Tutores' },
+    { id: 'announcements', href: 'notificaciones.html', icon: 'fa-bullhorn', label: 'Notificaciones', mobile: 'Notificaciones', footer: 'Avisos' },
+    { id: 'tutoring', href: 'tutorias.html', icon: 'fa-graduation-cap', label: 'Tutorías', mobile: 'Tutorías', footer: 'Tutorías' },
     { id: 'huecos', href: 'punto-hueco.html', icon: 'fa-mug-hot', label: 'Punto Hueco', mobile: 'Punto Hueco', footer: 'Punto Hueco' }
-];
+];const PROTECTED_PAGE = document.body.dataset.page;
+
+if (PROTECTED_PAGE && PROTECTED_PAGE !== 'cuenta') {
+    document.body.classList.add('uc-auth-pending');
+}
 
 function buildLayout() {
     const current = document.body.dataset.page;
@@ -19,7 +23,6 @@ function buildLayout() {
                     <a id="nav-${n.id}" href="${n.href}"
                         class="nav-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${active} hover:text-white hover:bg-white/10 relative">
                         <i class="fa-solid ${n.icon} text-unsa-gold"></i> ${n.label}
-                        ${n.badge ? '<span class="w-2 h-2 rounded-full bg-red-400 absolute top-2 right-1 animate-ping"></span>' : ''}
                     </a>`;
     }).join('');
 
@@ -266,7 +269,6 @@ function closeModal(id) {
 // Promesa global: las páginas que necesiten el usuario (p. ej. cuenta.html) pueden hacer `await sessionReady`.
 const sessionReady = refreshHeaderUser();
 
-// Verificar la promesa y redirigir si es nula
 sessionReady.then(user => {
 
     const currentPage = document.body.dataset.page;
@@ -276,12 +278,18 @@ sessionReady.then(user => {
         currentPage !== 'cuenta' &&
         window.sessionStatus === 'unauthenticated'
     ) {
-        const destination = currentPage === 'dashboard'
-            ? 'cuenta.html?next=dashboard'
-            : 'cuenta.html';
+        const next =
+            window.location.pathname.split('/').pop() +
+            window.location.search +
+            window.location.hash;
 
-        window.location.replace(destination);
+        window.location.replace(
+            'cuenta.html?next=' + encodeURIComponent(next)
+        );
+        return;
     }
+
+    document.body.classList.remove('uc-auth-pending');
 
 });
 // ---------- Campanita de notificaciones (estilo Facebook) ----------
