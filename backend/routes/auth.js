@@ -62,10 +62,14 @@ router.get('/perfil', h(async (req, res) => {
     }
 
     if (!perfil) {
-        return req.session.destroy(() =>
-            res.status(401).json({ error: 'Perfil no encontrado.' })
-        );
-    }
+
+    req.session = null;
+
+    return res.status(401).json({
+        error: 'Perfil no encontrado.'
+    });
+
+}
     res.json({
         user: { id: perfil.id, email: req.session.email, nombre: perfil.nombre, rol: perfil.rol, createdAt: perfil.creado_en }
     });

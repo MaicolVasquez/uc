@@ -122,9 +122,6 @@ function renderProfile(user) {
     document.getElementById('profileRole').textContent =
         roles[role] || 'Miembro UNSA';
 
-    // Identificador
-    document.getElementById('profileId').textContent =
-        user.id ? user.id.slice(0, 8) + '…' : '—';
 
     // Fecha de registro
     const createdAt = user.createdAt ? new Date(user.createdAt) : null;
@@ -987,7 +984,33 @@ function inicializarBuscadorEstudiantes() {
 
 }
 
+function obtenerDestinoLogin() {
 
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    const next = params.get('next');
+
+    const permitidos = new Set([
+        'dashboard.html',
+        'index.html',
+        'tutorias.html',
+        'punto-hueco.html',
+        'mapa.html',
+        'notificaciones.html',
+        'cuenta.html'
+    ]);
+
+    if (!next) return 'dashboard.html';
+
+    const pagina = next.split(/[?#]/)[0];
+
+    return permitidos.has(pagina)
+        ? next
+        : 'dashboard.html';
+
+}
 async function handleRegister(e) {
     e.preventDefault();
     showAuthError('');
@@ -1004,7 +1027,7 @@ async function handleRegister(e) {
         await apiPost('/api/auth/login', { email, password });
         const user = await refreshHeaderUser();
         if (!user) throw new Error('No se pudo cargar tu perfil. Intenta actualizar la página.');
-        window.location.replace('dashboard.html');
+        window.location.replace(obtenerDestinoLogin());
     } catch (err) {
         showAuthError(err.message);
     }
@@ -1038,13 +1061,13 @@ async function handleLogin(e) {
 
         const params = new URLSearchParams(window.location.search);
 
-        if (
-            params.get('next') === 'dashboard' ||
-            (!params.has('chat') && !params.has('mensajes'))
-        ) {
-            window.location.replace('dashboard.html');
-            return;
-        }
+       if (
+    params.has('next') ||
+    (!params.has('chat') && !params.has('mensajes'))
+) {
+    window.location.replace(obtenerDestinoLogin());
+    return;
+}
 
         renderProfile(user);
         inicializarBuscadorEstudiantes();
